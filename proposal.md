@@ -1,15 +1,17 @@
-# Mechanisms of Compositional Control in Multimodal Diffusion Models
+# Mechanisms of Context Consistency in Multimodal Diffusion Models
 
 **Working direction memo, 13 September 2026.** This proposes a research structure for discussion; it is not a finished submission or an agreed final scope.
 
 ## Recommendation
+
+Use **context consistency** as the motivating objective: generated content should satisfy the designated requirements of text, references, or demonstrations while preserving freedom in unspecified properties. For example, a creator may request style from one image, content from another, and spatial relationships from text. The scientific contribution lies in constructing suitable representations and understanding how parameters act through them.
 
 Organize the proposal as **one research program with two coupled views**, connected by an explicit correspondence between representation interventions and weight updates:
 
 1. **Reusable computation and adaptable visual knowledge:** predict which model components can transfer across domains, and use those predictions to adapt, share, or externalize selected visual knowledge.
 2. **Generative language semantics for visual creation:** learn to generate and revise reasoning-relevant contextual representations from powerful AR language models, couple them with visual denoising states, and test precise semantic control.
 
-The common scientific question is: **When can a desired change in a generated semantic representation be implemented by a compact, reusable weight update, and which representation choices make this possible?**
+The common scientific question is: **Which representations allow contextual requirements to remain consistent through generation, and when can interventions on those representations be implemented by compact, reusable weight updates?**
 
 The proposed advance is a mechanism that makes testable predictions about adaptation and editing on unseen combinations. Parameter efficiency, personalization, and source attribution become consequences and tests of that mechanism. Thrust 1 studies how weight changes alter generated content. Thrust 2 chooses and generates representations that make semantic goals easier to specify and control, including contextual language-model states supported by ELF. These questions feed into each other: a useful semantic decomposition can reveal candidate weight directions; measured parameter couplings can guide representation and architecture design. Conditional generation of weight deltas is an integrated application of this correspondence, rather than a third independent thrust.
 
@@ -26,6 +28,22 @@ flowchart TD
 ```
 
 This is the proposed functional model, not an established exclusive assignment to particular layers. Thrust 1 tests changes to source knowledge and aggregation; Thrust 2 tests direct control at the prediction/state interface.
+
+## Interpretable adaptation and selective control
+
+The proposed advantage over generic end-to-end adaptation is an explicit, testable connection between **the contextual requirement, the representation carrying it, and the parameter changes that implement its effect**. We will construct representations in which relevant factors can be inspected and intervened on, then study how weight changes affect contextual aggregation, stored visual knowledge, and local prediction through those representations. This account should help predict what an update changes, what it preserves, and when coordinated changes are necessary. The functional roles are hypotheses to test; they are not exclusive assignments of composition to attention or memory to MLPs.
+
+[LoRA](https://arxiv.org/abs/2106.09685) specifies a low-rank parameterization of weight updates. Low rank alone does not establish which semantic factors an update affects or the internal process responsible. Our method may itself use LoRA. The proposed distinction is how representations and update locations are chosen, and whether their effects can be predicted through an experimentally supported mechanism.
+
+Stronger interpretability and selective control are research hypotheses, supported by the preliminary mechanistic results but still requiring comparative evidence. Evaluate them through:
+
+1. **Causal predictability.** Predict affected factors and intermediate responses before testing held-out contexts and compositions. Intervene on the proposed representation or pathway to test whether it mediates the parameter update's effect; probe accuracy alone is insufficient.
+2. **Selective control.** Measure joint context satisfaction and preservation of other properties at comparable target-edit fidelity and generation quality. Compare with conventional LoRA under matched parameter, training, and selection budgets, and ablate representation construction and mechanism-informed parameter selection separately.
+3. **Reusable effects.** Hold a context-derived update fixed across new scenes and test whether it continues to reproduce the intended representation intervention. Report failures and collateral effects as well as successful cases.
+
+The comparison must also include structured adaptation methods: [Concept Sliders](https://arxiv.org/abs/2311.12092) already learns interpretable low-rank concept directions while limiting interference with other attributes. Our additional target is a predictive account of how representation choice and the denoising mechanism determine selective parameter effects, including where that correspondence fails. Interpretable adapter controls alone are insufficient differentiation.
+
+Use reusable context, such as a character or style collection, for the adapter demonstration. Keep changing scene instructions available as conditioning. Text/reference composition and repeated use across scenes provide a focused test of context consistency; audio synchronization and general physical consistency motivate broader relevance but require additional technical foundations.
 
 ## Unified connection: From semantic interventions to generated weight updates
 
@@ -182,6 +200,9 @@ The following are substantive overlaps, not merely background citations. This is
 | [SFD](https://arxiv.org/abs/2512.04926), [Latent Forcing](https://arxiv.org/abs/2602.11401), [SeFi-Image](https://arxiv.org/abs/2606.22568) | Different representation groups follow different schedules; semantics-first generation extends to text-to-image | Predict and optimize the survival and collateral effects of a specified edit, including cases requiring semantic revision |
 | [ReDi](https://arxiv.org/abs/2504.16064), [CoReDi](https://arxiv.org/abs/2604.17492) | Joint feature/image generation, representation guidance, and adaptation of the representation space | A causal factor-selection criterion tied to controlled intervention outcomes |
 | [Plug-and-Play Diffusion Features](https://arxiv.org/abs/2211.12572), [TIDE](https://arxiv.org/abs/2503.07050), [SHIFT](https://arxiv.org/abs/2604.09213) | Feature injection and interpretable steering, including layer/time-dependent interventions | Predict transfer and selectivity from the compositional mechanism, beyond searching for successful steering sites |
+| [Visual-Aware CoT](https://arxiv.org/abs/2512.19686) | Visual context consistency through planning and iterative correction | Construct and test representations that preserve contextual requirements through denoising, and connect their interventions to reusable parameter changes |
+| [Vision-Language Binding in In-Context Image Generation](https://arxiv.org/abs/2605.24624) | Causal interventions identify reference-to-text-to-image pathways and different routes for precise identity information in FLUX.2 | Use mechanism predictions to guide representation construction and selective parameter adaptation across new compositions |
+| [Concept Sliders](https://arxiv.org/abs/2311.12092) | Interpretable low-rank concept directions, targeted attribute changes, and reduced interference | Explain and predict when representation interventions admit selective, reusable parameter updates through the denoising mechanism |
 | [Custom Diffusion](https://arxiv.org/abs/2212.04488) | Selective parameter adaptation for multiple concepts | Predict allocation and compatibility for different types of domain shift; validate against matched adaptation budgets |
 | [Finding NeMo](https://arxiv.org/abs/2406.02366) | Memorized examples can be associated with and suppressed through cross-attention neurons | Test distributed, architecture-dependent feature storage and reusable composition; do not assert that memorization lives exclusively in MLPs |
 | [Semi-Parametric Neural Image Synthesis](https://arxiv.org/abs/2204.11824) | Retrieval provides local content while the generator learns scene composition; database replacement changes domains | Derive and test compatibility conditions at internal computation interfaces; relate module changes to causal output effects |
@@ -237,4 +258,4 @@ If transfer prediction fails, report the measured compatibility boundary and tes
 
 ## Drafting priority
 
-Give both coupled views substantive space within one program. The main connection is whether representation choices make desired semantic changes realizable through compact reusable weight updates. Preserve ELF's central role as feasibility evidence for generating powerful language representations; use the patchwise mechanism and transfer results to study the parameter correspondence. Treat the conditional weight generator as the integrated few-shot demonstration at one validated interface, rather than another broad model-building project. Keep attribution as a limited diagnostic; complete unlearning is not a promised outcome. Start with controlled local appearance, spatial composition, and precise language-described relations, adding identity only where intervention evidence supports it.
+Lead with context consistency as the objective and interpretable representations plus parameter mechanisms as the approach. Give both coupled views substantive space within one program. The main connection is whether representation choices make desired semantic changes realizable through compact reusable weight updates. Make the proposed advantage concrete: predict affected factors and internal responses, selectively change intended properties, and preserve those effects across new compositions. LoRA remains a possible implementation and a baseline family; stronger interpretability and control must be demonstrated against both conventional adaptation and structured concept adapters. Preserve ELF's central role as feasibility evidence for generating powerful language representations; use the patchwise mechanism and transfer results to study the parameter correspondence. Treat the conditional weight generator as the integrated few-shot demonstration at one validated interface, rather than another broad model-building project. Keep attribution as a limited diagnostic; complete unlearning is not a promised outcome. Start with controlled local appearance, spatial composition, and precise language-described relations, adding identity only where intervention evidence supports it.
