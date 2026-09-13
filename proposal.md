@@ -8,7 +8,7 @@ The scientific objective is **to understand and predict how contextual informati
 
 Organize the work around two coupled aims:
 
-1. **Representations of contextual requirements:** identify or construct representations that expose the requirements relevant to generation, and determine how those requirements are maintained, revised, or lost through denoising.
+1. **Representations of contextual requirements:** identify or construct representations through a range of upstream learning tasks, determine which contextual information they expose, and explain how that information is maintained, revised, or lost through denoising.
 2. **Mechanisms linking parameter and representation changes:** predict how parameter perturbations change representations during inference, and how changes in representation targets, losses, or training distributions change parameters over training.
 
 The two directions in Aim 2 are distinct dynamical processes. At inference the parameters are fixed while the denoising state evolves. During training an optimizer changes the parameters in response to a specified learning signal. These maps are related through the model's computation, but they are not generally inverses.
@@ -33,15 +33,25 @@ A creator may want the identity from one reference, the spatial arrangement spec
 
 Ask: **Which representations expose contextual requirements, and how do their interactions with visual denoising determine whether those requirements are satisfied?**
 
-### Constructing and testing task-relevant representations
+### Constructing and testing representations learned through different tasks
 
-One initial construction uses intermediate activations of a context-conditioned evaluator trained to distinguish successful generations from controlled violations of counts, attribute bindings, spatial relations, or designated reference properties. Use these features, or rich language-model features, as candidate generative state variables alongside complementary visual latents. Train on paired images and extracted features, using successful examples or explicit success conditioning to define the intended generation distribution. At inference the semantic states are generated from context and noise; they do not require access to an unavailable final image.
+Candidate semantic spaces can come from a range of training objectives, including self-supervised visual learning, language prediction, multimodal alignment, reconstruction, discrimination, and reward or preference learning. The upstream task need not directly judge success on the downstream generation task. For example, [DINOv2](https://arxiv.org/abs/2304.07193) demonstrates that general self-supervised training can produce visual features useful across image-level and pixel-level tasks. This motivates studying such features as generative representations; it does not by itself establish their intervention properties.
 
-Evaluator accuracy motivates the representation but does not establish its generative sufficiency, interpretability, or intervention properties. Compare layers and feature groups, test relevant factors through interventions, and retain visual variables for information the evaluator discards. Keep original contextual requirements fixed while allowing unspecified scene choices to vary. Evaluate outputs against original instructions and reference roles through independent measurements, so agreement between generated semantic and visual states cannot hide a shared violation.
+| Source of representations | Reason to investigate it |
+|---|---|
+| Self-supervised visual learning, such as DINOv2 | General visual features can expose semantic and spatial structure without supervision specific to the intended generation task |
+| Language prediction and multimodal alignment | Contextual features may express relationships and cross-modal associations needed for generation |
+| Discrimination, reward, or preference learning | Targeted supervision can make distinctions about realism or designated contextual requirements accessible |
 
-Discriminator-derived feature losses have precedents in [VAE/GAN](https://arxiv.org/abs/1512.09300). Original [DMD](https://arxiv.org/abs/2311.18828) uses score-difference distribution matching, while [DMD2](https://arxiv.org/abs/2405.14867) explicitly incorporates a GAN loss. These motivate learned evaluators as a starting point; the proposed question concerns which of their representations participate usefully in generation and how to explain their intervention effects.
+The source objective is a design choice within Aim 1. Investigate which information a representation retains, which variations it suppresses, and how that organization affects its role in denoising and its response to interventions. A representation that suppresses a variation useful for one task may discard a property needed for another generation requirement. Such losses of information motivate complementary representations and explicit visual latents. No single representation is assumed to be sufficient for every factor.
 
-Use the same evaluator source to compare scalar reward supervision, feature losses or conditioning, and explicit generative feature states. This isolates the effect of how the representation is used. Meta-learning may help construct candidate representations, but causal analysis of what they encode and how they affect generation remains the aim.
+Begin with a small set of pretrained representation sources and fixed contextual factors. Compare layers, token groups, and projections. Where a factor is missing or difficult to access, test targeted auxiliary training; a context-conditioned evaluator trained on controlled violations is one concrete option. Larger comparisons between pretrained encoders establish practical differences. To attribute differences specifically to a training objective, use controlled experiments holding architecture, data, and compute comparable.
+
+Treat selected features as candidate generative state variables alongside complementary visual latents. Train on images paired with extracted feature targets under the desired generation context. Where task-specific success labels are available, successful examples or explicit success conditioning can define the desired distribution. At inference the semantic states are generated from context and noise. Keep the original contextual requirements fixed while allowing unspecified scene choices to vary, and evaluate final outputs independently against those original requirements.
+
+Strong performance on the source task motivates a candidate representation but does not establish generative sufficiency, interpretability, or selectivity. Use the same representation source to compare feature losses or conditioning with explicit generative feature states; for evaluator-based sources, also compare scalar reward supervision. Measure retained semantic information, causal intervention effects, persistence through denoising, and preservation of other factors.
+
+Discriminator-derived feature losses have precedents in [VAE/GAN](https://arxiv.org/abs/1512.09300). Original [DMD](https://arxiv.org/abs/2311.18828) uses score-difference distribution matching, while [DMD2](https://arxiv.org/abs/2405.14867) explicitly incorporates a GAN loss. These support evaluators as one candidate source alongside more general representation learning. Meta-learning may help construct representations with useful intervention properties; understanding what the resulting features encode and how they participate in generation remains the aim.
 
 ### Why ELF is central feasibility evidence
 
@@ -63,7 +73,7 @@ Treat the denoising state, hidden activations, and model parameters as different
 
 ### Research approach
 
-1. **Establish semantic transfer and grounding.** Generate Qwen-derived language states and visual states for paired scenes with explicit relational descriptions. Compare frozen contextual activations with token embeddings and alternative encoders where feasible. Test whether decoded language constraints and independently measured image content agree. Use interventions on the semantic states, alongside the parameter mechanisms studied in Aim 2, to identify which internal pathways transmit the intended change. Measure unintended changes and persistence as well as semantic decoding quality.
+1. **Establish semantic transfer and grounding.** Select representative visual, language, and task-evaluator features for the same contextual factors. DINOv2-derived visual states and Qwen-derived contextual states provide concrete starting points. Compare how the source representations are used—as conditioning, feature losses, or generative variables—under comparable budgets. Test agreement with independently measured image content and use interventions, alongside the parameter mechanisms studied in Aim 2, to identify the pathways transmitting a change. Measure unintended changes and persistence as well as source-task or semantic-decoding performance.
 2. **Optimize representation evolution for a specified editing objective.** Extend asynchronous scheduling toward edit fidelity and preservation, alongside quality and compute. Compare fixed semantic-leading schedules, learned schedules, and direct activation steering. Permit revision of an early representation when it conflicts with a later constraint; do not presume that early semantic commitment is always best.
 3. **Test cross-modal composition.** Use crossed prompts and references that specify compatible or conflicting identity, pose, location, and appearance. Evaluate whether the intended modality supplies the requested factor, particularly on held-out combinations. Make preservation of one identity while changing layout and appearance the primary demonstration.
 
@@ -71,7 +81,7 @@ The scientific deliverable is a predictive relation between a factor's internal 
 
 ### Connection to Aim 2
 
-Aim 1 supplies explicit representation interventions and measurable contextual factors. Aim 2 studies how parameter changes act through those representations and how learning signals concerning those factors alter the parameters. Feedback from the parameter mechanisms can guide representation construction: features useful for detecting an error may still be difficult to influence selectively. The common object is the contextual factor and its internal implementation, with fast adaptation as one possible use of the resulting account.
+Aim 1 supplies explicit representation interventions and measurable contextual factors. Aim 2 studies how parameter changes act through those representations and how learning signals concerning those factors alter the parameters. Feedback from the parameter mechanisms can guide representation construction: features useful for recognition, prediction, or evaluation may still be difficult to influence selectively. The common object is the contextual factor and its internal implementation, with fast adaptation as one possible use of the resulting account.
 
 ## Aim 2: Mechanisms linking parameter and representation changes
 
@@ -261,4 +271,4 @@ If a local mechanism fails, determine whether changing aggregation, evolving rep
 
 ## Drafting priority
 
-Lead with a mechanistic account of how contextual information is represented, expressed in generation, and acquired or modified in training. Aim 1 identifies and constructs the relevant representations; Aim 2 explains and predicts their interactions with parameters in both directions. Make adaptation, precise control, and combining learned capabilities motivating consequences and focused tests. Use reward models, reference training, meta-learning, and ICL where they help answer these questions. Present prior work as qualification and feasibility evidence. Keep the novel claim in the predictive mechanism, with explicit limits and early falsifiable experiments.
+Lead with a mechanistic account of how contextual information is represented, expressed in generation, and acquired or modified in training. Aim 1 identifies and constructs the relevant representations; Aim 2 explains and predicts their interactions with parameters in both directions. Make adaptation, precise control, and combining learned capabilities motivating consequences and focused tests. Draw candidate representations from general self-supervised learning, language or multimodal learning, and targeted evaluator tasks. Use reference training, meta-learning, and ICL where they help answer the mechanistic questions. Present prior work as qualification and feasibility evidence. Keep the novel claim in the predictive mechanism, with explicit limits and early falsifiable experiments.
