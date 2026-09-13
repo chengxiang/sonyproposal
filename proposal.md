@@ -8,12 +8,12 @@ The scientific objective is **to understand and predict how contextual informati
 
 Organize the work around two coupled aims:
 
-1. **Representations of contextual requirements:** identify or construct representations through a range of upstream learning tasks, determine which contextual information they expose, and explain how that information is maintained, revised, or lost through denoising.
-2. **Locality, composition, and reusable knowledge in diffusion Transformers:** determine what contextual information suffices for denoising, how attention assembles that information, and how tokenwise prediction components learn and reuse visual knowledge. Use this account to predict both parameter-induced representation changes during inference and representation-induced parameter changes during training.
+1. **Representations of contextual requirements:** identify or construct semantic states through a range of upstream tasks, couple them to visual states, and test whether this joint representation preserves contextual requirements while exposing a useful graph of dependencies.
+2. **Graph locality, composition, and reusable knowledge in diffusion Transformers:** discover and test dependencies within and between semantic and visual states, explain how attention and tokenwise predictors implement them, and predict their response to parameter interventions and training.
 
 The two directions in Aim 2 are distinct dynamical processes. At inference the parameters are fixed while the denoising state evolves. During training an optimizer changes the parameters in response to a specified learning signal. These maps are related through the model's computation, but they are not generally inverses.
 
-A central hypothesis is that **suitable representations expose a structure of predictive dependencies that attention can aggregate and tokenwise predictors can reuse across compositions**. Changing the local predictive content and changing the rule for assembling its context should then produce distinguishable parameter and representation responses. The research will determine when this organization permits sparse computation, shared prediction banks, or selective component replacement, and when learned features and routing require coordinated changes. Aim 1 studies the representations in which this organization becomes useful; Aim 2 studies its implementation and acquisition by the generator.
+A central hypothesis is that **joint semantic–visual representations can expose a graph of dependencies through which compact, attention-mediated exchanges support globally consistent generation**. Its nodes may represent semantic token groups and visual patches or latents; edges may connect different modalities or distant regions, including the same object across video frames. A shared semantic state can mediate dependencies that appear broadly distributed in visual space. The proposed work will identify when this structure exists at useful representation and computation budgets, how it changes through denoising, and which parameter components implement or learn it. These mechanisms may permit selective control, shared prediction banks, and adaptable composition. Graph structure is a testable hypothesis, not an assumed property of all semantic encoders or generators.
 
 The scientific deliverable is a reduced, causally tested account that predicts these responses on held-out contexts and compositions. Application performance then tests the usefulness of that account. An improved adaptation benchmark alone does not establish the mechanism; a mechanistic prediction can be informative even when it identifies an intrinsic source of interference.
 
@@ -31,7 +31,7 @@ Use **text and reference images as interacting modalities**, with image generati
 
 A creator may want the identity from one reference, the spatial arrangement specified by text, and the appearance of a separate visual collection. Even when a model's features encode these factors, changing a feature may also alter unrelated content, be overwritten by subsequent denoising, or create an inconsistent latent state.
 
-Ask: **Which representations expose contextual requirements, and how do their interactions with visual denoising determine whether those requirements are satisfied?**
+Ask: **Which representations expose contextual requirements and useful dependencies between semantic and visual states, and how do those dependencies help maintain consistency through denoising?**
 
 ### Constructing and testing representations learned through different tasks
 
@@ -46,6 +46,8 @@ Candidate semantic spaces can come from a range of training objectives, includin
 The source objective is a design choice within Aim 1. Investigate which information a representation retains, which variations it suppresses, and how that organization affects its role in denoising and its response to interventions. A representation that suppresses a variation useful for one task may discard a property needed for another generation requirement. Such losses of information motivate complementary representations and explicit visual latents. No single representation is assumed to be sufficient for every factor.
 
 Begin with a small set of pretrained representation sources and fixed contextual factors. Compare layers, token groups, and projections. Where a factor is missing or difficult to access, test targeted auxiliary training; a context-conditioned evaluator trained on controlled violations is one concrete option. Larger comparisons between pretrained encoders establish practical differences. To attribute differences specifically to a training objective, use controlled experiments holding architecture, data, and compute comparable.
+
+Evaluate whether a representation permits contextual requirements to be realized through a compact graph connecting semantic and visual states. Begin with known object, attribute, and relation variables in controlled scenes, then study feature groups in pretrained encoders. Do not assume that each latent coordinate names a concept or that a supplied scene graph is the model's internal graph. Compare representation choices at fixed node/group capacity and communication budgets, retaining independent tests of semantic information and visual quality.
 
 Treat selected features as candidate generative state variables alongside complementary visual latents. Train on images paired with extracted feature targets under the desired generation context. Where task-specific success labels are available, successful examples or explicit success conditioning can define the desired distribution. At inference the semantic states are generated from context and noise. Keep the original contextual requirements fixed while allowing unspecified scene choices to vary, and evaluate final outputs independently against those original requirements.
 
@@ -81,58 +83,51 @@ The scientific deliverable is a predictive relation between a factor's internal 
 
 ### Connection to Aim 2
 
-Aim 1 supplies explicit representation interventions and measurable contextual factors. A representation can also change which dependencies must be modeled: a relationship distributed across many pixels may be accessible through a small set of object or semantic features. Aim 2 asks how attention constructs sufficient context in that representation and how learned predictors turn it into denoising updates. Feedback from these mechanisms guides representation construction. Apparent locality achieved by discarding required information is a failure, so preservation of the original contextual requirements remains an independent criterion. Fast adaptation is one possible use of this joint account.
+The shared object is a graph of dependencies across joint semantic and visual states. Aim 1 identifies representations whose nodes retain the needed information and make useful relations accessible. Aim 2 determines which edges and message paths are needed, how attention and prediction parameters realize them, and how they change through learning. This is joint representation and mechanism discovery: a different representation may simplify the graph or its messages, while failed graph interventions reveal missing or poorly organized semantic information. Apparent simplicity achieved by discarding a required factor is a failure. Adaptation and control test consequences of the resulting account.
 
-## Aim 2: Locality, composition, and reusable knowledge in diffusion Transformers
+## Aim 2: Graph locality, composition, and reusable knowledge in diffusion Transformers
 
 ### Scientific question and hypothesis
 
-**What information does a diffusion Transformer need to denoise each part of a generation, how do its parameters assemble and use that information, and how is this organization acquired or changed through training?**
+**What graph of dependencies supports joint semantic–visual denoising, how do attention and prediction parameters implement its compositional operations, and how does this organization change during inference interventions and training?**
 
 The proposed account separates three interacting operations: selecting relevant context, transporting its features, and predicting a patch or representation component from the resulting information. The completed manuscript analysis gives QK and VO concrete selection and transport roles. The tokenwise-predictor experiments motivate studying MLPs as learned detector/value expansions and shared prediction banks. Their roles can overlap across layers; neither spatial structure nor visual knowledge is assumed to reside exclusively in one parameter group.
 
 The objective remains to predict both parameter-to-representation effects during inference and learning-signal-to-parameter effects during training. Locality, aggregation, and prediction specify the mechanisms being tested. Jacobians and update approximations are tools for analyzing these mechanisms.
 
-### 2.1 What context suffices for denoising?
+### 2.1 Locality in a joint semantic–visual graph
 
-Start from the manuscript's statistical definition. For a clean patch X_0,m, noisy observation Y_t, and contextual conditions C, define the proposed conditional extension:
+Let Z_0 = (S_0,V_0) contain selected semantic states and image pixels or visual latents. Include supplied text/reference context as observed nodes. A candidate graph G can have semantic–semantic, visual–visual, and semantic–visual edges. Semantic nodes may connect far-apart visual regions; video motivates temporal identity or interaction edges. Node groupings and graph construction are part of the research. Begin with known graphs in controlled distributions and fixed-capacity learned features; allow context- and noise-dependent graphs only with their construction cost and information use accounted for.
 
-```text
-D_full = E[X_0,m | Y_t, C, t]
-D_B    = E[X_0,m | Y_t,B, C, t]
-locality_error(B,t) = E[||D_full - D_B||^2]
-```
-
-This measures the predictive information lost by restricting the observed patches to B. The manuscript establishes a graph-distance locality bound for Gaussian MRFs; it does not establish a universal neighborhood size for natural images. Extend the analysis to conditional models and compare neighborhoods in image coordinates with dependencies among the representations from Aim 1. If conditioning tokens are also restricted, define their retained subset explicitly and measure the additional information loss.
-
-Keep three properties distinct: a small set of relevant tokens, a compact summary of those tokens, and selective semantic effects of a parameter edit. None automatically implies the others. A context set may include distant but related regions. Its required size can depend on the data, representation, and noise level; a small graph radius need not contain few tokens. The manuscript's monotonicity guarantee covers a bounded noise range and concerns an upper bound, not a universal observed law.
-
-For an aggregator S that uses only the retained context and a predictor g, use conditional-expectation projection to separate excess squared denoising risk into:
+At a fixed pair of semantic and visual noise levels, let U contain all noisy states and observed context. For a fixed candidate graph, extend the manuscript's locality criterion:
 
 ```text
-excess risk
-  = information lost by restricting context
-  + information lost by aggregating that context
-  + prediction error given the aggregate
+D_full,i = E[Z_0,i | U]
+D_graph,i = E[Z_0,i | U restricted to B_G(i,r)]
+graph_locality_error(i,r) = E[||D_full,i - D_graph,i||^2]
 ```
 
-This decomposition is a standard analytical starting point. The proposed result is to relate its terms to learned parameter components, changes in the data, and representation choice, so that it predicts the cost of a particular restriction or intervention. In tractable distributions compute the conditional means; in learned models distinguish finite-model estimates and dense-model approximation errors from the unknown population locality error.
+Here B_G(i,r) is the graph-radius-r neighborhood, including any retained context nodes. Evaluate semantic and visual targets separately with fixed scales. A graph obtained by arbitrary thresholding after observing an outcome is not explanatory. Require transfer to held-out compositions, and control node dimensions, edges, graph construction, and message-passing depth. A small radius can contain many nodes, particularly around semantic hubs.
 
-The manuscript also bounds single-layer masking error using discarded attention mass, feature magnitudes, and VO operator norms. Extend this to downstream prediction and the denoising trajectory under explicit stability assumptions, then measure where amplification invalidates the approximation. Attention concentration alone cannot establish original-input locality: later-layer tokens may already contain distant information, and the procedure choosing an adaptive mask may itself use global context.
+Distinguish statistical locality from economical computation on a graph. A denoiser may depend on many observations yet compute that dependence through a few rounds of compact messages. For example, a controlled Gaussian model V_i = a_i S + eta_i, with a shared semantic variable S and independent residuals, has a sparse star-shaped generative graph. After Gaussian corruption, denoising a visual component generally uses evidence from all components. Nevertheless, the posterior mean of S is a shared sufficient statistic: aggregate evidence into it, then use it with each local observation to predict V_i. This elementary example motivates studying what learned semantic states can mediate; it is not a new graphical-inference method.
 
-### 2.2 How does attention enable composition?
+The manuscript's Gaussian-MRF result already allows graph-distance neighborhoods. The new question is which joint representations and graph/message structures remain useful for learned multimodal generation. Noising can change conditional dependencies; clean-data sparsity does not guarantee one-hop score locality. Vary semantic and visual noise levels separately and test whether information must be aggregated into semantic states, transmitted to visual states, or revised in both directions.
 
-Study how QK selects relevant patches or conditioning tokens, how VO carries their information into contextualized features, and how tokenwise predictors use those features. The question is whether this computation recombines learned content correctly under new relationships, rather than merely mixing token values.
+Use the conditional-mean decomposition to distinguish information lost by restricting context, information lost in its aggregate, and prediction error given that aggregate. For attention implementations, begin with the manuscript's single-layer masking bound using discarded attention mass and transported-feature magnitudes. Analyze propagation through layers and denoising under explicit stability conditions, then measure failures. The dependency graph and attention's computation graph need not coincide edge by edge.
 
-Use controlled scenes with independently varied content and composition: hold object/material vocabulary fixed while changing arrangements, attribute bindings, and allowed combinations. Compare the dependence of each output factor on image patches, reference tokens, and text conditions across layers and denoising times. Intervene on selected routes or transported features, restore predicted mediating states, and measure both the immediate denoising response and the completed generation. Evaluate semantic composition through independent factor checks on held-out combinations.
+### 2.2 How does attention compose semantic and visual information?
 
-Test when local prediction needs a small number of distant connections or a shared global summary. This supplies a concrete route toward efficient context use while preserving identity, counts, and scene relationships. It also predicts failures: an incorrect binding may result from selecting the wrong source, transporting it into an incompatible feature representation, or applying a predictor that cannot use the supplied context.
+Study QK selection, VO transport, and tokenwise prediction on the proposed graph. The question is how semantic states become particular visual attributes and relationships, and how visual evidence updates the semantic states. Attention maps provide candidate routes; interventions must establish which routes mediate the effects.
 
-The existing single-layer attention decomposition is the starting point. A forward-looking milestone is a reduced multilayer account that predicts which dependencies persist, appear, or change when QK, VO, or predictor parameters are perturbed. Since VO and MLP edits can change later QK inputs, their indirect routing effects must be included.
+Use a concrete crossed-reference task: supply an object's content from one reference, material or style from another, and spatial relations through text. Predict which semantic nodes, visual regions, and cross-modal paths should carry each requirement. Remove or replace selected messages, restore proposed mediating states, and measure changes both immediately and in the final generation. Test unseen combinations and preservation of independently measured factors. A video extension can ask whether the same identity state mediates appearances separated by time or occlusion; it is contingent on the image results.
+
+Compare a joint graph with geometric visual neighborhoods, separate within-space graphs, dense attention, and matched-budget generic sparse graphs. Count added semantic variables and communication rounds. Estimate graph rules on training/diagnostic tasks before testing new compositions. A convincing result would predict which cross-modal routes must be retained, which can be removed, and how a graph intervention changes designated semantic factors.
+
+The graph may evolve as evidence becomes more reliable. Test whether the mechanism predicts useful semantic/visual denoising schedules, including cases where an early semantic commitment must be revised. The source of fixed contextual requirements remains unchanged. In multilayer models, VO and predictor edits can alter later QK routing; identify when a parameter perturbation changes edge selection, message content, or the node's prediction rule.
 
 ### 2.3 When can learned prediction components be shared or replaced?
 
-Study a concrete interface between aggregated context and a learned prediction bank. Experiment 1 implements shared detector/value representations with layer-specific projections, providing a tractable architectural family alongside ordinary DiTs. Sharing here means reuse across depth with flexible layer-specific access; ordinary Transformer MLPs already share their weights across token positions.
+Study a concrete interface between graph-aggregated context and a learned prediction bank. Test whether reusable graph relation rules can be retained while particular node predictors or transported features change. Experiment 1 implements shared detector/value representations with layer-specific projections, providing a tractable architectural family alongside ordinary DiTs. Sharing here means reuse across depth with flexible layer-specific access; ordinary Transformer MLPs already share their weights across token positions.
 
 Test when layers can use the same bank, how much separate projection or conditioning capacity they require, and which errors appear when their feature coordinates or prediction tasks differ. Compare quality versus unique parameter count at controlled training budgets. Sharing storage does not itself eliminate repeated computation or establish a runtime speedup.
 
@@ -168,7 +163,7 @@ Meta-learning can test whether a compact projection, prediction-bank interface, 
 
 ### Decisive tests and distinguishing result
 
-The first integrated test uses a common base model and the crossed content/composition tasks above. From limited diagnostics, predict which context restrictions, shared banks, or component updates preserve the desired behavior. Then compare those predictions with actual masking, sharing, component replacement, and reference training. Include causal restoration of the proposed intermediate pathway and cases predicted to fail.
+The first integrated test uses a common base model and the crossed content/composition tasks above. From limited diagnostics, predict which joint graph paths, shared banks, or component updates preserve the desired behavior. Validate against graph interventions, state restoration, sharing, component replacement, and reference training, including predicted failures. To support interpretability beyond generic sparse attention or LoRA, the same account must predict both the affected semantic factors and the internal routes mediating them.
 
 Primary measures are prediction error for denoising and semantic responses, preserved versus disrupted dependencies, training-response accuracy, and the effect of finite combined updates. For two updates from a shared base, measure the departure from their separate effects in a fixed readout H:
 
@@ -181,7 +176,7 @@ I(A,B) = H(theta + delta_A + delta_B)
 
 Predict both this interaction and the factors it affects; task evaluation determines whether it helps or harms. Compare against generic sensitivity measures, matched-budget interventions or LoRA, and ordinary sparsity/sharing choices. A useful account must make successful prospective predictions at a reasonable diagnostic cost.
 
-The distinguishing result is **an account of how learned Transformer components implement and acquire context-dependent composition, with conditions predicting when computation can be restricted, prediction knowledge reused, and parameter changes combined selectively**. Locality and composition already have strong precedents; the contribution must connect them to parameter organization, training, and intervention outcomes.
+The distinguishing result is **a causally tested account of useful graph structure in learned joint semantic–visual states, and of how attention and prediction parameters implement, acquire, and modify its compositional operations**. It should predict which dependencies or message paths matter, when prediction knowledge transfers, and when parameter changes require coordination. General graph-based diffusion, feature-space locality, and joint image/condition generation already have precedents; graph terminology or an additional sparse mask does not supply the differentiation.
 
 ### Attribution and externalization as a bounded extension
 
@@ -201,7 +196,7 @@ Use the same text/reference creation setting to demonstrate the consequences of 
 
 | Motivating capability | Mechanism and concrete test |
 |---|---|
-| Efficient long-context generation | Predict small sufficient contexts, including necessary distant links, and test sparse aggregation at increasing context length. Report fidelity, wall-clock cost, and memory; an optional video test must measure temporal consistency |
+| Efficient long-context generation | Predict useful semantic–visual and temporal graph paths, including compact summaries of distant evidence. Test fidelity, total computation, wall-clock cost, and memory as context grows; optional video tests must measure temporal consistency |
 | Parameter efficiency | Predict when a shared detector/value bank with layer-specific access can replace separate layer storage; compare quality versus unique parameters under controlled training budgets |
 | Selective adaptation | Predict when the context selector transfers and which predictor/transport components must change; compare direct restricted training and replacement against broader adaptation |
 | Few-shot adaptability from broader compositional pretraining | At matched data and compute, test whether composition diversity improves reusable aggregation and reduces the examples needed for new content |
@@ -252,7 +247,10 @@ The following are substantive overlaps, not merely background citations. This is
 | [LatentLM](https://arxiv.org/abs/2412.08635), [MammothModa2](https://arxiv.org/abs/2511.18262) | AR hidden states or AR-generated semantic content condition visual diffusion | Make the contextual semantic states themselves generative diffusion variables and test the benefit of jointly revising them |
 | [RepFusion](https://arxiv.org/abs/2606.14700), [Mural](https://arxiv.org/abs/2606.29013) | Their primary abstracts describe evolving MLLM conditioning or coupling a frozen reasoning-capable LLM to image diffusion | Dynamic conditioning and strong LLM semantics in image generation are not sufficient novelty claims. The proposed distinction is generative modeling of the contextual semantic states; verify these recent papers' full methods before final priority claims |
 | [An analytic theory of creativity in convolutional diffusion models](https://arxiv.org/abs/2412.20292), [Locality in Image Diffusion Models Emerges from Data Statistics](https://arxiv.org/abs/2509.09672) | Patch composition and data-driven locality already explain aspects of diffusion generalization | Predict the behavior of trained Transformer components as content and contextual dependencies vary |
-| [Local Mechanisms of Compositional Generalization in Conditional Diffusion](https://arxiv.org/abs/2509.16447) | Relates conditional compositional structure to local scores with sparse pixel/conditioner dependencies, extends the theory to feature space, and tests locality interventions | Explain how DiT parameter groups implement and learn these dependencies, and predict sharing, component-transfer, and training responses. Defining locality or linking it to semantic composition alone is insufficient differentiation |
+| [Local Mechanisms of Compositional Generalization in Conditional Diffusion](https://arxiv.org/abs/2509.16447) | Allows arbitrary pixel/conditioner subsets, connects them to compositional structure, and extends locality to feature space | Discover and test structure across jointly generated semantic/visual states, including mediated dependencies, and predict parameter/training responses. A general graph or feature-space locality alone is insufficient differentiation |
+| [Graphically Structured Diffusion Models](https://arxiv.org/abs/2210.11633) | Uses specified graphical structure and intermediate variables to construct sparse attention for diffusion-based inference | Identify useful structure in learned multimodal representations and test how trained parameter components implement and modify it; graph-structured attention and intermediate variables are precedents |
+| [Factor Graph Diffusion Models](https://arxiv.org/abs/2410.21638) | Models images jointly with semantic, depth, sketch, or normal maps through a factor graph, supporting control and intermediate explanations | Study learned semantic-state/visual-state dependencies and their relation to internal parameter mechanisms. Joint image/semantic graphical modeling itself is already established |
+| [Scene Graph Disentanglement and Composition](https://arxiv.org/abs/2410.00447) | Generates semantic/layout guidance from scene graphs and uses compositional masked attention and editing | Test an internal dependency/message graph inferred or shaped through representations, with prospective intervention and learning-response predictions |
 | [Sliding Tile Attention](https://arxiv.org/abs/2502.04507), [Sparse Forcing](https://arxiv.org/abs/2604.21221) | Practical sparse spatiotemporal attention, including learned retention of useful context for long video rollouts | Predict sufficient dependencies and their change with representation, noise, and parameter interventions; efficient video attention itself is not a new direction |
 | [REPA](https://arxiv.org/abs/2410.06940), [RAE](https://arxiv.org/abs/2510.11690), [RAEv2](https://arxiv.org/abs/2605.18324) | External features improve generation; representation latents can replace conventional VAE latents; encoder and hidden-state properties have been studied | Determine which features are selectively controllable and explain preservation across interventions and unseen compositions |
 | [SFD](https://arxiv.org/abs/2512.04926), [Latent Forcing](https://arxiv.org/abs/2602.11401), [SeFi-Image](https://arxiv.org/abs/2606.22568) | Different representation groups follow different schedules; semantics-first generation extends to text-to-image | Predict and optimize the survival and collateral effects of a specified edit, including cases requiring semantic revision |
@@ -302,8 +300,8 @@ These are proposed research demonstrations, not claims about existing Sony produ
 
 | Period | Main result | Evidence of completion |
 |---|---|---|
-| Months 1–3 | Controlled content/composition tasks and candidate representations; define locality and aggregation/prediction errors | Tractable conditional-mean checks, independent factor measurements, component interventions, and reference training trajectories |
-| Months 4–6 | Predict sufficient context and component reuse in controlled DiTs | Prospective masking and transfer predictions; test proposed paths by intervening and restoring states; direct restricted-training comparisons |
+| Months 1–3 | Controlled content/composition tasks, joint representation candidates, and graph/message definitions | Known-graph Gaussian examples and synthetic scenes; fixed representation budgets, independent factors, and reference training trajectories |
+| Months 4–6 | Predict necessary cross-modal paths and component reuse in controlled DiTs | Compare joint, geometric, and matched-budget graph variants; prospective intervention/restoration and direct restricted-training tests |
 | Months 7–9 | Test learned banks, finite updates, and composition-diverse pretraining in text/reference generation | Quality/parameter tradeoffs, held-out transfer, and training-response predictions; identify feature/transport incompatibilities |
 | Months 10–12 | Validate focused control and reuse applications; release mechanisms and limits | Preserved semantic factors, bounded combined-update tests, and context-length scaling; optional short-video check only after core milestones |
 
@@ -313,11 +311,11 @@ If a local mechanism fails, determine whether changing aggregation, evolving rep
 
 ## Figures that will make the proposal easy to assess
 
-1. **Locality and composition mechanism:** show relevant context, QK selection, VO transport, and a shared predictor bank with layer-specific access. Mark which dependencies and predictor responses change under a content shift versus a composition shift. Distinguish denoising time from optimizer steps and established single-layer results from proposed multilayer mechanisms.
+1. **Joint semantic–visual graph:** show a shared semantic state connecting distant visual regions, local visual edges, and a cross-object relation. Beside it show QK selection, VO messages, and node predictors. Mark predicted intervention paths and changes under content versus composition shifts. Distinguish graph hypotheses, established single-layer results, denoising time, and optimizer steps.
 2. **Predicted and observed responses:** show one successful and one unsuccessful component-reuse case, then the prospective test of the proposed explanation. Existing selected panels must be labeled and accompanied by quantitative evidence.
 3. **Representation feasibility:** show ELF's frozen-Qwen representation extraction and answer-state generation, with reasoning as functional validation; pair this with the visual multi-representation denoising result. Place these after the scientific question they support.
 4. **Consequences of the mechanism:** show a planned parameter intervention, a learning response, and a combined-update test on the same contextual factors. Label proposed outputs explicitly. Adaptation cost, control fidelity, and merging compatibility are separate application measurements.
 
 ## Drafting priority
 
-Lead with a mechanistic account of how contextual information is represented, composed during generation, and acquired or modified in training. Aim 1 identifies representations that retain contextual requirements and can expose simpler predictive dependencies. Aim 2 tests how attention aggregates those dependencies and how learned predictors reuse knowledge, then predicts the effects of changing parameters or training signals. Ground efficiency, adaptability, and control in specific locality and interface conditions. Keep images and the common content/composition tasks central; broader applications motivate the work without becoming separate programs. Use previous results as qualification and feasibility evidence. The novelty must lie in predictive parameter mechanisms and their causal tests, with locality, composition, sparse attention, and generic adaptation explicitly situated against existing work.
+Lead with a graph hypothesis for joint semantic–visual generation: appropriate representations may let attention mediate complex dependencies through compact, reusable exchanges. Aim 1 constructs and evaluates the representations; Aim 2 discovers and tests the graph and its parameter mechanisms during inference and training. Make locality meaningful through retained information, fixed node/message budgets, held-out predictions, and intervention tests. Ground control, efficiency, and adaptability in these findings. Preserve the common image-generation tasks and treat video as a motivating extension. Graphical diffusion and feature-space locality are substantial precedents; the contribution must be the learned multimodal mechanism and the predictions it enables. Prior work supplies feasibility and qualification.
