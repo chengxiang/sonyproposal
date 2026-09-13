@@ -5,196 +5,181 @@
 **Project duration:** 12 months  
 **PI contact:** [Email to insert]; [Phone with country code to insert]
 
-*Proposal draft, 13 September 2026. Figure placeholders and editorial notes are marked for removal or replacement before submission.*
+*Drafting note — remove before submission: This draft uses only existing results and published work as feasibility evidence. The research experiments proposed below are work for the award period. Submission figures will use existing results or explanatory drawings; no new training, sampling, ablation, or evaluation is required.*
 
 ## Abstract
 
-A creator may ask a generative model to preserve an object's identity from one reference, adopt a material or style from another, and obey spatial relationships specified through language. Achieving this context consistency requires the model to bind different sources to different properties and maintain those bindings throughout generation. We propose to understand how the representation of these requirements relates to the internal computations and parameters that realize them. Our central hypothesis is that representations exposing sparse, recurring conditional dependencies can support reusable denoising computations, and that their alignment with attention and prediction components makes parameter effects more selective and predictable. Aim 1 will construct and test semantic–visual representations using masked prediction and controlled variations, including examples produced by existing generators. Aim 2 will identify how attention selects and transports the relevant information, determine which prediction components can be reused, and predict responses to both inference interventions and training. Controlled composition tasks and text-and-reference image generation will test predictions on unseen combinations. Our preliminary results and external studies establish feasibility for generative semantic states, coordinated denoising, and selective parameter interventions. The project will deliver a causally tested account of when these mechanisms align, together with a creator demonstration of selective control and reusable adaptation.
+A creator may want an image to preserve an object from one reference, use a material from another, and follow a spatial arrangement described in text. Generative models can fail to keep these requirements separate: changing the material may also change the object or its position. We propose to understand how a diffusion Transformer represents these requirements and how its weights determine whether they are preserved. Our hypothesis is that a suitable representation can divide generation into simpler, repeated computations: each part needs information from only a few other parts, and the same rules apply across different scenes. We will investigate whether this division matches the roles of attention and other network components. Aim 1 will learn and test representations that expose these relationships. Aim 2 will predict which weights must change to produce a desired effect and which can be reused. Text-and-reference image generation will provide a common test. Existing results from our group and other researchers support the main ingredients. The project will connect them through a mechanistic account that can guide selective editing and adaptation.
 
-## 1. Motivation, hypothesis, and contribution
+## 1. The problem and the proposed contribution
 
-Content creation requires consistency with several sources of context at once. Consider a concept artist who supplies a reference object, a separate material reference, and the instruction to place the object to the left of a second asset. A useful generator must determine which reference supplies each property, preserve the requested object features, and realize the spatial relationship. If the material is changed later, the artist expects the object and arrangement to remain recognizable.
+Consider a concept artist who supplies an object reference, a material reference, and the instruction to place the object to the left of a second asset. The generator must use each source for the intended purpose. If the artist later changes the material, the object and arrangement should remain recognizable.
 
-We use **context consistency** to describe this agreement between generated content and the requirements supplied by its context. The concept also motivates audiovisual synchronization and temporal coherence, but this project will focus on text-and-reference image generation. This setting provides a concrete multimodal binding problem, controlled interventions, and accessible measurements of composition and preservation.
+We call this **context consistency**: agreement between the generated content and the requirements supplied by its context. The idea also applies to consistency between audio and video or between successive video frames. This project will focus on images generated from text and visual references, where we can make controlled changes and measure what the model preserves.
 
-The scientific question is: **Which representations expose the computations needed to satisfy contextual requirements, and how do the parameters of a diffusion Transformer implement and modify those computations?** During inference, parameter changes alter evolving representations and the final image. During training, changes in examples, representation targets, or losses induce parameter updates. Understanding both processes could explain when a desired change can be made selectively, when a learned component can be reused, and when coordinated adaptation is necessary.
+Our scientific question is: **How does the model's representation of a scene relate to the network components and weights that generate it?** We will study both directions of this relationship. During generation, a weight change alters the model's internal states and output. During training, a change in examples or desired outputs changes what the network learns. Understanding these processes could tell us where to edit a model, which learned computations can be reused, and when a change requires several components to adapt together.
 
-**Central hypothesis.** Representations that expose sparse, recurring conditional dependencies can support a decomposition of denoising into reusable computations. Suitable representations and training conditions can align these computations with identifiable attention and prediction components, enabling predictions of their semantic effects under intervention and learning.
+**Our hypothesis is that representations with simple, repeated relationships between their parts can make the network's computations easier to separate and reuse.** For example, predicting an object's appearance may require its material, geometry, and illumination. These inputs vary across scenes, but the rule combining them can remain useful. Attention could select the relevant information, while other network components learn how to turn it into appearance.
 
-Sparsity provides a measurable starting point: recovering a state may require only a few other tokens or feature groups. Recurrence provides the reason to expect reusable parameters: many scenes require the same operations of selecting an object, retrieving its attributes, and translating those attributes into appearance. These relationships form an implicit dependency structure. We will study them through prediction and intervention, using graphs as explanatory abstractions. The hypothesis concerns functional organization, rather than recovery of a unique adjacency matrix.
+We will measure whether each part can be predicted from a small subset of the other parts. This is the sense in which we seek *sparse dependence*. The relationships may connect distant image regions or parts of different representations; they need not follow a grid. Graphs can illustrate these relationships without becoming a required mathematical model of the whole generator.
 
-This organization is not guaranteed by sparse dependencies alone. Shared parameters can entangle otherwise separable computations, and an early intervention can alter later attention. Establishing when the alignment exists, and predicting its failures, is the central research contribution.
+The main uncertainty is whether this separation in the representation also appears in the network's weights. Shared weights may mix several computations, and a change at one layer may affect many later layers. The research will determine when the proposed correspondence holds and use its failures to explain why some edits or adaptations interfere with other properties.
 
-The two aims address this hypothesis together:
+The two aims are:
 
-1. **Learn representations that expose reusable conditional computations.**
-2. **Explain and predict how attention and prediction parameters implement, acquire, and modify those computations.**
+1. **Learn representations that make the information needed for generation easier to identify.**
+2. **Explain which network components use that information, and predict the effects of changing weights or training examples.**
 
-### Differentiation from existing work
+### How this differs from existing work
 
-Several parts of this program have strong precedents. Joint image–text diffusion is established by [UniDiffuser][unidiffuser]; [SFD][sfd] and [SeFi-Image][sefi] establish semantic-first visual generation. [Local Mechanisms of Compositional Generalization][local] connects sparse conditional-score dependencies to a specified compositional structure, including a feature-space formulation. [Vision-Language Binding in In-Context Image Generation][binding] identifies causal reference-to-text-to-image pathways. [Concept Sliders][sliders] learns selective low-rank parameter directions, including from controlled changes in another generator's representation.
+There are strong precedents for the tools we will use. [UniDiffuser][unidiffuser] jointly generates image and text representations. [SFD][sfd] and [SeFi-Image][sefi] generate semantic information ahead of visual detail. [Local Mechanisms of Compositional Generalization][local] connects sparse dependencies to a specified form of composition. [Vision-Language Binding][binding] traces how reference information passes through text and image tokens. [Concept Sliders][sliders] learns weight changes that control selected visual properties.
 
-Our contribution will be a **predictive connection between representation structure and parameter mechanisms**. We will test whether a representation's dependency structure predicts which components must change, which can be retained, and which output properties a finite update will affect. Predictions will be specified before evaluation on held-out compositions and adaptation tasks. This goes beyond locating useful features or finding a successful adapter: the proposed account must explain the internal route of an effect and predict preservation and interference.
+Our contribution will be to **predict which network components should change for a particular request, which should remain useful, and what else the change will affect**. We will make these predictions before testing new combinations of objects, appearances, and relationships. Comparison with ordinary low-rank adaptation (LoRA), which learns small weight updates, will measure the value of this understanding: can it identify more selective updates and explain when they fail?
 
-> **Figure 1 placeholder — Creator problem and scientific hypothesis.** Use one running example with an object reference, a material/style reference, and a spatial instruction. Show semantic and visual state groups beside the attention-selection, feature-transport, and prediction operations proposed to implement their dependencies. Distinguish denoising time from optimizer steps. Include a small inset showing a material change with intended preservation of object and arrangement. All example outputs in this overview should be labeled illustrative unless taken from a documented experiment. The visual should communicate the representation–computation–parameter connection without suggesting a fixed graph or one head per concept.
+> **Figure 1 — Explanatory overview; no new results needed.** Draw an object reference, a material reference, and a spatial instruction using simple shapes, swatches, and labels. Connect them to three operations: select relevant information, extract the needed features, and predict the image. Mark where representation changes and weight changes enter. Label this as the proposed explanation, without model-generated output panels.
 
-## 2. Aim 1: Learn representations that expose reusable conditional computations
+## 2. Aim 1: Learn representations that expose the information needed for generation
 
-### 2.1 Semantic states as generative variables
+### 2.1 Representing meaning and visual detail
 
-Representations learned through different tasks retain different aspects of a scene. General self-supervised features such as [DINOv2][dino] provide a starting point for visual semantics; contextual language-model states can express object attributes and relationships. Multimodal alignment, reconstruction, and task-specific discrimination or reward learning provide additional sources when the initial representations omit a required distinction.
+Different training tasks produce representations with different strengths. A visual encoder such as [DINOv2][dino] can describe objects and spatial structure. A language model can represent attributes and relationships stated in a scene description. Other useful representations may come from image reconstruction, matching text to images, or learning to judge whether an image satisfies a request. We will begin with visual and language features and use targeted training when a required property is missing.
 
-Our initial implementation will extend a semantic/texture DiT with text and reference tokens carrying explicit source identifiers. It will jointly denoise image latents and compact semantic states. Visual semantic targets will come from a frozen visual encoder; language-semantic targets will come from frozen Qwen contextual activations of scene descriptions. Controlled scenes will provide precise descriptions, and generated or curated image–description pairs will support natural-image experiments. At inference, the original prompt and references remain fixed conditioning, while semantic and visual states evolve from noise. Generated descriptions cannot redefine the requirements against which the image is evaluated.
+We will extend our existing diffusion Transformer for semantic features and image detail to accept text and reference images. It will generate both a compressed image representation and feature vectors describing the scene. During training, a visual encoder will provide image features, and Qwen will provide internal states for the corresponding scene description. These two feature-producing models will be kept fixed. During generation, the model will generate these feature vectors alongside the image. The original prompt and references will remain fixed, and evaluation will always use those original requirements.
 
-We will begin with visual semantic states and then add language-semantic groups in the same architecture, using comparisons that hold the representation source fixed. The comparisons will distinguish ordinary conditioning, an autoregressively generated scene description, and explicitly generated semantic states. The central language question is whether precision available in the contextual states becomes effective visual binding, particularly for counts, attribute assignments, and spatial relations.
+This lets us ask whether language-model representations help the image generator maintain precise counts, attribute assignments, and spatial relations. We will compare three uses of the same representation source: supplying it as a fixed input, having the language model write a scene description, and generating the semantic states through diffusion. Visual states will provide the initial implementation; language states will be added and tested within the same model.
 
-The image latent stream retains details that a semantic encoder may suppress. A representation will be useful only if it supports both faithful generation and interventions whose effects can be understood. Source-task performance alone will not determine selection.
+The representations must retain enough information to generate the requested content. They must also let us identify what changes when a selected part is edited. Success on an encoder's original task does not establish either property.
 
-### 2.2 Learning the decomposition through controlled variation
+### 2.2 Learning from missing information and controlled changes
 
-We will organize normalized features into token and coordinate groups using two complementary signals.
+We will divide the representations into groups, which may be whole tokens or selected coordinates within a token. Two kinds of training examples will help organize these groups.
 
-**Grouped masked prediction.** Independently mask or corrupt selected regions, semantic groups, or entire representation streams, then predict their clean targets from the remaining information. [MultiMAE][multimae] supplies a precedent for learning through prediction across masked modalities. We will vary semantic and visual noise levels separately to determine which dependencies change as information becomes reliable.
+First, we will hide or add noise to selected groups and train the model to recover them from the remaining information. This builds on masked learning across different types of input, as in [MultiMAE][multimae]. We will vary which groups are available and how noisy they are.
 
-**Controlled-change supervision.** Construct pairs and small sets of examples that vary one designated factor while preserving others. Existing generators will provide material, style, and arrangement variations across multiple objects and backgrounds. Synthetic editing supervision is feasible at scale, as demonstrated by [InstructPix2Pix][instruct]. We will verify intended and preserved properties independently and use a small human audit, treating requested edits as imperfect labels.
+Second, we will use examples in which a chosen property changes while others are preserved. For instance, changing material across many objects and backgrounds can help identify features associated with material. A separate set of arrangement changes can help distinguish those features from spatial information.
 
-The first construction will learn rotations and groupings of normalized frozen features, preserving their information content. Controlled pairs will encourage stability of preserved factors and concentration of the intended change in a small group. Swapping that group between compatible examples will test whether it produces the intended visual change. If a compact learned encoder is needed, reconstruction and prediction of fixed teacher features will constrain information loss. Original features and random groupings will provide controls.
+Existing generators can supply these examples during the project. [InstructPix2Pix][instruct] demonstrates the practicality of generated editing pairs. We will check that a requested edit actually occurred and that the properties meant to remain fixed were preserved. Changing material may legitimately change reflections and highlights, so preservation will be judged by the intended properties.
 
-This design allows a material-related feature group to recur across scenes while attention routes it to different objects. It also permits legitimate coupled effects, such as a new material changing highlights. The objective is selective semantic variation, not invariance of every pixel. For missing-input experiments, masking will occur before contextual encoding; completion of already encoded states will be reported separately.
+Our initial method will learn rotations and groupings of normalized features from a fixed encoder. Rotations preserve the available information while changing how it is divided among coordinates. Training will encourage a designated edit to change a small group and encourage preserved properties to stay stable. Replacing that group with one from a compatible example will test whether it causes the expected image change. We will compare against the original features and random groupings. If a smaller learned representation is needed, image reconstruction and recovery of the original encoder features will guard against losing required information.
 
-### 2.3 Measuring useful dependence and generation order
+For experiments about genuinely missing inputs, information will be removed before the encoder can copy it elsewhere. Tests that remove already encoded features will answer a separate question about how the generator uses those features.
 
-At a specified representation interface, let Y_i be a target group and U the available states. Its own noisy observation, if present, is held fixed. We will estimate the extra prediction error incurred by restricting access to other states:
+### 2.3 Testing whether the representation helps
 
-```text
-R_i(S, t) = inf_f E[||Y_i - f(U_i, U_S, t)||^2]
-k_i(epsilon, t) = min cost(S)
-                 subject to R_i(S, t) - R_i(all, t) <= epsilon.
-```
+We will measure how accurately a selected group can be recovered as we limit the other groups available to the predictor. Comparisons will use similar model capacity and training budgets. We will also check the generator itself: does removing the apparently unnecessary information preserve its behavior, and does changing a selected group produce the predicted effect?
 
-Here U_i is the target's noisy observation or mask, t denotes the semantic and visual noise levels, and cost counts accessible tokens or fixed-size feature groups other than i. In practice, predictors will have comparable capacity and training budgets. We will report loss-versus-access curves, absolute generation quality, and the benefit retained from additional context. Representation dimensions and feature scales will be controlled.
+A small number of groups is useful only if generation quality and fidelity to the request remain high. We will control group size and representation dimension. If one group summarizes the whole scene, we will count its size and the work required to compute it. Likewise, selecting a few tokens after examining every token will not by itself count as a faster computation.
 
-A shared semantic summary may legitimately support many visual predictions. Its dimension and construction cost will remain explicit. When subset selection itself examines the full context, we will distinguish sparse message use from sparse computation throughout the network.
+Tests will include combinations withheld from training, such as familiar objects with new materials or familiar attributes assigned in new ways. Methods will receive the same examples so that improvements can be attributed to how the representation is learned and used.
 
-Three tests will determine whether the decomposition is useful: restricted-information prediction, actual intervention on the trained generator, and generalization to unseen factor combinations. Random train/test splits will measure ordinary generalization; withholding material–object and object–relation combinations will test compositional reuse. Comparisons using identical generated examples will isolate the contribution of the representation objective.
+Finally, we will ask whether making one group reliable earlier helps recover others. This will guide the order of semantic and visual generation. We will compare the suggested schedules with simultaneous generation and a fixed semantic-first schedule, checking that benefits persist in the final image.
 
-We will also test whether making one semantic group reliable reduces the context required to predict another group or the visual stream. These measurements will propose semantic/visual denoising schedules, evaluated against synchronous and fixed semantic-leading schedules. Final generation must confirm that a locally useful dependency produces persistent consistency across the trajectory.
+**Expected result:** a representation for which we can identify what information each part needs, what changes when it is edited, and whether the same relationships hold across new scenes.
 
-**Aim 1 outcome:** a representation and a validated description of its conditional computations, including the factors they preserve, the information they require, and how these properties change during denoising.
+> **Figure 2 — Explanatory training diagram; no new results needed.** Use schematic feature blocks to show the two learning signals: recover a hidden group, and identify what changes between two drawings that differ in material or arrangement. Show a group being replaced and label the intended change and preserved properties. This is a diagram of the proposed method; include no new samples, measured curves, or accuracy comparisons.
 
-> **Figure 2 placeholder — Learning and testing a decomposition.** Show a small grid of matched scenes crossing two factors, such as material and arrangement, followed by grouped semantic/visual states and masked-prediction tasks. Reserve a panel for the proposed loss-versus-access curves at two noise regimes and a group-swap test. Show original/random/learned groupings as planned comparisons, without fabricated curves or scores. This figure should make clear how controlled variation supplies supervision beyond an ordinary collection of images.
+## 3. Aim 2: Explain and predict the roles of network components and weights
 
-## 3. Aim 2: Predict how parameter mechanisms realize and modify the decomposition
+### 3.1 How attention uses the representation
 
-### 3.1 From conditional dependence to attention and prediction
+We will study three operations:
 
-We will investigate three cooperating operations: selecting relevant context through query–key interactions, transporting selected features through value/output projections, and predicting a representation component through MLPs and surrounding transformations. [Compositional Attention][compositional] demonstrates the utility of separating search from retrieval in attention. Our question is how these operations participate in denoising and whether their reuse follows the representation structure identified in Aim 1.
+- **Select information:** query–key interactions in attention determine which tokens to use.
+- **Extract features:** value and output projections determine which features are passed onward.
+- **Predict the next denoising update:** MLPs and the surrounding network combine the available information to refine the generated state.
 
-With normalization and residual paths omitted from the notation, the attention message has the form
+[Compositional Attention][compositional] shows that separating attention's search and retrieval operations can improve reuse in its evaluated tasks. We will investigate whether a similar separation explains the repeated computations identified in Aim 1.
 
-```text
-message_i = sum_h sum_j a_ij^h(U) M_h u_j,
-M_h = W_O^h W_V^h.
-```
+The relevant computation may involve several heads or layers. We will test which feature groups they read and modify, then deliberately remove or replace those features. For example, if a particular state carries a material reference to the image, replacing it should change material in the predicted way. Restoring it should recover the corresponding behavior. We will measure the immediate prediction and the final image, since later denoising can preserve, amplify, or overwrite the change.
 
-The coefficients a select tokens, while M mixes feature coordinates. We will test which feature groups each head reads and writes, and whether several heads jointly realize a recurring dependency. This connects token and coordinate dependence to specific parameter operations.
+We will begin by examining the trained model. We will then use the findings to test selective weight sharing or changes to the allowed attention connections. This distinguishes evidence about what the model already does from evidence about how its design could be improved.
 
-A functional module may span several heads, feature subspaces, and layers. We will first analyze the dense trained model. Using the discovered organization to impose selective sharing or access restrictions will be a separate causal test of the proposed explanation.
+### 3.2 Which computations can be reused?
 
-Candidate pathways will be identified through grouped prediction and sensitivity measurements, then tested by removing messages, transplanting states between matched examples, and restoring a proposed mediator. Measurements will include immediate denoising effects and final semantic changes under paired initial noise. Restoring the predicted state should recover the corresponding behavior when the mechanism is correctly identified. We will explicitly test whether value/MLP changes alter later routing, since retaining query–key weights does not imply retaining the attention pattern.
+The main experiment will separate changes in appearance from changes in the rules for combining information:
 
-### 3.2 Predicting the boundary of component reuse
-
-The main experiment crosses changes in visual content with changes in compositional relationships:
-
-| Adaptation task | Prediction to be tested |
+| What changes? | Question about the network |
 |---|---|
-| New material or appearance; familiar relationships | Context selection may transfer if its aggregate retains the information required by the new predictor. |
-| Familiar content; changed binding or composition rules | Selection or feature transport may require modification while parts of the prediction mechanism remain reusable. |
-| Both change | Coordinated updates may be needed because independently reusable components have incompatible interfaces. |
-| Neither changes | A reference condition measures drift and unnecessary parameter changes. |
+| Material or appearance changes; relationships stay familiar | Can the existing attention still supply the information needed by an adapted predictor? |
+| Content stays familiar; binding or spatial rules change | Must attention select different information, while other computations remain useful? |
+| Both change | Which components must adapt together? |
+| Neither changes | How much drift is introduced by unnecessary adaptation? |
 
-For example, rendering a new material on familiar objects may preserve the rule selecting the relevant geometry and illumination. Changing which reference supplies an object's material may instead require changing the binding operation.
+For example, learning to render a new material may preserve the way the model finds the relevant geometry and illumination. Changing which reference supplies an object's material may require a different selection rule.
 
-We will develop diagnostics on source data and designated development shifts, then fix the prediction procedure before evaluating new adaptation tasks. Each new task will provide a limited support set; separate query examples will contain unseen compositions. We will predict the parameter groups requiring adaptation and compare direct training restricted to MLPs, value/output plus MLPs, query/key components, and broader updates. Diagnostic cost, trainable parameter count, and adaptation compute will be reported and controlled in the relevant comparisons. Coarse component tests will be followed by interventions on predicted heads and projection subspaces, compared with alternative allocations of the same update budget.
+We will develop a prediction procedure on a set of source and adaptation tasks, then fix it before testing new tasks. A small support set will inform each prediction; separate test examples will contain new combinations. We will compare training different groups of weights, including MLPs, value/output projections, query/key projections, and broader combinations. Comparisons will account for the examples used, number of updated weights, and training cost. More detailed tests will target particular heads or feature subspaces.
 
-The disjoint-data experiment will retain an aggregation mechanism learned on one subset while fitting a predictor on another. It asks whether the aggregate remains sufficient across the change, rather than merely whether the complete network generalizes.
+An important test will learn attention on one data subset and retain it while fitting the remaining prediction components on another. This asks whether the same attention computation can support a new prediction task.
 
-A theoretical starting point follows from conditional-mean prediction. If U is the full denoising input and A(U) is the retained aggregate, the irreducible excess squared error from using that aggregate is
+The theoretical starting point is simple: **a new predictor can reuse the attention output only if that output still contains the information it needs.** For squared prediction error, the cost of reuse can be separated into information lost by the fixed attention computation and error in learning the new prediction rule. We will study this separation first in linear models with Gaussian data, where the best predictions can be calculated, then test the resulting criteria in small diffusion Transformers.
 
-```text
-aggregation_gap = E[||E[Y | U] - E[Y | A(U)]||^2].
-```
+Our existing analysis also bounds the effect of removing attention contributions using their weights and feature magnitudes. We will investigate how these errors accumulate across layers and denoising steps. Changing an MLP can change the states seen by later attention, even when attention's weights stay fixed; the prediction must account for this possibility.
 
-The target's local observation is included in A(U). If this gap is small under the target task, a sufficiently expressive and successfully trained predictor can reuse the aggregate. This does not assert that arbitrary MLP replacement succeeds: finite predictor capacity, optimization, and changing hidden-state interfaces remain separate sources of error.
+One related experiment will test whether several layers can share learned prediction features while using different layer-specific projections. It will measure generation quality against the number of stored parameters. This addresses parameter efficiency within the same study of reusable computation.
 
-We will first analyze controlled linear/Gaussian examples and explicit local predictors, then estimate the gap and its proxies in small DiTs. Our existing single-layer attention analysis provides bounds involving discarded attention mass and transported-feature magnitudes. We will study their propagation under stated stability assumptions and test where changing routing or amplification invalidates a local prediction. The same account will support one bounded sharing experiment: reuse a prediction bank across depth with layer-specific access, measuring quality against unique parameter count.
+### 3.3 How weight changes affect generation and learning
 
-### 3.3 Connecting inference effects to training dynamics
+We will study two related questions. Given a weight change, can we predict which scene properties change during generation? Given new examples or a changed prediction target, can we predict how training changes the weights?
 
-At inference, we will predict how a finite parameter change affects selected semantic states, the relevant information paths, and the final image. During training, we will specify a change in examples, representation targets, or loss, and predict the resulting learning response from a common initialization. These are distinct processes connected by the network's computation.
+A first approximation will use the sensitivity of the network's prediction to each weight. For a fixed input and squared-error loss, the same sensitivity determines how a changed target alters one gradient update. This gives a starting point for identifying the weights associated with a desired change.
 
-For a fixed input and half-squared prediction loss, perturbing the target by delta_y gives the exact one-step SGD diagnostic
+We will then examine larger changes, where a single approximation may fail. We will update the approximation along short training runs and model interactions between attention and prediction components. Longer training runs with the model's standard flow-matching objective will provide reference learning paths and well-trained models for comparison. These references specify the behavior we aim to approximate; they are not assumed to be unique optimal weights.
 
-```text
-change_in_parameter_update = learning_rate * J_theta^T * delta_y,
-```
+A key test will start with a representation edit that produces a desired effect. We will predict which weights can reproduce that effect, fit an update, and reuse it across new scenes. Ordinary low-rank adaptation and Concept Sliders will provide comparisons using the same supervision and comparable budgets. We will assess the intended change, preservation of other properties, and whether the observed internal changes agree with the prediction. Combining two updates from the same base model will provide a limited test of when their effects interfere.
 
-where J_theta is the prediction's parameter Jacobian at the common starting point. This supplies an initial connection between semantic target changes and parameter groups. A change in representation can also change the inputs and loss geometry; those effects will be measured separately.
+**Expected result:** an account that predicts which components can be reused, which need to change, and when several changes must be coordinated. The practical test is selective control; the scientific test is whether the account correctly predicts new cases.
 
-We will extend beyond a single linearization through repeated linearization along short adaptation trajectories and structured approximations of interactions among selection, transport, and prediction components. Extensive flow-training runs on development tasks will provide reference trajectories and well-trained endpoints. They are operational references, not unique ideal weights. Predictions will be evaluated through denoising fields, semantic readouts, and final behavior, as well as the allocation of parameter changes.
+> **Figure 3 — Existing component-reuse results only.** Use the already reported CelebA→AAHQ and CelebA→STL-10 results, with paired DINO recovery values 0.815 and 0.143. Draw which weights were restored to the source model and which remained adapted. Reuse existing illustrative images if suitable; the reported values alone are sufficient. Label the experiment as restoring components after joint adaptation. Do not add new runs, uncertainty estimates, direct restricted-training results, or predicted-versus-observed results from the proposed project.
 
-The strongest test will identify a successful representation intervention and predict the parameter components capable of reproducing its effect across new scenes. One fitted update will be reused across multiple prompts and image-noise realizations. Generic low-rank adaptation and Concept Sliders will be comparisons using the same supervision and comparable budgets. We will measure intended change, preservation, and agreement with the predicted internal mechanism. Within this same experiment, combining two updates from a shared base will provide a limited test of predicted interference.
+## 4. Why the proposed work is feasible
 
-**Aim 2 outcome:** a causally validated procedure that predicts which components can be reused, which must change, and when their interactions prevent selective control. Improved adaptation performance will support the practical value of the account; predictive accuracy on unseen tasks will establish its explanatory value.
+Existing work supports several of the connections we will study. SFD and SeFi-Image show that generated semantic information can guide image generation. The locality study shows that restricting dependencies can improve composition in a controlled setting and finds suggestive structure in SDXL features. Concept Sliders uses controlled changes in StyleGAN to create paired examples and learn corresponding diffusion-model weight updates. Vision-language binding studies show that interventions can trace how references influence an image. These results support the proposed approach while leaving our central question—how representation structure relates to reusable weights—open. [SFD][sfd], [SeFi-Image][sefi], [Local Mechanisms][local], [Concept Sliders][sliders], [Vision-Language Binding][binding].
 
-> **Figure 3 placeholder — Predicted versus observed mechanism.** Use the crossed content/composition experiment as the layout. Show how diagnostic observations lead to a prediction about reusable selection, transported features, and prediction parameters. Reserve side-by-side panels for predicted and observed semantic effects, including a failure requiring coordinated adaptation. A compact response matrix can use semantic factors as rows and parameter groups as columns. This is a planned result figure; do not populate it with invented observations.
+Our existing results provide the following evidence:
 
-## 4. Feasibility and preliminary evidence
-
-Existing work supports several interactions needed for this project. SFD couples semantic and texture generation, while SeFi-Image extends semantic-first modeling to text-to-image generation. The locality study provides both a controlled architectural intervention supporting composition and suggestive feature-space evidence in SDXL; its SDXL heuristic does not by itself establish a causal parameter decomposition. Concept Sliders transfers controlled StyleGAN variations into diffusion-model parameter directions through paired-image supervision. Together with causal reference-binding studies, these results make the proposed measurements and interventions credible. [SFD][sfd], [SeFi-Image][sefi], [Local Mechanisms][local], [Concept Sliders][sliders], [Vision-Language Binding][binding].
-
-Our preliminary work supplies complementary analytical and experimental capability:
-
-| Evidence | Established result | Relevance to the proposed work |
+| Existing work | Result | What it establishes |
 |---|---|---|
-| Generative language-semantic states: ELF-L, unpublished | A separately trained diffusion model generates projected frozen-Qwen contextual answer states, reaching 61.94% GSM8K accuracy. Qwen encodes the question but does not autoregressively generate the solution at inference. | Demonstrates that reasoning-relevant contextual states can themselves be generative variables. Visual grounding is the proposed next step. |
-| Coupled representation trajectories | With a matched 675M backbone, learned asynchronous schedules reach AutoGuidance FID 1.05 after 200 epochs, matching an 800-epoch SFD-XL result. [Learning When to Denoise][schedule] | Establishes a working multi-representation training pipeline and control of semantic/texture timing. |
-| Interpretable denoising computation | [From Softmax to Score][softmax] gives constructive attention–denoising connections. Our working mechanistic manuscript develops context aggregation, conditional-mean sufficiency, and single-layer masking analysis. | Supplies the initial theoretical tools for aggregation reuse and intervention analysis. |
-| Parameter allocation and reuse, unpublished | On CelebA64, a shared prediction-bank variant improves FID from 17.574 to 14.304 at approximately 10.2M parameters. Restoring source QK in jointly adapted models yields paired DINO recovery of 0.815 for CelebA→AAHQ and 0.143 for CelebA→STL-10. | Motivates both selective sharing and the need to predict when component reuse fails. |
+| ELF-L, unpublished | A separate diffusion model generates projected frozen-Qwen answer states and reaches 61.94% GSM8K accuracy. Qwen encodes the question but does not generate the solution autoregressively at inference. | Diffusion can generate language-model states that retain enough information for substantial reasoning performance. |
+| [Learning When to Denoise][schedule] | With a matched 675M-parameter backbone, learned schedules reach AutoGuidance FID 1.05 after 200 epochs, matching an 800-epoch SFD-XL result. | We can train models that generate semantic and visual representations together and control their relative timing. |
+| [From Softmax to Score][softmax] and our working mechanistic manuscript | Constructive connections between attention and denoising; analysis of the information needed for prediction and the effect of removing attention contributions. | We have analytical tools for studying what attention computes and when its output can be reused. |
+| Parameter sharing and transfer, unpublished | A shared prediction-feature variant improves CelebA64 FID from 17.574 to 14.304 at approximately 10.2M parameters. Restoring source query/key weights after joint adaptation gives recovery scores of 0.815 for CelebA→AAHQ and 0.143 for CelebA→STL-10. | Sharing can improve parameter allocation, while reuse succeeds on some changes and fails on others. |
 
-The parameter-allocation result uses one training seed. The transfer results are post-training component-reversion experiments relative to jointly adapted generators; they do not establish that freezing the same components throughout training would succeed. Direct restricted training is therefore part of Aim 2. ELF's reasoning performance establishes functional utility of generated contextual states, without establishing visual grounding or equivalence to the teacher's internal reasoning. Our work on [anisotropic trajectory optimization][trajectory] provides additional experience with representation-dependent diffusion dynamics.
+The sharing result uses one training seed. The transfer metric compares outputs in DINO feature space against the jointly adapted generator. Those experiments restored weights after training; they do not establish that keeping those weights fixed throughout training would work equally well. This distinction motivates the proposed reuse tests.
 
-The remaining uncertainty is the central hypothesis: whether a useful representation decomposition aligns with reusable parameter mechanisms. We will test that interaction early in the project using the common controlled task. A negative result will be analyzed through information loss, shared-parameter interference, and changing routing, allowing the account to predict when a broader update is necessary.
+ELF is useful here because it demonstrates generation of reasoning-relevant language states. Whether those states can guide visual content is part of the proposed work. Our [trajectory optimization research][trajectory] adds experience with controlling diffusion across different representation directions.
 
-> **Figure 4 placeholder — Existing evidence supporting the proposed interaction.** Assemble three compact panels from existing material: (a) ELF's frozen-Qwen target extraction and diffusion generation, with reasoning accuracy as functional validation; (b) the published semantic/texture schedule result using matched-backbone training curves or a compact comparison; (c) one successful and one unsuccessful component-reversion case, paired with the recovery values above. Label unpublished results and distinguish post-training reversion from direct restricted training. Use documented example selection and identify illustrative images as such. If space is tight, omit the separate shared-bank FID panel and retain its table entry.
+Together, the existing evidence supports the ability to generate rich internal representations, coordinate their evolution, and study the effects of changing network components. The project will investigate their connection. If a representation predicts image content well but does not permit selective editing, we will determine whether information is missing, shared weights mix the relevant computations, or later layers undo the change.
 
-## 5. Creator demonstration and relevance to Sony
+> **Figure 4 — Existing representation-generation results only.** Use two panels: (a) a diagram of ELF's frozen-Qwen feature extraction and diffusion generation, with the already reported 61.94% reasoning accuracy; (b) the existing semantic/texture scheduling result, reusing a published plot or displaying the reported 200- versus 800-epoch comparison. Do not request new seeds, runs, decoded examples, or comparisons. Figure 3 already covers the transfer evidence, so it need not be repeated here.
 
-The demonstration will support **reference-guided asset variation**: preserve selected object features from one reference, transfer appearance from another, and obey spatial instructions. It will show both an image-specific representation edit and a reusable parameter update applied across new scenes. The interface will expose the selected source properties and requested changes; the research report will explain the internal pathways mediating them.
+## 5. Proposed creator demonstration and relevance to Sony
 
-Evaluation will separate object/content preservation, appearance transfer, attribute binding, and spatial accuracy. Automated factor measurements on controlled scenes will be complemented by blinded human assessment on natural images. We will report FID and prompt–image alignment alongside the factor-specific tests, so aggregate quality cannot conceal failed binding or preservation. The same examples will be used across methods. Results will include unsuccessful edits and cases in which the predicted mechanism requires coordinated updates.
+During the award period, we will build a demonstration in which a creator preserves selected object features from one reference, adopts appearance from another, and specifies arrangement through text. It will compare editing a representation for one image with learning a weight update that can be reused across scenes.
 
-A bounded extension of this workflow will introduce a known appearance collection through a source-specific module. Enabling, replacing, or disabling that module will test its contribution through the predicted semantic states and final outputs. This provides a concrete route toward controllable source use and knowledge externalization. The claim will concern the newly introduced module's contribution; removing it does not establish erasure of related information already present in the base model.
+Evaluation will measure object preservation, appearance transfer, attribute assignment, and spatial accuracy separately. FID and prompt–image alignment will provide broader quality measures. Blinded human assessment will complement automated measurements on natural images. All methods will use the same examples, and we will report failures as well as successful edits.
 
-These deliverables address Sony's interest in internal mechanisms, cross-modal binding, causal intervention, and controllable source contributions. They could inform asset development and visual iteration for games, animation, and film. Video, audio, and general-purpose model merging remain longer-term applications of the mechanism.
+A limited extension will add an appearance collection through a separate group of parameters. Enabling, replacing, or disabling those parameters will test which generated properties depend on the collection and how its influence passes through the model. This could support more explicit control over newly added sources. Removing those parameters would not imply that related information has been erased from the original model.
 
-> **Figure 5 placeholder — Demonstration storyboard.** Show one reference object and one appearance reference above a row of new text-specified scenes. Reserve matched columns for the base model, a representation intervention, and one reused parameter update. A final pair should show the source-specific module enabled and disabled. Annotate requested and preserved properties separately. Use future demonstrator outputs when available; for submission, use a clearly labeled storyboard or existing documented examples, with no implied new experimental result.
+The demonstration addresses Sony's interests in internal mechanisms, the use of different sources, editing, and controllable contributions. It could inform visual asset development for games, animation, and film. Video and audio provide longer-term motivations.
 
-## 6. Work plan, deliverables, and scope
+> **Figure 5 — Conceptual workflow only.** Draw an annotated storyboard using shapes, reference labels, and appearance swatches. Show the creator changing an appearance reference while asking to preserve object and arrangement, followed by reuse across several scene descriptions. An optional switch can illustrate enabling or disabling the added appearance parameters. Label the figure “Proposed workflow.” Do not reserve submission panels for new generated images or a completed demonstration.
 
-| Period | Research milestone | Evidence of completion |
+## 6. Work plan and deliverables
+
+All experiments in this work plan are proposed for the 12-month award period.
+
+| Period | Main task | Deliverable |
 |---|---|---|
-| Months 1–3 | Establish the common semantic/visual DiT, controlled-change data, and initial grounding tests. | Reproducible baselines; independent factor measurements; first integrated state intervention with documented success or failure. |
-| Months 4–6 | Learn and test representation decompositions and identify candidate parameter mechanisms. | Held-out prediction-versus-access curves; message removal/restoration tests; prospective component-reuse predictions. |
-| Months 7–9 | Evaluate finite parameter changes and learning responses; transfer the tests to natural-image contexts. | Direct restricted-training comparisons, reference adaptation trajectories, and tests of preservation on unseen compositions. |
-| Months 10–12 | Complete the creator demonstration and consolidate the mechanistic account. | Reusable-update and source-module demonstrations; reproducible evaluation package; final analysis of valid regimes and failures. |
+| Months 1–3 | Extend the existing semantic/visual diffusion model and establish controlled scene tests. | Baseline implementation, training examples, and independent measurements of requested and preserved properties. |
+| Months 4–6 | Learn representation groups and test how attention uses them. | Results on recovery from limited information, deliberate feature changes, and predictions about component reuse. |
+| Months 7–9 | Test weight updates, learning behavior, and natural-image examples. | Comparisons of which weights are trained, predictions of their effects, and preservation tests on new combinations. |
+| Months 10–12 | Complete the creator demonstration and consolidate the explanation. | Reusable editing examples, source-control demonstration, reproducible evaluation materials, and final report. |
 
-The core experiments will use small controlled DiTs and the existing multi-representation training pipeline. Natural-image validation will reuse a pretrained generator and limit adaptation to the interfaces under study. This concentrates computation on mechanistic comparisons and avoids foundation-model pretraining as a project dependency. Synthetic examples and feature targets can be prepared once and reused across controlled comparisons.
+The core studies will use small diffusion Transformers and our existing training pipeline. Natural-image validation will reuse a pretrained generator and adapt the components under study. This keeps foundation-model pretraining outside the project requirements and allows the same data and extracted features to support several comparisons.
 
-The project will prioritize the two aims and one creator workflow. Conditional generative models of weight updates, broad meta-learning, and long-video generation are follow-on directions. The principal technical risk is that semantic predictability does not translate into selective causal control. The staged design will reveal this through independent grounding tests, fixed-model interventions, and direct training, rather than inferring control from a probe alone.
+We will prioritize the two aims and one creator workflow. Generating weight updates with another model, broad meta-learning, and long-video generation remain follow-on directions. The main technical risk is that a clear representation does not correspond to separately controllable weights. Tests at the representation, network, and output levels will distinguish these possibilities.
 
-We will provide three quarterly reports and a final research summary, with progress-questionnaire responses as required. Scientific deliverables will include representation and dependency diagnostics, parameter-intervention and adaptation protocols, benchmark configurations, and the creator demonstration. The intended outcome is an explanatory account whose predictions help determine how to change generated content while preserving the contextual requirements that matter to its creator.
+We will provide three quarterly reports, a final research summary, and the required progress-questionnaire responses. The research outputs will explain which information the model uses, which weights implement the relevant computations, and when a change can preserve the other requirements of a creator's request.
 
 ## References
 
@@ -220,20 +205,20 @@ We will provide three quarterly reports and a final research summary, with progr
 
 | Cost category | Research purpose | Amount (USD) |
 |---|---|---|
-| Personnel and associated benefits | Research effort for representation learning, mechanistic analysis, and experiments | [To complete] |
-| Computing | Controlled training, reference adaptation runs, feature extraction, and generator evaluation | [To complete] |
+| Personnel and associated benefits | Research on representations and weights, model training, and evaluation | [To complete] |
+| Computing | Training and adapting models, extracting features, and evaluating generation | [To complete] |
 | Other justified direct costs, if applicable | [Specify or remove] | [To complete] |
 | Indirect costs | Institutional rate and applicable cost base | [To complete] |
 | **Total requested** | **At or below USD 150,000** | **[To complete]** |
 
 ## Editorial notes for finalization — remove before submission
 
-- Replace the five figure placeholders with compact diagrams, documented existing results, or explicitly labeled demonstration storyboards. No new pre-submission experiment is assumed.
-- Target approximately one page for the abstract/problem and overview figure, one for positioning, four for the two aims, two for feasibility and demonstration, and two for the work plan and references. Adjust after figures are laid out; the narrative and references must fit within ten pages, with the budget on a separate eleventh page.
+- Prepare figures using only explanatory drawings and already reported results. Figures 1, 2, and 5 are diagrams; Figures 3 and 4 use existing evidence. Existing images and plots can be reused, and reported numbers can be redrawn. No additional training, sampling, ablations, evaluation, or completed demonstration is needed before submission.
+- Fit the narrative and references within ten pages, with the budget on a separate eleventh page. Shorten prose as figures are laid out; page count has not yet been checked in a submission PDF.
 - Complete PI contact details and the institutional budget. The PI CV is a separate submission item.
-- Specify the final model checkpoints, resolutions, and compute allocation in the methods once the implementation budget is fixed. The initial implementation is the semantic/texture DiT described in Section 2; the natural-image checkpoint should support the required text/reference and internal-intervention access.
-- Review the final bibliography style and complete the authorship/citation form for unpublished preliminary materials. Confirm the exact existing panels and captions used for Figure 4.
-- Typeset the four plain-text mathematical displays in the submission PDF. They use fenced text here to remain readable in GitHub without dollar-sign math delimiters.
+- Check the planned model choices and computing costs against the budget. This is a planning decision and does not require a new experiment.
+- Review the bibliography and complete the authorship/citation form for unpublished preliminary materials. Preserve the qualifications about the existing sharing and transfer results in their figure captions.
+- Remove all drafting notes and figure-production instructions from the submission.
 - [Sony's submission requirements][sony]: ten proposal pages including references, one budget page, minimum 10-point font, PDF under 16 MB; deadline 15 September 2026 at 11:59 p.m. PDT.
 
 [dino]: https://arxiv.org/abs/2304.07193
