@@ -2,156 +2,46 @@
 
 **Working direction memo, 13 September 2026.** This proposes a research structure for discussion; it is not a finished submission or an agreed final scope.
 
-## Recommendation
+## Scientific objective and organization
 
-Use **context consistency** as the motivating objective: generated content should satisfy the designated requirements of text, references, or demonstrations while preserving freedom in unspecified properties. For example, a creator may request style from one image, content from another, and spatial relationships from text. The scientific contribution lies in constructing suitable representations and understanding how parameters act through them.
+The scientific objective is **to understand and predict how contextual information is represented, expressed during generation, and acquired or modified through training in diffusion Transformers**. Context consistency supplies the motivating content-creation problem: a creator may request style from one reference, content from another, and spatial relationships from text. Rapid adaptation, precise generation control, and combining separately learned capabilities are applications and tests of the proposed understanding.
 
-Organize the proposal as **one research program with two coupled views**, connected by an explicit correspondence between representation interventions and weight updates:
+Organize the work around two coupled aims:
 
-1. **Reusable computation and adaptable visual knowledge:** predict which model components can transfer across domains, and use those predictions to adapt, share, or externalize selected visual knowledge.
-2. **Generative language semantics for visual creation:** learn to generate and revise reasoning-relevant contextual representations from powerful AR language models, couple them with visual denoising states, and test precise semantic control.
+1. **Representations of contextual requirements:** identify or construct representations that expose the requirements relevant to generation, and determine how those requirements are maintained, revised, or lost through denoising.
+2. **Mechanisms linking parameter and representation changes:** predict how parameter perturbations change representations during inference, and how changes in representation targets, losses, or training distributions change parameters over training.
 
-The common scientific question is: **Which representations allow contextual requirements to remain consistent through generation, and when can interventions on those representations be implemented by compact, reusable weight updates?**
+The two directions in Aim 2 are distinct dynamical processes. At inference the parameters are fixed while the denoising state evolves. During training an optimizer changes the parameters in response to a specified learning signal. These maps are related through the model's computation, but they are not generally inverses.
 
-The proposed advance is a mechanism that makes testable predictions about adaptation and editing on unseen combinations. Parameter efficiency, personalization, and source attribution become consequences and tests of that mechanism. Thrust 1 studies how weight changes alter generated content. Thrust 2 chooses and generates representations that make semantic goals easier to specify and control, including contextual language-model states supported by ELF. These questions feed into each other: a useful semantic decomposition can reveal candidate weight directions; measured parameter couplings can guide representation and architecture design. Conditional generation of weight deltas is an integrated application of this correspondence, rather than a third independent thrust.
+A central hypothesis is that **the functional organization of a generator induces structure in both its response to parameter interventions and its response to learning signals**. In controlled models, distinguish changes to local predictive information from changes to the contextual dependencies used to combine it. Test whether this distinction predicts affected representations, parameter components, and interactions between separately learned changes. Determine where coordinated changes are necessary and where the proposed functional account fails.
 
-The central hypothesis should remain conditional: **when a domain shift changes local predictive features while preserving the context information needed to combine them, substantial adaptation may be localized to prediction and transport components; when that context structure changes, coordinated adaptation becomes necessary.** The research must determine whether this distinction predicts behavior in trained models, where it breaks, and whether it can guide useful interventions.
+The scientific deliverable is a reduced, causally tested account that predicts these responses on held-out contexts and compositions. Application performance then tests the usefulness of that account. An improved adaptation benchmark alone does not establish the mechanism; a mechanistic prediction can be informative even when it identifies an intrinsic source of interference.
 
-```mermaid
-flowchart TD
-    S["Source-specific knowledge"] --> P["Local prediction interface"]
-    C["Text and visual context"] --> A["Context aggregation"]
-    A --> P
-    Z["Evolving denoising state"] --> A
-    P --> Z
-    Z --> O["Generated composition"]
-```
-
-This is the proposed functional model, not an established exclusive assignment to particular layers. Thrust 1 tests changes to source knowledge and aggregation; Thrust 2 tests direct control at the prediction/state interface.
-
-## Interpretable adaptation and selective control
-
-The proposed advantage over generic end-to-end adaptation is an explicit, testable connection between **the contextual requirement, the representation carrying it, and the parameter changes that implement its effect**. We will construct representations in which relevant factors can be inspected and intervened on, then study how weight changes affect contextual aggregation, stored visual knowledge, and local prediction through those representations. This account should help predict what an update changes, what it preserves, and when coordinated changes are necessary. The functional roles are hypotheses to test; they are not exclusive assignments of composition to attention or memory to MLPs.
-
-[LoRA](https://arxiv.org/abs/2106.09685) specifies a low-rank parameterization of weight updates. Low rank alone does not establish which semantic factors an update affects or the internal process responsible. Our method may itself use LoRA. The proposed distinction is how representations and update locations are chosen, and whether their effects can be predicted through an experimentally supported mechanism.
-
-Stronger interpretability and selective control are research hypotheses, supported by the preliminary mechanistic results but still requiring comparative evidence. Evaluate them through:
-
-1. **Causal predictability.** Predict affected factors and intermediate responses before testing held-out contexts and compositions. Intervene on the proposed representation or pathway to test whether it mediates the parameter update's effect; probe accuracy alone is insufficient.
-2. **Selective control.** Measure joint context satisfaction and preservation of other properties at comparable target-edit fidelity and generation quality. Compare with conventional LoRA under matched parameter, training, and selection budgets, and ablate representation construction and mechanism-informed parameter selection separately.
-3. **Reusable effects.** Hold a context-derived update fixed across new scenes and test whether it continues to reproduce the intended representation intervention. Report failures and collateral effects as well as successful cases.
-
-The comparison must also include structured adaptation methods: [Concept Sliders](https://arxiv.org/abs/2311.12092) already learns interpretable low-rank concept directions while limiting interference with other attributes. Our additional target is a predictive account of how representation choice and the denoising mechanism determine selective parameter effects, including where that correspondence fails. Interpretable adapter controls alone are insufficient differentiation.
-
-Use reusable context, such as a character or style collection, for the adapter demonstration. Keep changing scene instructions available as conditioning. Text/reference composition and repeated use across scenes provide a focused test of context consistency; audio synchronization and general physical consistency motivate broader relevance but require additional technical foundations.
-
-## Unified connection: From semantic interventions to generated weight updates
-
-### Why representation and parameter design belong together
-
-Suppose a creator supplies examples of an appearance or material and asks to reuse that property on different objects. A representation separating the requested appearance from object geometry makes the desired intervention explicit. The parameter-side question is whether a small update can reproduce that intervention across new prompts and generations while preserving geometry and other capabilities.
-
-Semantic coordinate separation does not automatically imply that a small set of weights controls those coordinates. Dense shared computation may still couple the effects. The research should identify or learn interfaces where semantic separation corresponds to compact, stable parameter directions, and predict when a larger coordinated change is necessary. A mere invertible coordinate relabeling cannot create missing control directions; representation learning and architectural restrictions must be evaluated by the behavioral changes they enable.
-
-A local diagnostic makes this question precise. Let F summarize the selected semantic properties of the final generation, including properties that should be preserved. Let s specify an intervention at an explicit denoising state or hidden representation. For each generation prompt q and image noise seed e, compare:
-
-```text
-J_weight(q,e) delta_theta ~= J_state(q,e) delta_s
-```
-
-Both Jacobians propagate the intervention through the full remaining denoising computation to F. Restrict delta_theta to candidate modules or a compact shared update basis, and fit the correspondence across multiple prompts and trajectories. Feasibility depends on whether the intended changes fall within the attainable parameter-response directions while satisfying preservation constraints. Conditioning of that map determines how large and fragile the required updates may be. The linear approximation is a diagnostic and a starting point for theory; finite changes need direct intervention tests.
-
-A persistent update must approximate the context-dependent intervention rule across scenes, noise levels, and prompts. Reproducing one activation vector or one image is insufficient. Theoretical work can start with linear local predictors or the patch-bank model, where changing predictor prototypes is directly interpretable, then examine approximate correspondence in trained Transformers.
-
-### Conditional generation of weight deltas
-
-A concrete few-shot adaptation pipeline is:
-
-```text
-a ~ q_phi(a | context C, requested change g)
-delta_theta = B(a)
-adapted model = theta_base + delta_theta
-x ~ p_(adapted model)(x | generation prompt q)
-```
-
-C contains the contextual examples or instructions. The instruction g specifies what to capture and preserve; q requests each new scene. B maps a compact adapter code into permitted parameter changes. Sample the adapter once and reuse it across several images, allowing image noise to vary independently. This distinguishes uncertainty about the adapted model from ordinary variation among its generated images. The learned conditional distribution is not automatically a calibrated Bayesian posterior.
-
-Start with fixed/shared matrix bases at a small set of mechanistically selected modules and generate their coefficients. This keeps the output manageable and avoids treating arbitrary LoRA factor rotations as meaningful diversity. Adapter generation can be deterministic initially, with a conditional diffusion/flow model evaluated where examples leave multiple plausible, functionally different adaptations.
-
-The argument for stochastic generation is few-shot ambiguity. A few reference images may permit several context-consistent styles or reusable feature interpretations. Different adapter samples should correspond to these behavioral alternatives, each remaining consistent across new scenes. Multiple parameterizations of the same behavior do not justify a distribution. Where the task is essentially determined, a deterministic hypernetwork may be sufficient and is a required comparison.
-
-### Training and decisive evaluation
-
-Construct episodic tasks with independently varied appearance, identity, and arrangement. Each episode has a small context set and disjoint query scenes. First obtain representation interventions with measured selectivity, then fit compact updates that reproduce their effects across a distribution of prompts and states. These provide standardized adapter targets for a context-to-update model; fine-tune or assess it using generation/denoising objectives, semantic effect matching, and preservation on query examples. Weight reconstruction alone is insufficient.
-
-The central test is whether the representation-to-parameter correspondence predicts and improves adaptation on held-out compositions. Compare ordinary conditioning, activation intervention, conventional few-shot LoRA, deterministic context-to-adapter prediction, and stochastic adapter generation under comparable adaptation and selection budgets. Keep the same base model and candidate update capacity where possible. Test predicted module allocation, intervention-transfer error, desired-factor fidelity, preservation, repeated-use consistency, and adaptation cost. Do not infer meaningful uncertainty merely from spread in adapter coefficients.
-
-### Prior work that fixes the novelty boundary
-
-This pipeline has direct precedents. [Doc-to-LoRA](https://arxiv.org/abs/2602.15902) maps context into LoRA updates so the target LLM need not repeatedly consume it; [Text-to-LoRA](https://arxiv.org/abs/2506.06105) predicts adapters from task descriptions. [SHINE](https://arxiv.org/abs/2602.06358) also maps context-derived activations into adapter parameters. [Doc-to-Atom](https://arxiv.org/abs/2606.12400) already connects semantic decomposition with modular updates and preservation in language models.
-
-For image generators, [DiffLoRA](https://arxiv.org/abs/2408.06740) and [LoRA Diffusion](https://arxiv.org/abs/2412.02352) use conditional diffusion to generate personalization weights from reference identity information. [Conditional LoRA Parameter Generation](https://arxiv.org/abs/2408.01415) covers description/example conditioning and visual style adaptation. [HyperLoRA](https://arxiv.org/abs/2503.16944) already separates identity-related and other adapter components and explores attribute edits through differences between generated adapters. [Interpreting the Weight Space of Customized Diffusion Models](https://arxiv.org/abs/2406.09413) studies semantic directions, generation, and editing in customized-model weight space.
-
-Accordingly, neither conditional weight generation, stochastic LoRA synthesis, nor semantic adapter separation alone is the proposed contribution. The added scientific target is a predictive correspondence between semantic interventions and compact parameter changes within a denoising mechanism, with representation/architecture choices evaluated by whether that correspondence improves selective transfer. Existing methods provide concrete feasibility evidence and demanding baselines.
+The proposal should be organized around these future questions. Prior results support feasibility and investigator qualification; they do not determine the aims or require every previous project to become a deliverable.
 
 ## Fit and scope
 
 Sony's theme emphasizes internal causal mechanisms, multimodal binding, controllability, and knowledge externalization for controllable source use. It requests explicit differentiation and useful applications. The award supports a one-year project up to $150,000; the submission limit is ten pages including references, plus one budget page. The current deadline is 15 September 2026, 11:59 p.m. PDT. [Sony call and guidelines](https://www.sony.com/en/SonyInfo/research-award-program/#FocusedResearchAward).
 
-Use **text and reference images as interacting modalities**, with image generation as the main experimental setting. A short-video extension can test persistence of one selected factor if image milestones succeed. ELF's language-reasoning result is central feasibility evidence that diffusion can generate representations derived from a powerful AR model's contextual hidden states while supporting precise semantic computation. The mathematical task is a functional test of this capability; developing a new math benchmark system is outside the proposed application scope.
+Use **text and reference images as interacting modalities**, with image generation as the main experimental setting. Both aims study the same contextual factors, generation models, and controlled tasks. A short-video extension can test persistence of one selected factor if the main mechanism milestones succeed.
 
-## Why this structure is preferable
-
-| Candidate direction | Strength | Main concern | Recommended role |
-|---|---|---|---|
-| Transformer mechanisms and parameter allocation | Closest connection to the patchwise model and architecture/transfer experiments | A universal attention-versus-MLP division is unsupported | Mechanistic center of Thrust 1 |
-| AR hidden activations as denoising variables | ELF demonstrates generation in frozen Qwen's contextual representation space with substantial reasoning accuracy; image work supplies complementary visual-denoising evidence | Contextual latent diffusion and latent reasoning have precedents; the precise ELF configuration and the proposed joint visual capability must be distinguished | Central foundation of Thrust 2: generate and revise language semantics together with visual content |
-| Compositional attribution | Direct relevance to Sony's source-use interests | Patch, group, and style attribution already exist; current attachments contain no validated attribution result | Bounded causal evaluation within Thrust 1 |
-| Parameter efficiency alone | Concrete preliminary result | Risks becoming an architecture optimization proposal with weak source/control relevance | A measurable outcome of the mechanism |
-
-## Thrust 1: Reusable computation and adaptable visual knowledge
-
-### Motivation and question
-
-A generator adapted to a new character, visual collection, or artistic domain should reuse as much existing computation as possible. Yet we do not know how to predict which parameters must change, or when separately adapted components will remain compatible.
-
-Ask: **Can the change in local visual content and its contextual dependencies predict which parts of a diffusion Transformer need adaptation?** This is more specific than asking whether attention captures geometry and MLPs capture appearance.
-
-The patchwise denoising view suggests three interacting operations: selecting useful context, transporting its features, and producing local predictions using learned representations. QK, VO, and MLP interventions give concrete ways to test this account. Their roles can overlap and depend on layer, noise level, and architecture; a change to VO or MLP can alter routing in later layers.
-
-### Research approach
-
-1. **Make predictions in controlled models.** Construct image families that vary the local feature dictionary and its composition separately: preserve the dictionary while changing spatial relationships; preserve relationships while changing appearance; change both. Begin with tractable patch distributions, then synthetic scenes with known factors, and finally natural-image transfers. Derive sufficient conditions for a context summary to remain useful and quantify denoising error when the conditional prediction rule changes.
-2. **Test the predictions through interventions.** Compare parameter transplantation, matched activation interventions, and direct restricted fine-tuning. Predict which components will transfer on held-out source-target pairs before measuring their adaptation outcomes. Compare with equal-budget LoRA, alternative component allocations, and jointly adapted models. Include multiple training seeds and separate validation for allocation selection.
-3. **Use the mechanism to design transferable modules.** Test shared prototype banks with layer-specific projections and small source-specific residual modules. Vary compositional diversity while controlling training size, visual vocabulary, and compute to test whether more varied compositions actually improve transfer. Parameter count, adaptation time, retained source behavior, and target quality are distinct measurements.
-
-A theoretical milestone should concern the relationship between context sufficiency, changed local prediction rules, and transfer error in an explicit model class. A generic claim that Transformers are patchwise denoisers would not supply enough new theory. Extending a controlled-model result to trained networks requires measurement of approximation error and predictive validation.
-
-The initial benchmark should cross unchanged/changed local content with unchanged/changed compositional relationships. Preserve shared initialization or align the interfaces when transplanting weights: a failed swap between independently trained coordinate systems would not isolate a failure of the proposed content/composition distinction.
-
-### Attribution and externalization as a bounded extension
-
-Where a source-specific module or external bank has a verified origin, test a concrete causal claim: changing or removing that source changes a specified factor through a predicted internal path. Trace source/module interventions into intermediate features and final output changes. Compare the result with similarity attribution and counterfactual retraining on small controlled datasets.
-
-Distinguish three questions:
-
-- **Module contribution:** what changes if this known module is removed during generation?
-- **Training-source contribution:** what changes if the source is excluded from training? Use retraining controls at tractable scale to validate approximations.
-- **Feature resemblance:** which source has a similar patch or attribute? This alone does not establish either causal contribution above.
-
-Start with newly introduced source-specific knowledge added through a controlled interface. Removing that interface can support controllable use of that contribution; it does not guarantee erasure of related knowledge already distributed through a pretrained base. Allow overlapping group contributions and unresolved cases rather than forcing one training source per generated feature.
-
-### Distinguishing result
-
-The important outcome is **an accurate prediction of which changes can be localized and composed**, followed by a selective adaptation method that improves the quality/preservation/compute tradeoff. Swapping weights successfully after observing the results would be weaker evidence.
-
-## Thrust 2: Generative language semantics for visual creation
+## Aim 1: Representations of contextual requirements
 
 ### Motivation and question
 
 A creator may want the identity from one reference, the spatial arrangement specified by text, and the appearance of a separate visual collection. Even when a model's features encode these factors, changing a feature may also alter unrelated content, be overwritten by subsequent denoising, or create an inconsistent latent state.
 
-Ask: **Can a multimodal diffusion model generate and revise the precise semantics represented inside a powerful AR language model together with visual content, so that objects, relations, and constraints remain consistent?**
+Ask: **Which representations expose contextual requirements, and how do their interactions with visual denoising determine whether those requirements are satisfied?**
+
+### Constructing and testing task-relevant representations
+
+One initial construction uses intermediate activations of a context-conditioned evaluator trained to distinguish successful generations from controlled violations of counts, attribute bindings, spatial relations, or designated reference properties. Use these features, or rich language-model features, as candidate generative state variables alongside complementary visual latents. Train on paired images and extracted features, using successful examples or explicit success conditioning to define the intended generation distribution. At inference the semantic states are generated from context and noise; they do not require access to an unavailable final image.
+
+Evaluator accuracy motivates the representation but does not establish its generative sufficiency, interpretability, or intervention properties. Compare layers and feature groups, test relevant factors through interventions, and retain visual variables for information the evaluator discards. Keep original contextual requirements fixed while allowing unspecified scene choices to vary. Evaluate outputs against original instructions and reference roles through independent measurements, so agreement between generated semantic and visual states cannot hide a shared violation.
+
+Discriminator-derived feature losses have precedents in [VAE/GAN](https://arxiv.org/abs/1512.09300). Original [DMD](https://arxiv.org/abs/2311.18828) uses score-difference distribution matching, while [DMD2](https://arxiv.org/abs/2405.14867) explicitly incorporates a GAN loss. These motivate learned evaluators as a starting point; the proposed question concerns which of their representations participate usefully in generation and how to explain their intervention effects.
+
+Use the same evaluator source to compare scalar reward supervision, feature losses or conditioning, and explicit generative feature states. This isolates the effect of how the representation is used. Meta-learning may help construct candidate representations, but causal analysis of what they encode and how they affect generation remains the aim.
 
 ### Why ELF is central feasibility evidence
 
@@ -173,15 +63,124 @@ Treat the denoising state, hidden activations, and model parameters as different
 
 ### Research approach
 
-1. **Establish semantic transfer and grounding.** Generate Qwen-derived language states and visual states for paired scenes with explicit relational descriptions. Compare frozen contextual activations with token embeddings and alternative encoders where feasible. Test whether decoded language constraints and independently measured image content agree. Use interventions on the semantic states, alongside the interfaces identified in Thrust 1, to identify which internal pathways transmit the intended change. Measure unintended changes and persistence as well as semantic decoding quality.
+1. **Establish semantic transfer and grounding.** Generate Qwen-derived language states and visual states for paired scenes with explicit relational descriptions. Compare frozen contextual activations with token embeddings and alternative encoders where feasible. Test whether decoded language constraints and independently measured image content agree. Use interventions on the semantic states, alongside the parameter mechanisms studied in Aim 2, to identify which internal pathways transmit the intended change. Measure unintended changes and persistence as well as semantic decoding quality.
 2. **Optimize representation evolution for a specified editing objective.** Extend asynchronous scheduling toward edit fidelity and preservation, alongside quality and compute. Compare fixed semantic-leading schedules, learned schedules, and direct activation steering. Permit revision of an early representation when it conflicts with a later constraint; do not presume that early semantic commitment is always best.
 3. **Test cross-modal composition.** Use crossed prompts and references that specify compatible or conflicting identity, pose, location, and appearance. Evaluate whether the intended modality supplies the requested factor, particularly on held-out combinations. Make preservation of one identity while changing layout and appearance the primary demonstration.
 
 The scientific deliverable is a predictive relation between a factor's internal representation, its route through the denoiser, and its persistence under intervention. An interpretable probe or an improved aggregate FID alone is insufficient.
 
-### A useful bridge between the thrusts
+### Connection to Aim 2
 
-**When can a repeated representation intervention be converted into a small reusable parameter update?** This is now the organizing connection of the program, developed in the unified section above. The few-shot demonstration conditions a model of adapter coefficients on references and the requested semantic change. It must preserve the intervention's effect across new prompts without asserting universal equivalence between latent, activation, and weight edits. ELF remains central evidence for the richness of the semantic states that this program can attempt to generate and manipulate.
+Aim 1 supplies explicit representation interventions and measurable contextual factors. Aim 2 studies how parameter changes act through those representations and how learning signals concerning those factors alter the parameters. Feedback from the parameter mechanisms can guide representation construction: features useful for detecting an error may still be difficult to influence selectively. The common object is the contextual factor and its internal implementation, with fast adaptation as one possible use of the resulting account.
+
+## Aim 2: Mechanisms linking parameter and representation changes
+
+### Scientific question
+
+**How do changes to diffusion Transformer parameters alter semantic representations and generated content, and how do changes to representation targets or learning signals become parameter changes during training?**
+
+The patchwise denoising view motivates three interacting operations: selecting useful context, transporting its features, and producing local predictions using learned information. QK, VO, and MLP interventions provide concrete tests. The roles can overlap and vary with layer, noise level, and architecture; a parameter change can also alter the routing performed by later layers. The goal is to characterize this organization and its limits in both generation and learning.
+
+### Parameter changes and inference dynamics
+
+For a fixed prompt and initial noise, predict how a perturbation in a specified parameter component changes intermediate representations throughout denoising and the resulting output factors. Distinguish a change measured at fixed noisy inputs from its full effect after the generation trajectory changes. Determine which paths mediate the effect, which unrelated factors are affected, and when it persists across new contexts.
+
+First-order Jacobians provide a starting diagnostic, not the intended endpoint. Begin with linear local predictors or an explicit patch-bank model, then study changing Jacobians and interactions between aggregation, feature transport, and prediction in trained networks. A useful reduced account should predict responses more economically than exhaustive intervention search.
+
+Test finite and combined interventions. In a fixed semantic readout H of the full generation, with prompt and seed held fixed, define the interaction residual:
+
+```text
+I(A,B) = H(theta + delta_A + delta_B)
+       - H(theta + delta_A)
+       - H(theta + delta_B)
+       + H(theta)
+```
+
+A nonzero residual measures departure from additive effects in this chosen readout. Whether that departure is beneficial or harmful requires task-specific evaluation. The scientific question is whether the proposed mechanism predicts the residual and its affected factors. Start with updates learned from a common base and compatible representation coordinates; merging arbitrary independently trained models is outside the initial experiment.
+
+### Representation changes and training dynamics
+
+Specify the changed learning signal: a representation target, a representation-dependent loss, or the data distribution represented by the training samples. An inference-time activation edit does not itself define a parameter update. Fix the initialization, training protocol, and comparison readouts, then predict which components change, in what directions, and how their roles evolve through optimization.
+
+As a simple diagnostic, with a fixed training input u and loss one-half times the squared error between a prediction f_theta(u) and target y, changing only the target by delta_y changes one SGD update by:
+
+```text
+change in parameter update = learning_rate * J_prediction(theta,u)^T * delta_y
+```
+
+Here J_prediction differentiates the training prediction, not the full sampled generation. The inference map requires propagation through denoising. A new representation space may also change inputs, targets, and loss geometry, so those interventions must be distinguished. The formula identifies a local connection; the research concerns its semantic structure across parameter groups and its evolution over many training steps.
+
+Use extensive flow training on rich data for controlled tasks to obtain reference training trajectories and well-trained endpoints. These are operational reference adaptations, not unique globally optimal weight vectors. Include the intended contextual and preservation requirements in the reference task. Measure both parameter changes and their effects on representation and denoising fields. Predict held-out trajectories or endpoint effects from limited diagnostic data; compare against ordinary local approximations and unrestricted learned predictors.
+
+This makes the central problem broader than fast fine-tuning: explain how generative knowledge is acquired and modified, and how that organization relates to the way the model expresses the knowledge at inference.
+
+### Controlled program and representation design
+
+Cross unchanged/changed local content with unchanged/changed compositional relationships. Use tractable patch distributions, synthetic scenes with known factors, and selected natural-image transfers. In each setting test both directions: perturb parameters to measure semantic effects; change training targets or distributions to measure parameter responses. Predict responses on held-out tasks before inspecting the reference outcomes.
+
+A theoretical milestone should relate context sufficiency, local prediction changes, and parameter-response or interaction error within an explicit model class. Quantify the approximation when transferring the account to trained Transformers. Existing component reversion experiments motivate this question but do not establish direct restricted-training success or a universal module assignment.
+
+Meta-learning is a tool for testing and improving the discovered organization. Meta-train a compact representation projection, update basis, or initialization across related tasks, then ask whether it changes the predicted localization, coupling, and preservation of learning effects. Use disjoint support and query examples and fixed adaptation budgets. Compare any speed benefit with changes in the mechanistic quantities; fast learning alone does not establish interpretability. [MAML](https://arxiv.org/abs/1703.03400), [CAVIA](https://arxiv.org/abs/1810.03642), [LEO](https://arxiv.org/abs/1807.05960), and [Meta-LoRA](https://arxiv.org/abs/2503.22352) provide methods and baselines.
+
+Learned update rules or a few unrolled, preconditioned steps can approximate the reference dynamics where useful. The PI's work on [preconditioned gradient descent in ICL](https://arxiv.org/abs/2306.00297) and [functional gradient descent in ICL](https://proceedings.mlr.press/v235/cheng24a.html) supports investigating such structured learned computations in the studied spirit; extending them to generative training dynamics is proposed work. ICL remains a possible method and qualification, not a separate aim.
+
+### Mechanistic validation
+
+The primary criteria are accuracy of predictions about intermediate and final semantic responses, accuracy of predicted training responses, causal evidence for the proposed pathways, and predicted interactions between finite updates. Evaluate on held-out contexts, compositions, and tasks with comparable diagnostic budgets. Correlated probes and matching output images alone do not establish that the proposed pathway is responsible.
+
+### Attribution and externalization as a bounded extension
+
+Where a source-specific module or external bank has a verified origin, test a concrete causal claim: changing or removing that source changes a specified factor through a predicted internal path. Trace source/module interventions into intermediate features and final output changes. Compare the result with similarity attribution and counterfactual retraining on small controlled datasets.
+
+Distinguish three questions:
+
+- **Module contribution:** what changes if this known module is removed during generation?
+- **Training-source contribution:** what changes if the source is excluded from training? Use retraining controls at tractable scale to validate approximations.
+- **Feature resemblance:** which source has a similar patch or attribute? This alone does not establish either causal contribution above.
+
+Start with newly introduced source-specific knowledge added through a controlled interface. Removing that interface can support controllable use of that contribution; it does not guarantee erasure of related knowledge already distributed through a pretrained base. Allow overlapping group contributions and unresolved cases rather than forcing one training source per generated feature.
+
+### Distinguishing result
+
+The important outcome is **a predictive, experimentally supported account of how parameter organization governs both semantic responses during inference and the acquisition of semantic changes during training**. The account should identify what can be localized, what requires coordination, and when separately learned changes interact. Efficient adaptation and controllable composition demonstrate its practical value.
+
+## Applications as tests of the mechanism
+
+Use the same text/reference creation setting to demonstrate the consequences of Aim 2. The applications do not form separate research aims.
+
+| Application | Mechanistic prediction being tested |
+|---|---|
+| Rapid adaptation | Which parameter components and learning directions can approximate a reference training outcome from limited samples and compute? |
+| Precise generation control | Which intervention changes a designated semantic factor, through which pathway, with what collateral effects? |
+| Combining separately learned capabilities | When do two updates from the same base preserve their individual effects, and when do they interfere or require coordinated correction? |
+
+For merging, start with separately learned material/appearance and spatial-composition changes in a controlled family. Predict the combined behavior before applying the merged update and test it across held-out scenes. Addition of adapters is the baseline operation; predicting its success or failure is the research result.
+
+### From representation interventions to reusable updates
+
+A representation separating a requested appearance from geometry makes the intended effect explicit, but does not imply that the effect is controlled by a small parameter subset. Use the mechanisms of Aim 2 to identify candidate update locations and predict their selectivity. Fit the effect across prompts and denoising trajectories, using a local response approximation initially and finite intervention tests subsequently. An invertible coordinate relabeling alone cannot create missing control directions.
+
+For application development, compare an effective representation intervention with the corresponding parameter update in fixed semantic readouts and independently measured output properties. Reproducing one image is insufficient for a reusable operation. Keep scene-specific instructions available as conditioning, while testing reusable character, material, or style information in the update.
+
+### Conditional generation of weight deltas as a possible implementation
+
+Once reference updates at a validated interface are available, test a context-to-update model:
+
+```text
+a ~ q_phi(a | context C, requested change g)
+delta_theta = B(a)
+x ~ p_(theta_base + delta_theta)(x | scene prompt q)
+```
+
+B installs compact coefficients in selected parameter components. Start with shared or fixed bases to standardize the update coordinates. A deterministic predictor is a sufficient first implementation. A conditional diffusion/flow model is justified only when limited context admits several useful, functionally different adaptations; coefficient diversity alone is not evidence of meaningful uncertainty. Sample an adapter once and evaluate it across new scenes with independently varied image noise.
+
+Rich reference training runs belong to offline task families. At evaluation, the update predictor receives only a small support set for an unseen task. Match reference denoising behavior and contextual effects rather than relying on weight reconstruction alone. Report adaptation cost, quality, desired-factor fidelity, preservation, and repeated-use consistency separately.
+
+### Comparison with existing methods
+
+[LoRA](https://arxiv.org/abs/2106.09685) is a possible parameterization and a baseline family. Compare predicted update locations against alternative allocations under matched diagnostic, parameter, and training budgets. [Concept Sliders](https://arxiv.org/abs/2311.12092) already provides interpretable concept directions, and [Meta-LoRA](https://arxiv.org/abs/2503.22352) already pursues fast personalization. Better control or speed requires matched application comparisons; the proposed broader mechanism requires the separate prediction and causal tests in Aim 2.
+
+Conditional update generation also has direct precedents: [Doc-to-LoRA](https://arxiv.org/abs/2602.15902), [Text-to-LoRA](https://arxiv.org/abs/2506.06105), [SHINE](https://arxiv.org/abs/2602.06358), and [Doc-to-Atom](https://arxiv.org/abs/2606.12400) connect context, activations, semantic decomposition, and adapters in language models. [DiffLoRA](https://arxiv.org/abs/2408.06740), [LoRA Diffusion](https://arxiv.org/abs/2412.02352), [Conditional LoRA Parameter Generation](https://arxiv.org/abs/2408.01415), [HyperLoRA](https://arxiv.org/abs/2503.16944), and [Interpreting the Weight Space of Customized Diffusion Models](https://arxiv.org/abs/2406.09413) cover generated personalization weights, structured adapter effects, or semantic weight-space operations. These are implementations and comparisons for application tests; weight generation itself is not the proposed scientific contribution.
 
 ## Closest work and the differentiation we must earn
 
@@ -208,8 +207,10 @@ The following are substantive overlaps, not merely background citations. This is
 | [Semi-Parametric Neural Image Synthesis](https://arxiv.org/abs/2204.11824) | Retrieval provides local content while the generator learns scene composition; database replacement changes domains | Derive and test compatibility conditions at internal computation interfaces; relate module changes to causal output effects |
 | [Knowledge Externalization](https://proceedings.iclr.cc/paper_files/paper/2026/hash/7e9c2053258b1bdd32ff2654802cd594-Abstract-Conference.html) | MLLM knowledge can be moved into editable, composable memory tokens | Investigate a denoising mechanism and its source-dependent contribution over a generation trajectory; external memory alone is not the novelty |
 | [Nonparametric Data Attribution](https://arxiv.org/abs/2510.14269), [GUDA](https://arxiv.org/abs/2601.22651) | Multiscale patch attribution and group/style attribution via unlearning | Validate source-to-component-to-state effects and distinguish module removal from training-data removal |
+| [VAE/GAN](https://arxiv.org/abs/1512.09300) | Discriminator features supply a learned reconstruction metric | Test evaluator-derived features as generative state variables and explain when they support selective interventions |
+| [MAML](https://arxiv.org/abs/1703.03400), [CAVIA](https://arxiv.org/abs/1810.03642), [LEO](https://arxiv.org/abs/1807.05960), [Meta-LoRA](https://arxiv.org/abs/2503.22352) | Meta-learning supports parameter or latent adaptation, including diffusion personalization | Use these tools to test how representation design changes interpretable parameter responses, training dynamics, and interactions |
 
-Do not claim novelty merely from putting these ingredients together. The core claim must be a useful prediction or intervention guarantee within a stated scope, with a result that fails if the proposed mechanism is wrong.
+Tools such as learned reward features, meta-learning, and generated adapters already have substantial precedents. The proposed contribution must be a specific account of representation-dependent inference and training responses, supported by predictions and interventions that could falsify it. Each application should test a consequence of that account.
 
 ## Preliminary evidence and its limits
 
@@ -229,6 +230,8 @@ The ELF comparison pools two generation seeds over the same 1,319 questions; the
 
 The mechanistic manuscript is incomplete in several sections. Cite its completed mathematical statements and the separate experiment reports, and identify the remaining interpretation as a hypothesis.
 
+The existing results reduce uncertainty about learning rich generative representations, coordinating denoising spaces, and identifying reusable computation. The untested connection between these ingredients is a central research question. The proposal should name that remaining uncertainty and test it early; completing the full synthesis is not a prerequisite for motivating the research.
+
 ## Two proposed creator use cases
 
 These are proposed research demonstrations, not claims about existing Sony product capabilities or agreed deployment plans. They are relevant to the visual creation and creator-protection interests described in [Sony AI's research overview](https://ai.sony/).
@@ -240,22 +243,22 @@ These are proposed research demonstrations, not claims about existing Sony produ
 
 | Period | Main result | Evidence of completion |
 |---|---|---|
-| Months 1–3 | Controlled benchmark and mechanism predictions | Predeclared predictions of component transfer; baseline sharing, transplant, and adaptation results |
-| Months 4–6 | Test transfer-guided adaptation | Held-out transfer accuracy and quality/preservation/compute comparisons; document where component coordination is necessary |
-| Months 7–9 | Generative language semantics coupled to visual states; a tractable intervention-to-update test | A text/reference image demonstration with independent relation/binding measurements; compare state intervention and reusable adapter effects |
-| Months 10–12 | Integrated few-shot adaptation demonstration and bounded attribution evaluation | Context-generated adapters at the validated interface; compare deterministic and stochastic generation where ambiguity matters; source-module intervention audit and final reproducible artifacts |
+| Months 1–3 | Common controlled task family, candidate representations, and initial tests of both parameter-response directions | Independent contextual-factor measurements; small parameter interventions and reference training runs; explicit mechanism predictions |
+| Months 4–6 | Predict inference responses and training responses in controlled models | Held-out prediction accuracy, causal pathway tests, and quantified failures of local approximations |
+| Months 7–9 | Test finite changes and representation-dependent interactions in a text/reference generator | Predict effects of individual and combined updates; compare candidate representations and training protocols using the same factors |
+| Months 10–12 | Validate applications of the mechanism and release reproducible results | Focused control and adaptation demonstrations; bounded combination/merging tests using the same models and tasks |
 
-Large-scale source externalization and video remain contingent extensions. Do not promise broad image/video/audio generation, universal training-data attribution, foundation-model retraining, and a new language-reasoning model in one year.
+Image generation is the main setting. Broad audio/video generation, arbitrary independent-model merging, full foundation-model meta-training, and universal training-data attribution are outside the initial commitment. Conditional adapter generation is a possible implementation after the mechanism and reference updates are established; it does not displace the scientific deliverables.
 
-If transfer prediction fails, report the measured compatibility boundary and test small joint routing/prediction adapters; that fallback should still answer a scientific question. If a candidate representation does not support selective edits, characterize its entanglement and evaluate a more constrained interface rather than presuming semantic labels guarantee control.
+If a local mechanism fails, determine whether changing aggregation, evolving representations, or interactions between modules explain the error. If a candidate feature space supports evaluation but not selective intervention, characterize that mismatch. These outcomes should refine the mechanistic account rather than merely trigger a new adaptation benchmark.
 
 ## Figures that will make the proposal easy to assess
 
-1. **Mechanism and interventions:** one diagram connecting source knowledge, context aggregation, hidden features, and the evolving denoising state. Mark which relations are established in simplified models and which are research hypotheses.
-2. **One success and one failure of component reuse:** show Source / QK-only / VO+MLP / Joint for CelebA→AAHQ and CelebA→STL-10, using the existing experiment panels. Label them as selected illustrations and accompany them with the full quantitative recovery comparison.
-3. **Two complementary feasibility results:** show the frozen-Qwen representation extraction and ELF answer-state generation with the reasoning score as a functional validation; alongside it, show the published visual multi-representation denoising result. Their conjunction motivates the proposed language-semantic/visual model. The ELF figure should emphasize what is generated and how Qwen is used, rather than mainly plotting the schedule gain. The matched-budget architecture FID is a separate compact result if space permits.
-4. **Proposed demonstration schematic:** reference identity crossed with new layouts/appearances, plus source-module removal. Label planned outputs as proposed; do not substitute synthetic illustrative images for experimental results.
+1. **Generation and learning mechanisms:** show which parameter components express a contextual factor during denoising and which components respond when that factor's training targets change. Distinguish denoising time from optimizer steps and mark hypotheses versus established controlled-model results.
+2. **Predicted and observed responses:** show one successful and one unsuccessful component-reuse case, then the prospective test of the proposed explanation. Existing selected panels must be labeled and accompanied by quantitative evidence.
+3. **Representation feasibility:** show ELF's frozen-Qwen representation extraction and answer-state generation, with reasoning as functional validation; pair this with the visual multi-representation denoising result. Place these after the scientific question they support.
+4. **Consequences of the mechanism:** show a planned parameter intervention, a learning response, and a combined-update test on the same contextual factors. Label proposed outputs explicitly. Adaptation cost, control fidelity, and merging compatibility are separate application measurements.
 
 ## Drafting priority
 
-Lead with context consistency as the objective and interpretable representations plus parameter mechanisms as the approach. Give both coupled views substantive space within one program. The main connection is whether representation choices make desired semantic changes realizable through compact reusable weight updates. Make the proposed advantage concrete: predict affected factors and internal responses, selectively change intended properties, and preserve those effects across new compositions. LoRA remains a possible implementation and a baseline family; stronger interpretability and control must be demonstrated against both conventional adaptation and structured concept adapters. Preserve ELF's central role as feasibility evidence for generating powerful language representations; use the patchwise mechanism and transfer results to study the parameter correspondence. Treat the conditional weight generator as the integrated few-shot demonstration at one validated interface, rather than another broad model-building project. Keep attribution as a limited diagnostic; complete unlearning is not a promised outcome. Start with controlled local appearance, spatial composition, and precise language-described relations, adding identity only where intervention evidence supports it.
+Lead with a mechanistic account of how contextual information is represented, expressed in generation, and acquired or modified in training. Aim 1 identifies and constructs the relevant representations; Aim 2 explains and predicts their interactions with parameters in both directions. Make adaptation, precise control, and combining learned capabilities motivating consequences and focused tests. Use reward models, reference training, meta-learning, and ICL where they help answer these questions. Present prior work as qualification and feasibility evidence. Keep the novel claim in the predictive mechanism, with explicit limits and early falsifiable experiments.
