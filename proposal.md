@@ -7,11 +7,11 @@
 Organize the proposal around **two connected thrusts**:
 
 1. **Reusable computation and adaptable visual knowledge:** predict which model components can transfer across domains, and use those predictions to adapt, share, or externalize selected visual knowledge.
-2. **Selective control through generative representations:** identify representations and denoising dynamics that let a creator change one factor while preserving others.
+2. **Generative language semantics for visual creation:** learn to generate and revise reasoning-relevant contextual representations from powerful AR language models, couple them with visual denoising states, and test precise semantic control.
 
 The common scientific question is: **How does a generative Transformer turn stored visual knowledge into a particular composition, and which interventions let us change that composition selectively?**
 
-The proposed advance is a mechanism that makes testable predictions about adaptation and editing on unseen combinations. Parameter efficiency, personalization, and source attribution become consequences and tests of that mechanism. Thrust 1 identifies candidate interfaces and their transfer boundaries; Thrust 2 exposes those interfaces to creator control. Each has measurable intermediate results, without requiring a universal theory of the network.
+The proposed advance is a mechanism that makes testable predictions about adaptation and editing on unseen combinations. Parameter efficiency, personalization, and source attribution become consequences and tests of that mechanism. Thrust 1 identifies candidate interfaces and their transfer boundaries. Thrust 2 brings a complementary capability: diffusion can generate contextual language-model representations that support precise reasoning, motivating their use as evolving semantic states in visual generation. The thrusts meet in understanding how semantic changes pass through aggregation and prediction into visual content. Each has its own preliminary foundation and measurable intermediate results.
 
 The central hypothesis should remain conditional: **when a domain shift changes local predictive features while preserving the context information needed to combine them, substantial adaptation may be localized to prediction and transport components; when that context structure changes, coordinated adaptation becomes necessary.** The research must determine whether this distinction predicts behavior in trained models, where it breaks, and whether it can guide useful interventions.
 
@@ -31,14 +31,14 @@ This is the proposed functional model, not an established exclusive assignment t
 
 Sony's theme emphasizes internal causal mechanisms, multimodal binding, controllability, and knowledge externalization for controllable source use. It requests explicit differentiation and useful applications. The award supports a one-year project up to $150,000; the submission limit is ten pages including references, plus one budget page. The current deadline is 15 September 2026, 11:59 p.m. PDT. [Sony call and guidelines](https://www.sony.com/en/SonyInfo/research-award-program/#FocusedResearchAward).
 
-Use **text and reference images as interacting modalities**, with image generation as the main experimental setting. A short-video extension can test persistence of one selected factor if image milestones succeed. Language reasoning supplies supporting evidence for representation-dependent denoising, rather than another application workstream.
+Use **text and reference images as interacting modalities**, with image generation as the main experimental setting. A short-video extension can test persistence of one selected factor if image milestones succeed. ELF's language-reasoning result is central feasibility evidence that diffusion can generate representations derived from a powerful AR model's contextual hidden states while supporting precise semantic computation. The mathematical task is a functional test of this capability; developing a new math benchmark system is outside the proposed application scope.
 
 ## Why this structure is preferable
 
 | Candidate direction | Strength | Main concern | Recommended role |
 |---|---|---|---|
 | Transformer mechanisms and parameter allocation | Closest connection to the patchwise model and architecture/transfer experiments | A universal attention-versus-MLP division is unsupported | Mechanistic center of Thrust 1 |
-| Activations as denoising variables | Strongest large-model feasibility results and clear connection to multimodal control | Semantic representation generation and asynchronous schedules already have close precedents | Thrust 2, focused on selective intervention and preservation |
+| AR hidden activations as denoising variables | ELF demonstrates generation in frozen Qwen's contextual representation space with substantial reasoning accuracy; image work supplies complementary visual-denoising evidence | Contextual latent diffusion and latent reasoning have precedents; the precise ELF configuration and the proposed joint visual capability must be distinguished | Central foundation of Thrust 2: generate and revise language semantics together with visual content |
 | Compositional attribution | Direct relevance to Sony's source-use interests | Patch, group, and style attribution already exist; current attachments contain no validated attribution result | Bounded causal evaluation within Thrust 1 |
 | Parameter efficiency alone | Concrete preliminary result | Risks becoming an architecture optimization proposal with weak source/control relevance | A measurable outcome of the mechanism |
 
@@ -78,13 +78,23 @@ Start with newly introduced source-specific knowledge added through a controlled
 
 The important outcome is **an accurate prediction of which changes can be localized and composed**, followed by a selective adaptation method that improves the quality/preservation/compute tradeoff. Swapping weights successfully after observing the results would be weaker evidence.
 
-## Thrust 2: Selective control through generative representations
+## Thrust 2: Generative language semantics for visual creation
 
 ### Motivation and question
 
 A creator may want the identity from one reference, the spatial arrangement specified by text, and the appearance of a separate visual collection. Even when a model's features encode these factors, changing a feature may also alter unrelated content, be overwritten by subsequent denoising, or create an inconsistent latent state.
 
-Ask: **Which representation interfaces make an intended edit persist through generation while preserving the other factors?**
+Ask: **Can a multimodal diffusion model generate and revise the precise semantics represented inside a powerful AR language model together with visual content, so that objects, relations, and constraints remain consistent?**
+
+### Why ELF is central feasibility evidence
+
+ELF uses projected contextual activations from frozen Qwen3-4B-Instruct-2507 blocks 16, 24, and 32 as the answer-representation targets of a separately trained diffusion/flow model. At inference Qwen encodes the question once; ELF generates the answer-state sequence from noise and decodes it to text. Qwen does not autoregressively produce the solution. The resulting 61.94% GSM8K accuracy provides functional evidence that generation in this representation space can support substantial multi-step reasoning. The relevant result is this generative capability, not chiefly the arithmetic task or the 7.77-point gain from changing inference schedules.
+
+This supports a proposal-level feasibility argument: powerful language-model representations need not remain only conditioning inputs or outputs of a separate AR planner; they can themselves be objects of generative modeling. Quantifying how much the pretrained organization causes the performance, or whether the model reproduces Qwen's internal reasoning procedure, requires further evidence. Neither claim is needed for the initial feasibility argument.
+
+The vision-language extension is proposed work. Keep the user's prompt as fixed conditioning, and introduce additional generated language-semantic variables representing a scene description, inferred relationships, or constraints. Couple those variables to visual latents during denoising. Paired visual data and precise descriptions must teach that correspondence: language-only success does not supply visual grounding by itself. Compare fixed LLM conditioning, an AR-generated scene plan, generated semantic states followed by visual generation, and jointly revisable semantic/visual states under comparable budgets.
+
+The immediate scientific question is which semantic information survives this coupling and how it reaches image generation through the Transformer's attention, transport, and prediction mechanisms. A first use case can test exact object counts, attribute bindings, and spatial relations under crossed text/reference inputs. Identity preservation remains another candidate once its relevant representation is identified.
 
 Treat the denoising state, hidden activations, and model parameters as different intervention sites. Do not assume DINO or Qwen features already separate identity, geometry, appearance, and motion.
 
@@ -96,7 +106,7 @@ Treat the denoising state, hidden activations, and model parameters as different
 
 ### Research approach
 
-1. **Expose and test the interfaces identified in Thrust 1.** On controlled counterfactual examples, compare their representation interventions with the corresponding parameter interventions. External features and denoising-state partitions are candidate coordinates for expressing the same desired change. Measure intended change, unintended changes, and persistence over the remainder of the trajectory. Use replacement and rescue interventions, independent output evaluations, and controls for off-distribution perturbations.
+1. **Establish semantic transfer and grounding.** Generate Qwen-derived language states and visual states for paired scenes with explicit relational descriptions. Compare frozen contextual activations with token embeddings and alternative encoders where feasible. Test whether decoded language constraints and independently measured image content agree. Use interventions on the semantic states, alongside the interfaces identified in Thrust 1, to identify which internal pathways transmit the intended change. Measure unintended changes and persistence as well as semantic decoding quality.
 2. **Optimize representation evolution for a specified editing objective.** Extend asynchronous scheduling toward edit fidelity and preservation, alongside quality and compute. Compare fixed semantic-leading schedules, learned schedules, and direct activation steering. Permit revision of an early representation when it conflicts with a later constraint; do not presume that early semantic commitment is always best.
 3. **Test cross-modal composition.** Use crossed prompts and references that specify compatible or conflicting identity, pose, location, and appearance. Evaluate whether the intended modality supplies the requested factor, particularly on held-out combinations. Make preservation of one identity while changing layout and appearance the primary demonstration.
 
@@ -112,6 +122,12 @@ The following are substantive overlaps, not merely background citations. This is
 
 | Existing work | What already exists | Proposed additional contribution |
 |---|---|---|
+| [Latent Diffusion for Language Generation](https://arxiv.org/abs/2212.09462), [STAR-LDM](https://arxiv.org/abs/2602.20528) | Diffusion over language representations and semantic plans, using pretrained encoder/decoder machinery | ELF's specific evidence concerns generated multidepth frozen-AR contextual states with reasoning evaluation; proposed work couples such states to visual generation |
+| [LaDiR](https://arxiv.org/abs/2510.04573), [VDLM](https://arxiv.org/abs/2602.15870) | Substantial reasoning through diffusion over learned thought latents or semantic text-span embeddings; additional pretrained reasoning or rendering machinery remains | Distinguish ELF's separately trained continuous denoiser over frozen Qwen contextual token states and its inference pipeline. Do not claim that latent diffusion reasoning itself is unprecedented |
+| [DiHAL](https://arxiv.org/abs/2605.14368) | Diffusion reconstructs selected original AR hidden states to replace a lower-layer computational prefix, retaining upper causal layers and the LM head | Generate an answer-state sequence conditioned on a question with an independent diffusion model, then investigate joint visual generation; hidden-state diffusion alone is not the novelty |
+| [UniDiffuser](https://arxiv.org/abs/2303.06555) | Joint continuous diffusion of image and text representations with independent noise levels | Study contextual semantics from strong reasoning-capable AR models and validate precise semantic constraints in the generated visual content |
+| [LatentLM](https://arxiv.org/abs/2412.08635), [MammothModa2](https://arxiv.org/abs/2511.18262) | AR hidden states or AR-generated semantic content condition visual diffusion | Make the contextual semantic states themselves generative diffusion variables and test the benefit of jointly revising them |
+| [RepFusion](https://arxiv.org/abs/2606.14700), [Mural](https://arxiv.org/abs/2606.29013) | Their primary abstracts describe evolving MLLM conditioning or coupling a frozen reasoning-capable LLM to image diffusion | Dynamic conditioning and strong LLM semantics in image generation are not sufficient novelty claims. The proposed distinction is generative modeling of the contextual semantic states; verify these recent papers' full methods before final priority claims |
 | [An analytic theory of creativity in convolutional diffusion models](https://arxiv.org/abs/2412.20292), [Locality in Image Diffusion Models Emerges from Data Statistics](https://arxiv.org/abs/2509.09672) | Patch composition and data-driven locality already explain aspects of diffusion generalization | Predict the behavior of trained Transformer components as content and contextual dependencies vary |
 | [REPA](https://arxiv.org/abs/2410.06940), [RAE](https://arxiv.org/abs/2510.11690), [RAEv2](https://arxiv.org/abs/2605.18324) | External features improve generation; representation latents can replace conventional VAE latents; encoder and hidden-state properties have been studied | Determine which features are selectively controllable and explain preservation across interventions and unseen compositions |
 | [SFD](https://arxiv.org/abs/2512.04926), [Latent Forcing](https://arxiv.org/abs/2602.11401), [SeFi-Image](https://arxiv.org/abs/2606.22568) | Different representation groups follow different schedules; semantics-first generation extends to text-to-image | Predict and optimize the survival and collateral effects of a specified edit, including cases requiring semantic revision |
@@ -135,11 +151,11 @@ Do not claim novelty merely from putting these ingredients together. The core cl
 | Attached Experiment 3, pp. 2, 5, 10–12 | With adapted VO+MLP and source QK, paired recovery is 0.815 for CelebA→AAHQ and 0.143 for CelebA→STL-10 | The success and failure motivate the transfer-compatibility question. Recovery is a DINO-feature metric relative to the jointly adapted generator |
 | [Variational Trajectory Optimization](https://arxiv.org/abs/2602.19512) | Learns matrix-valued anisotropic noise schedules with a trajectory objective and develops a corresponding solver | Provides machinery for subspace-dependent generation dynamics |
 | [Learning When to Denoise](https://arxiv.org/abs/2606.19662) | With a matched 675M backbone, 200-epoch training reaches AutoGuidance FID 1.05, matching an 800-epoch SFD-XL result | Strong image-generation feasibility for learned asynchronous schedules; the reported setting does not establish selective editing or video control |
-| Attached ELF-L summary and CSV, epoch 12 | Same synchronously trained checkpoint/EMA: GSM8K 54.17%→61.94%, +7.77 percentage points, by changing inference clocks at ODE32 without more training | Supports denoising contextual representations with separately controlled trajectories; no matched AR superiority or end-to-end speedup is established by the supplied files |
+| Attached ELF-L summary and CSV, epoch 12 | A separately trained diffusion model generates projected frozen-Qwen contextual answer states and decodes them to text: 61.94% GSM8K, with Qwen used once to encode the prompt. The same checkpoint gives 54.17% with synchronous clocks | Central feasibility evidence for generatively modeling reasoning-relevant AR representations. The schedule improvement is secondary; neither a matched AR superiority claim nor established visual grounding is required or supported here |
 
 Experiment 3 jointly adapts QK, VO, and MLP and then restores selected components to source values. This is not evidence that freezing those components throughout adaptation gives the same result. Endpoints use existing test-FID evaluations, and illustrative images were deliberately selected. Direct restricted training, independent evaluation selection, and additional seeds belong in the proposed work.
 
-The ELF comparison pools two generation seeds over the same 1,319 questions; the 2,638 trials are not distinct test questions or a voting protocol. Keep it as a small cross-domain feasibility result. The supplied evidence does not support a claim of superiority over a directly evaluated AR baseline.
+The ELF comparison pools two generation seeds over the same 1,319 questions; the 2,638 trials are not distinct test questions or a voting protocol. Give it a central role in the feasibility argument for generating language-model semantics, with the reasoning score serving as a functional check. The supplied evidence does not support a claim of superiority over a directly evaluated AR baseline. The targeted literature check identifies close predecessors but no exact match to the full stated ELF configuration; this is insufficient to assert a universal first. The proposed contribution should center on generating and revising these semantic states jointly with visual content and measuring the mechanism of semantic control.
 
 The mechanistic manuscript is incomplete in several sections. Cite its completed mathematical statements and the separate experiment reports, and identify the remaining interpretation as a hypothesis.
 
@@ -156,7 +172,7 @@ These are proposed research demonstrations, not claims about existing Sony produ
 |---|---|---|
 | Months 1–3 | Controlled benchmark and mechanism predictions | Predeclared predictions of component transfer; baseline sharing, transplant, and adaptation results |
 | Months 4–6 | Test transfer-guided adaptation | Held-out transfer accuracy and quality/preservation/compute comparisons; document where component coordination is necessary |
-| Months 7–9 | Selective representation intervention | A reference-and-text image demonstration with independent factor measurements and comparisons to steering/schedule baselines |
+| Months 7–9 | Generative language semantics coupled to visual states | A text/reference image demonstration with independent relation/binding measurements and comparisons to fixed conditioning, AR planning, and steering/schedule baselines |
 | Months 10–12 | Integrated demonstration and bounded attribution evaluation | Source-module intervention audit; controlled retraining checks; final report and reproducible evaluation artifacts |
 
 Large-scale source externalization and video remain contingent extensions. Do not promise broad image/video/audio generation, universal training-data attribution, foundation-model retraining, and a new language-reasoning model in one year.
@@ -167,9 +183,9 @@ If transfer prediction fails, report the measured compatibility boundary and tes
 
 1. **Mechanism and interventions:** one diagram connecting source knowledge, context aggregation, hidden features, and the evolving denoising state. Mark which relations are established in simplified models and which are research hypotheses.
 2. **One success and one failure of component reuse:** show Source / QK-only / VO+MLP / Joint for CelebA→AAHQ and CelebA→STL-10, using the existing experiment panels. Label them as selected illustrations and accompany them with the full quantitative recovery comparison.
-3. **A compact feasibility panel:** matched-budget FID from Experiment 1 alongside the published asynchronous-schedule result. Include ELF only if it helps demonstrate representation generality without diluting the visual-content focus.
+3. **Two complementary feasibility results:** show the frozen-Qwen representation extraction and ELF answer-state generation with the reasoning score as a functional validation; alongside it, show the published visual multi-representation denoising result. Their conjunction motivates the proposed language-semantic/visual model. The ELF figure should emphasize what is generated and how Qwen is used, rather than mainly plotting the schedule gain. The matched-budget architecture FID is a separate compact result if space permits.
 4. **Proposed demonstration schematic:** reference identity crossed with new layouts/appearances, plus source-module removal. Label planned outputs as proposed; do not substitute synthetic illustrative images for experimental results.
 
 ## Drafting priority
 
-Give Thrust 1 slightly more space because it provides the distinctive mechanistic question. Make Thrust 2 its creator-facing intervention counterpart through a shared interface and benchmark. Keep attribution as an explicit, limited diagnostic rather than a third full program; complete unlearning is not a promised outcome. The most important unresolved choice is how broadly to define the initial controlled factors; start with local appearance and spatial composition, then add identity only where the intervention evidence supports it.
+Give both thrusts substantive space. Thrust 1 contributes a predictive account of reusable computation and source-dependent knowledge; Thrust 2 contributes the generative treatment of powerful language semantics within visual creation, with ELF as a central feasibility result. Link them through tests of how semantic changes are routed into visual denoising. Keep attribution as an explicit, limited diagnostic rather than a third full program; complete unlearning is not a promised outcome. Start with controlled local appearance, spatial composition, and precise language-described relations, adding identity only where intervention evidence supports it.
