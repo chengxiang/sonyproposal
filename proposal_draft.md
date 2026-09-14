@@ -1,4 +1,4 @@
-# Mechanisms of Context Consistency in Multimodal Diffusion Models
+# How Representations and Weights Shape Multimodal Generation
 
 **Principal investigator:** Xiang Cheng, Department of Electrical and Computer Engineering, Duke University  
 **Focused Research Theme:** Internal Mechanisms of Multimodal Generative Models for Content Creation  
@@ -9,34 +9,40 @@
 
 ## Abstract
 
-A creator may want an image to preserve an object from one reference, use a material from another, and follow a spatial arrangement described in text. Generative models can fail to keep these requirements separate: changing the material may also change the object or its position. We propose to understand how a diffusion Transformer represents these requirements and how its weights determine whether they are preserved. Our hypothesis is that a suitable representation can divide generation into simpler, repeated computations: each part needs information from only a few other parts, and the same rules apply across different scenes. We will investigate whether this division matches the roles of attention and other network components. Aim 1 will learn and test representations that expose these relationships. Aim 2 will predict which weights must change to produce a desired effect and which can be reused. Text-and-reference image generation will provide a common test. Existing results from our group and other researchers support the main ingredients. The project will connect them through a mechanistic account that can guide selective editing and adaptation.
+We propose to learn representations that make the roles of a diffusion model's weights easier to explain and predict. Our hypothesis is that when each part of the generated state needs only a few identifiable inputs, and the same relationships recur across scenes, the network can learn reusable computations for selecting information and predicting content. We will test when this organization appears in attention and other network components. Aim 1 will learn representations that expose the information needed to generate each part. Aim 2 will connect these relationships to parameter roles: how weight changes affect generation, and how changes in representations or training targets affect the weights learned. The central test is whether this understanding predicts which components must change for a desired effect, which can be reused, and what else the change will affect. Text-and-reference image generation will provide a common application, such as changing an object's material while preserving its identity and arrangement. Existing results on generating semantic states and reusing network components support the ingredients. The project will establish where their connection enables selective editing and adaptation, and where it breaks down.
 
-## 1. The problem and the proposed contribution
+## 1. The proposed contribution
 
-Consider a concept artist who supplies an object reference, a material reference, and the instruction to place the object to the left of a second asset. The generator must use each source for the intended purpose. If the artist later changes the material, the object and arrangement should remain recognizable.
+**We will investigate whether the way a model represents a scene can make the roles of its weights easier to identify and predict.** The proposed approach connects three questions: what information is needed to generate a particular property, which attention and prediction components use that information, and which weights must change when the desired property or its relationship to other properties changes.
 
-We call this **context consistency**: agreement between the generated content and the requirements supplied by its context. The idea also applies to consistency between audio and video or between successive video frames. This project will focus on images generated from text and visual references, where we can make controlled changes and measure what the model preserves.
+This connection runs in both directions. During generation, we will study how a weight change alters selected internal states and image properties. During training, we will study how changes in representation or prediction targets alter the weight updates required to learn them.
 
-Our scientific question is: **How does the model's representation of a scene relate to the network components and weights that generate it?** We will study both directions of this relationship. During generation, a weight change alters the model's internal states and output. During training, a change in examples or desired outputs changes what the network learns. Understanding these processes could tell us where to edit a model, which learned computations can be reused, and when a change requires several components to adapt together.
+### Where the proposed advance lies
 
-**Our hypothesis is that representations with simple, repeated relationships between their parts can make the network's computations easier to separate and reuse.** For example, predicting an object's appearance may require its material, geometry, and illumination. These inputs vary across scenes, but the rule combining them can remain useful. Attention could select the relevant information, while other network components learn how to turn it into appearance.
+There are strong precedents for the individual tools. [UniDiffuser][unidiffuser] jointly generates image and text representations. [SFD][sfd] and [SeFi-Image][sefi] generate semantic information ahead of visual detail. [Local Mechanisms of Compositional Generalization][local] connects sparse dependencies to a specified form of composition. [Vision-Language Binding][binding] traces how reference information passes through text and image tokens. [Concept Sliders][sliders] learns weight changes that control selected visual properties.
 
-We will measure whether each part can be predicted from a small subset of the other parts. This is the sense in which we seek *sparse dependence*. The relationships may connect distant image regions or parts of different representations; they need not follow a grid. Graphs can illustrate these relationships without becoming a required mathematical model of the whole generator.
+Our proposed advance is to **use the information relationships within a representation to predict which network computations can be reused and which groups of weights need to change for a new task**. We will make these predictions before testing new combinations of objects, appearances, and relationships. Comparison with ordinary low-rank adaptation (LoRA), which learns small weight updates, will measure whether this account improves selectivity and explains interference between edits.
 
-The main uncertainty is whether this separation in the representation also appears in the network's weights. Shared weights may mix several computations, and a change at one layer may affect many later layers. The research will determine when the proposed correspondence holds and use its failures to explain why some edits or adaptations interfere with other properties.
+### The hypothesis and the two aims
+
+Predicting an object's appearance may require its material, geometry, and illumination. The particular inputs vary across scenes, but the computation combining them can remain useful. A representation that exposes these inputs could help us identify how attention selects and passes the information and how other components turn it into appearance. Learning a new material might then preserve some of these computations while changing others.
+
+We will seek representations in which each part can be predicted from a small subset of the other parts. This is the sense in which we seek *sparse dependence*. The relevant relationships may connect distant image regions or semantic and visual features; they need not follow a grid. Their recurrence across scenes is what could make network computations reusable.
+
+**Sparse dependence in a representation does not guarantee separately controllable weights.** Shared weights may mix several computations, and later layers may spread or undo a change. The main scientific task is to establish when the proposed correspondence holds and when several components must change together. Graphs can illustrate the information relationships; the evidence will come from predicting and testing the effects of changing features and weights.
 
 The two aims are:
 
 1. **Learn representations that make the information needed for generation easier to identify.**
 2. **Explain which network components use that information, and predict the effects of changing weights or training examples.**
 
-### How this differs from existing work
+### Why the connection matters for content creation
 
-There are strong precedents for the tools we will use. [UniDiffuser][unidiffuser] jointly generates image and text representations. [SFD][sfd] and [SeFi-Image][sefi] generate semantic information ahead of visual detail. [Local Mechanisms of Compositional Generalization][local] connects sparse dependencies to a specified form of composition. [Vision-Language Binding][binding] traces how reference information passes through text and image tokens. [Concept Sliders][sliders] learns weight changes that control selected visual properties.
+Consider a concept artist who supplies an object reference, a material reference, and an instruction to place the object to the left of a second asset. If the artist later changes the material, the object and arrangement should remain recognizable. Our approach will ask which representation change expresses that request, which network components implement it, and whether a small weight update can reproduce the effect across new scenes.
 
-Our contribution will be to **predict which network components should change for a particular request, which should remain useful, and what else the change will affect**. We will make these predictions before testing new combinations of objects, appearances, and relationships. Comparison with ordinary low-rank adaptation (LoRA), which learns small weight updates, will measure the value of this understanding: can it identify more selective updates and explain when they fail?
+Text-and-reference image generation will provide the common test of context consistency, with separate measurements of appearance, identity, and arrangement. Better understanding of component reuse could also guide parameter sharing and adaptation to new visual content. Consistency across video frames or between audio and video provides a longer-term motivation.
 
-> **Figure 1 — Explanatory overview; no new results needed.** Draw an object reference, a material reference, and a spatial instruction using simple shapes, swatches, and labels. Connect them to three operations: select relevant information, extract the needed features, and predict the image. Mark where representation changes and weight changes enter. Label this as the proposed explanation, without model-generated output panels.
+> **Figure 1 — Explanatory overview; no new results needed.** Put the proposed representation–weight connection at the center. Show scene properties such as material, geometry, and illumination; connect them to the network operations that select information, pass features, and predict appearance. Use two annotated paths to distinguish the effects of a weight change during generation from the weight updates caused by changed training targets. Mark the correspondences as hypotheses. A small text-and-reference example can show the intended application. Use only shapes and labels, with no model-generated output panels.
 
 ## 2. Aim 1: Learn representations that expose the information needed for generation
 
