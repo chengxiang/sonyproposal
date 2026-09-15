@@ -1,6 +1,6 @@
 # Sony proposal: LaTeX source
 
-`proposal.tex` is the editable LaTeX version of the current `proposal_draft.md`, including its updated institutional budget. Keep `references.bib`, `sonyabbrvnat.bst`, and the four figure PDFs in `figures/` alongside it.
+`proposal.tex` is the editable LaTeX version of the current `proposal_draft.md`, organized as four connected research sections (2.1–2.4), with the institutional budget unchanged. Keep `references.bib`, `sonyabbrvnat.bst`, and the four figure PDFs in `figures/` alongside it.
 
 ## Compile
 

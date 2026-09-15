@@ -4,10 +4,16 @@ The proposal embeds PNG versions. Matching SVG files preserve editable text and 
 
 | Figure | Content | Evidence status |
 |---|---|---|
-| `fig1_mechanism_overview` | Semantic components, network computations, and asynchronous revision | Proposed mechanism; all vectors and schedules are schematic |
-| `fig2_recovery_schedule` | Fixed-target-noise denoising comparison and crossing schedules | Proposed measurement; no loss values, empirical dependency graph, or learned schedules are fabricated |
+| `fig1_mechanism_overview` | Four connected steps: learn representations/extractors, measure denoising dependencies, jointly optimize generation, and share/specialize computations | Proposed program for selective generation and revision; component labels, vectors, and module activity are illustrative |
+| `fig2_recovery_schedule` | Fixed-target-noise denoising comparison, crossing schedules, and the link from the full noise vector to module activity | Proposed measurement and joint design; no loss values, empirical dependency graph, or learned schedules are fabricated |
 | `fig3_component_reuse` | Existing image panels plus reported recovery scores | Experiment 3 report, pages 2, 5, and 10 |
 | `fig4_existing_feasibility` | Language-state generation, schedule learning, and parameter sharing | ELF-L summary, LWD paper, and Experiment 1 report |
+
+## Conceptual figures
+
+Figures 1–2 show the narrowed four-part research program. Representation extractors learn from fixed encoders or downstream tasks/rewards; controlled changes in component noise reveal denoising-loss dependencies; schedules, the transformer, and module activity are optimized jointly; sparse attention and shared/switchable MLPs support sharing and specialization across conditional denoising tasks. The main application is selective generation and revision. The figures do not introduce a separate model-merging, generated-weight-update, or meta-learning aim.
+
+Both PNG/SVG versions and the print PDFs use the same builders in `scripts/make_conceptual_figures.py`. All versions are exactly 7 inches wide, with nominal text sizes of at least 10 points (ordinary mathematical subscripts scale normally). Figure 1 is 4.65 inches high and Figure 2 is 3.7 inches high. Their colored component vectors, active-module pictograms, and schedules are illustrative, not experimental measurements.
 
 ## Component-reuse figure
 
@@ -37,6 +43,7 @@ From the repository root, with Python, Matplotlib, NumPy, and Pillow installed:
 
 ```bash
 python scripts/make_conceptual_figures.py
+python scripts/make_latex_figures.py --figures 1 2
 python scripts/make_reuse_figure.py
 python scripts/make_feasibility_figure.py
 ```
