@@ -56,13 +56,11 @@ def vector(ax, x, y, w, h, vals, color):
 
 def build_overview():
     fig, ax = canvas(4.65)
-    txt(ax, .018, .971, "Selective generation and revision", 12, "bold")
+    txt(ax, .018, .971, "Controllable multimodal generation", 12, "bold")
     box(ax, .018, .788, .964, .145, PO, "#E7CDB2")
-    txt(ax, .035, .906, "REQUESTED REVISION", 10, "bold", ORANGE)
-    txt(ax, .035, .858, "Woman gives cup to man", 10.5, "bold")
-    arrow(ax, (.439, .858), (.490, .858), ORANGE)
-    txt(ax, .512, .858, "Man gives cup to woman", 10.5, "bold")
-    txt(ax, .035, .815, "Preserve the characters, their clothing, and the child reading.")
+    txt(ax, .035, .906, "REQUESTED SCENE", 10, "bold", ORANGE)
+    txt(ax, .035, .858, "A woman in a red coat gives a blue cup to a man in a green sweater.", 10.5)
+    txt(ax, .035, .815, "A child beside them reads a book.")
 
     # Three connected aspects; the middle aspect is an ongoing training loop.
     box(ax, .018, .622, .964, .126, PB)
@@ -103,7 +101,7 @@ def build_overview():
     box(ax, .675, .095, .290, .083, "white", "#BEDCD8")
     txt(ax, .531, .1365, "Sparse attention", 10, "bold", TEAL, ha="center")
     txt(ax, .820, .1365, "Shared / switched MLPs", 10, "bold", TEAL, ha="center")
-    txt(ax, .500, .027, "Goal: revise selected content while preserving the rest.",
+    txt(ax, .500, .027, "Goal: accurately generate participants, attributes, and relationships.",
         10.5, "bold", TEAL, ha="center")
     return fig
 
