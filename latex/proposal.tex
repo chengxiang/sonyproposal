@@ -64,7 +64,7 @@
 \hypertarget{abstract}{%
 \section{Abstract}\label{abstract}}
 
-We will jointly design multimodal representations, denoising procedures, and the transformer computations that connect them. The goal is to generate complex scenes and revise a specified action or relationship while preserving other requirements. First, we will obtain representations from pretrained models and downstream tasks and learn component extractors. Second, component-wise denoising losses will reveal which information helps predict each component. Third, we will jointly optimize asynchronous schedules and the transformer, including which modules operate at different component noise levels. Fourth, we will train shared and specialized computations across conditional denoising tasks and varied semantic compositions. Module interventions will explain which computations carry a change and when they remain reusable. Existing results on diffusion-generated Qwen states, learned schedules, and transformer component sharing and replacement provide the foundation. The one-year project will deliver a working generation and revision method together with a mechanistic account of its representation dependencies and transformer computations.
+We will jointly design multimodal representations, denoising procedures, and the transformer computations that connect them. The goal is to generate complex scenes and revise a specified action or relationship while preserving other requirements. First, we will learn representation components from pretrained models and downstream tasks. Second, we will jointly learn denoising order, component dependencies, and the transformer: denoising losses reveal which information is useful, while learned schedules determine when it becomes available. These dependencies and schedules will be refined as the model learns. Third, we will train shared and specialized transformer computations across conditional tasks, with module activity governed by component noise levels. Module interventions will explain which computations carry a change and when they remain reusable. Existing results on diffusion-generated Qwen states, learned schedules, and transformer component sharing and replacement provide the foundation. The one-year project will deliver a working generation and revision method together with a mechanistic account of its representation dependencies and transformer computations.
 
 \hypertarget{the-proposed-contribution}{%
 \section{1. The proposed contribution}\label{the-proposed-contribution}}
@@ -87,7 +87,7 @@ For one token, an extractor simply maps d coordinates to \(d_k\) coordinates. A 
 
 We will obtain representations from pretrained models and downstream tasks, then learn their component extractors. Encoders supply clean training targets; the diffusion model generates corresponding states from noise. Our aim is a decomposition useful for generation and editing, including complex prompt semantics, without prescribing an exhaustive list of semantic factors.
 
-\textbf{2. Transformer modules can specialize in how they access and change these components.} A \emph{module} is an identifiable transformer computation together with its parameters: an attention head, including its query/key/value/output projections; an MLP block; or a specified group of rows or columns in these projections. Denote its parameters by \(\theta_m\). This definition supports interventions on existing modules and the shared or specialized constructions in Sections 2.3--2.4.
+\textbf{2. Transformer modules can specialize in how they access and change these components.} A \emph{module} is an identifiable transformer computation together with its parameters: an attention head, including its query/key/value/output projections; an MLP block; or a specified group of rows or columns in these projections. Denote its parameters by \(\theta_m\). This definition supports interventions on existing modules and the shared or specialized constructions in Section 2.3.
 
 Our preliminary studies show how MLPs can store training samples or patches in the studied models, and how attention combines information during denoising. We will identify which representation components supply useful inputs to a module, which predictions change when its contribution is removed or replaced, and how these roles vary with noise levels. \textbf{A particular focus is attention's use of a local subset of information: locality means dependence on a small set of representation components, which may span distant tokens, image regions, or modalities.} Sparse dependence alone does not imply isolated weights; we will construct and analyze the corresponding transformer computations.
 
@@ -110,7 +110,7 @@ The interaction with training is explicit. With extractor parameters \(\psi\) an
 \qquad s_k=P_{k,\psi}(\operatorname{vec}(E(x))).
 \]
 
-Changing \(\psi\) changes the prediction targets; changing \(\phi\) changes the noisy inputs and their weighting. Both therefore change the parameter update. Sections 2.1--2.3 learn the targets, dependencies, and schedules; Section 2.4 organizes transformer computations around the resulting conditional denoising tasks.
+Changing \(\psi\) changes the prediction targets; changing \(\phi\) changes the noisy inputs and their weighting. Both therefore change the parameter update. Section 2.1 learns the targets; Section 2.2 jointly learns denoising order, dependencies, and the transformer; Section 2.3 organizes its computations across conditional prediction tasks.
 
 \hypertarget{differentiation-from-existing-approaches}{%
 \subsection{Differentiation from existing approaches}\label{differentiation-from-existing-approaches}}
@@ -129,12 +129,12 @@ What this proposal adds
 \bottomrule\noalign{}
 \endlastfoot
 Semantic feature generation and coordinated schedules (SFD \citep{sfd}, our LWD \citep{schedule} and trajectory optimization \citep{trajectory}). & Extend our joint schedule/denoiser learning to learned component divisions, with transformer module activity governed by the components' noise levels. \\
-Sparse score dependencies and feature-space composition (Local Mechanisms \citep{local}). & Learn component divisions through task supervision and conditional denoising, then use their measured dependencies to organize both generation schedules and transformer information access. \\
+Sparse score dependencies and feature-space composition (Local Mechanisms \citep{local}). & Learn component divisions and refine their dependence structure together with the transformer and generation schedules. Component denoising losses connect the learned order to the information the model can use. \\
 Modality-binding interventions, timestep specialization, and separated attention operations (Vision-Language Binding \citep{binding}, DeMe \citep{deme}, Compositional Attention \citep{compositional}). & Identify which computations can be shared across conditional denoising tasks and which must specialize as conditions, targets, and noise configurations change. Use those findings to support selective revision. \\
 \end{longtable}
 
-\hypertarget{one-research-program-in-four-connected-steps}{%
-\subsection{One research program in four connected steps}\label{one-research-program-in-four-connected-steps}}
+\hypertarget{one-research-program-in-three-connected-parts}{%
+\subsection{One research program in three connected parts}\label{one-research-program-in-three-connected-parts}}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -142,14 +142,12 @@ Modality-binding interventions, timestep specialization, and separated attention
 \item
   \textbf{Learn representations and component extractors} from pretrained activations and downstream tasks.
 \item
-  \textbf{Learn denoising dependencies} by measuring which components help predict one another.
+  \textbf{Jointly learn denoising order, component dependencies, and the transformer.} Denoising losses reveal useful information, and schedules determine when that information becomes available.
 \item
-  \textbf{Jointly optimize schedules and transformer activity} according to the information available at each noise configuration.
-\item
-  \textbf{Train shared and specialized computations} across conditional denoising tasks and diverse compositions.
+  \textbf{Learn shared and specialized transformer computations} across conditional tasks and component noise configurations.
 \end{enumerate}
 
-The same component vectors, losses, and transformer implement all four steps. Measured dependencies guide schedules and attention access; restricting or sharing a computation changes its prediction errors and therefore informs the next schedule update. Selective generation and revision of text-and-reference images provide the common application.
+These are interacting parts of one training procedure. Transformer learning changes which dependencies it can exploit, and schedule learning changes the conditional prediction problems it encounters. Measurements at selected checkpoints guide refinements to component divisions and module access, followed by further joint training. Selective generation and revision of text-and-reference images provide the common application.
 
 \begin{figure}[H]
 \centering
@@ -161,7 +159,7 @@ The same component vectors, losses, and transformer implement all four steps. Me
 \hypertarget{research-approach-representations-denoising-and-transformer-computations}{%
 \section{2. Research approach: representations, denoising, and transformer computations}\label{research-approach-representations-denoising-and-transformer-computations}}
 
-\textbf{Representation learning determines what the vectors encode; dependency learning determines what information is useful for denoising each component.} Downstream tasks supply the first signal. Component-wise flow-matching errors supply the second. We will alternate these steps with schedule learning while retaining reconstruction of the generation target. The resulting conditional prediction tasks determine the module activity and parameter sharing studied in Sections 2.3--2.4.
+\textbf{Representation learning determines what the vectors encode; joint denoising training determines how those components help predict one another and when to generate them.} Downstream tasks and reconstruction guide the representation. Component-wise flow losses jointly train the transformer and schedules and expose useful dependencies. Section 2.3 studies the computations that implement these conditional predictions.
 
 \hypertarget{obtain-representations-and-learn-component-extractors}{%
 \subsection{2.1 Obtain representations and learn component extractors}\label{obtain-representations-and-learn-component-extractors}}
@@ -170,31 +168,14 @@ The same component vectors, losses, and transformer implement all four steps. Me
 
 \textbf{Use downstream tasks to improve the targets.} Discriminators, reward/preference models, and visual or language understanding tasks can reveal distinctions that a generation model needs. Discriminator feature losses \citep{vaegan}, ImageReward \citep{imagereward}, and representation alignment \citep{repa} provide precedents. We will first train extractors to predict annotated participants and interaction roles, while also reconstructing the original features. Task losses give components useful information; the denoising objective determines how that information should be divided. These tasks guide learning without requiring a one-to-one correspondence between a component and a named concept.
 
-\hypertarget{measure-and-learn-dependencies-through-component-denoising}{%
-\subsection{2.2 Measure and learn dependencies through component denoising}\label{measure-and-learn-dependencies-through-component-denoising}}
+\hypertarget{jointly-learn-denoising-order-component-dependencies-and-the-transformer}{%
+\subsection{2.2 Jointly learn denoising order, component dependencies, and the transformer}\label{jointly-learn-denoising-order-component-dependencies-and-the-transformer}}
 
-Here \emph{denoising} means predicting a clean component, or equivalently its flow target, from partially noisy states. \emph{Generation} is the complete trajectory from noise to a sample. To measure dependence, hold the network and the target component's noise fixed and vary the information available in another component.
+\textbf{Denoising order and dependence structure are closely related through the conditional predictions learned by the transformer.} Dependencies describe which components supply useful information; denoising order determines when that information is available. Both depend on the conditional predictions the transformer learns. We will refine the dependencies and order jointly as the representation and model change. Order means relative progress through noise levels and allows overlapping schedules.
 
-Let u collect the K components' noise-to-data progress, and let \(f_{\theta,i}\) predict the local velocity for component i. Define
+Here \emph{denoising} means predicting a clean component, or equivalently its flow target, from partially noisy states. \emph{Generation} is the complete trajectory from noise to a sample.
 
-\[
-L_i(\mathbf u)=\frac{1}{d_i}\mathbb E
-\left\|f_{\theta,i}(\widetilde{\mathbf s}(\mathbf u),\mathbf u,c)
--(s_i-\varepsilon_i)\right\|^2,
-\qquad
-D_{j\to i}(\mathbf u)=
-L_i(\mathbf u_{j\leftarrow u_j^{\rm noisy}})
--L_i(\mathbf u_{j\leftarrow u_j^{\rm cleaner}}).
-\]
-
-The context c contains the supplied prompt and reference features; larger \(u_j\) means less noise. A positive D means cleaner information in j improves denoising of i conditional on that context. For visual-to-semantic tasks, we omit the target role labels from the supplied prompt so that the task requires visual information. Examples, noise draws, other noise levels, and parameters remain fixed. These are local-velocity errors, so merely slowing a component's schedule cannot trivially reduce the diagnostic. Varying groups of components captures dependencies missed by pairwise measurements.
-
-We will learn extractors that retain semantic prediction and reconstruction while making each component predictable from a limited subset of the others. Starting with the largest measured benefits, retain a small set of inputs and replace omitted inputs with independent noise during training, drawing on masked prediction \citep{multimae}. Normalized feature scales and a fixed total dimension limit rescaling and redundant-copy solutions. The result is an operational dependence structure defined by denoising performance, rather than a separately imposed graph. Section 2.4 will implement and analyze the corresponding attention restrictions. These measurements identify information useful to the current denoiser; for editing, they propose candidate groups to revise, whose effects must also be checked in the generated image.
-
-\hypertarget{jointly-optimize-denoising-schedules-and-the-transformer}{%
-\subsection{2.3 Jointly optimize denoising schedules and the transformer}\label{jointly-optimize-denoising-schedules-and-the-transformer}}
-
-We will extend LWD's joint probe to K components, with monotone schedules that can cross. For fixed extractors, let \(v_k=s_k-\varepsilon_k\) be the local flow target and let \(f_k\) abbreviate the transformer's prediction at the current noisy states and progress vector. A concrete starting objective is
+\textbf{Jointly train the transformer and schedules.} We will extend LWD's joint probe to K components, with monotone schedules that can cross. For fixed extractors, let \(v_k=s_k-\varepsilon_k\) be the local flow target and let \(f_k\) abbreviate the transformer's prediction at the current noisy states and progress vector. The context c contains the supplied prompt and reference features. A concrete starting objective is
 
 \[
 \mathcal J_{\rm probe}(\theta,\phi)=
@@ -208,7 +189,7 @@ We will extend LWD's joint probe to K components, with monotone schedules that c
 
 The first term fits the denoising network with a change-of-variable weight for each component's own progress. The operator sg holds that weight fixed during differentiation; schedule gradients still pass through the noisy states and progress inputs. The second term penalizes large predicted velocities in generation time and serves as a schedule-selection regularizer during the probe. This is LWD's prescribed surrogate-gradient construction, generalized from two representations to K components; it is not an unweighted flow loss whose value can be reduced just by changing the sampling of noise levels.
 
-We will jointly update a temporary denoiser and \(\phi\) during a short probe, then fix the schedules and train the main denoiser, as in our LWD implementation \citep{schedule}. Main training uses the weighted flow-fitting term without the kinetic penalty, together with auxiliary flow losses at independently sampled component noise levels, including components held clean. This trains the mixed-noise configurations needed for dependency measurements and editing. Extractors remain fixed within a probe and are refined between probes. Our variational anisotropic method \citep{trajectory} supplies a complementary score-based formulation.
+During a probe, we will jointly update a temporary denoiser and \(\phi\) with this objective. Both probe and main training will also include auxiliary flow losses at independently sampled component noise levels, including components held clean, to support dependency measurements and editing. Extractors remain fixed within a probe and are refined between probes. After refinement, we will fix the schedules for main training, following our LWD implementation \citep{schedule}; the main model uses the weighted flow-fitting term and auxiliary losses without the kinetic penalty. Our variational anisotropic method \citep{trajectory} supplies a complementary score-based formulation.
 
 Generation integrates the predicted velocity in generation time:
 
@@ -220,6 +201,36 @@ f_{\theta,k}(\widehat{\mathbf s}_t,\boldsymbol\tau(t;\phi),c).
 
 \textbf{The schedule must balance information gained and information missing.} Denoising one component early can improve other components' predictions, but raises its own error if useful context is still noisy. Optimizing the joint trajectory balances these effects across conditional prediction problems; a fixed semantic-first rule cannot express all such tradeoffs.
 
+\textbf{Read dependencies from the evolving denoiser.} Let u collect the K components' noise-to-data progress, and let \(f_{\theta,i}\) predict the local velocity for component i. Define
+
+\[
+L_i(\mathbf u)=\frac{1}{d_i}\mathbb E
+\left\|f_{\theta,i}(\widetilde{\mathbf s}(\mathbf u),\mathbf u,c)
+-(s_i-\varepsilon_i)\right\|^2,
+\qquad
+D_{j\to i}(\mathbf u)=
+L_i(\mathbf u_{j\leftarrow u_j^{\rm noisy}})
+-L_i(\mathbf u_{j\leftarrow u_j^{\rm cleaner}}).
+\]
+
+Larger \(u_j\) means less noise. A positive D means cleaner information in j improves denoising of i conditional on that context. For visual-to-semantic tasks, we omit the target role labels from the supplied prompt so that the task requires visual information. Within each paired diagnostic, examples, noise draws, other noise levels, and transformer parameters remain fixed. This isolates the information supplied by j; the transformer continues to train between diagnostics. These are local-velocity errors, so merely slowing a component's schedule cannot trivially reduce the diagnostic. Varying groups of components captures dependencies missed by pairwise measurements.
+
+We will learn extractors that retain semantic prediction and reconstruction while making each component predictable from a limited subset of the others. Starting with the largest measured benefits, retain a small set of inputs and replace omitted inputs with independent noise during training, drawing on masked prediction \citep{multimae}. Normalized feature scales and a fixed total dimension limit rescaling and redundant-copy solutions. The result is an operational dependence structure defined by denoising performance, rather than a separately imposed graph. Section 2.3 will implement and analyze the corresponding attention restrictions. These measurements identify information useful to the current denoiser; for editing, they propose candidate groups to revise, whose effects must also be checked in the generated image.
+
+\textbf{Refine structure and order within the same learning loop.} Train the transformer and schedules jointly, measure dependencies at selected checkpoints, and use those measurements to refine component divisions and candidate input sets. Resume joint training after each refinement, retaining semantic prediction and reconstruction. Recompute dependencies after a representation or module-access change. Once the design stabilizes, fix the schedules for the main training run. Thus the dependence structure develops with the model and its denoising order.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=7in]{figures/fig2_recovery_schedule.pdf}
+\caption{\textbf{Joint learning connects denoising order and component dependencies.} Within a diagnostic, make component j cleaner while holding target i's noise, other inputs, and the current transformer checkpoint fixed. The loss difference measures the benefit of information from j. Repeat these measurements as transformer and schedule learning change the conditional prediction problems. The learned schedules balance the value of making information available against the difficulty of predicting it early. Curves and relationships are illustrative.}
+\label{fig:2}
+\end{figure}
+
+\hypertarget{learn-shared-and-specialized-transformer-computations}{%
+\subsection{2.3 Learn shared and specialized transformer computations}\label{learn-shared-and-specialized-transformer-computations}}
+
+The jointly learned order and dependencies define conditional prediction problems for the transformer. We will study which computations are needed at different component noise levels, which can be shared across tasks, and which must specialize.
+
 \textbf{Localize computations as well as generation stages.} An illustrative procedure generates A over time {[}0, 0.2{]}, then B and C conditioned on A over {[}0.2, 0.6{]}, and finally D conditioned on B and C over {[}0.6, 1{]}. Different transformer modules may serve these conditional prediction problems, with some computations shared across stages. In the learned procedure, schedules can overlap and cross; module activity depends on the vector of component noise levels rather than a fixed global time interval. For a module selected by the current condition--target task, we write its gated contribution as
 
 \[
@@ -228,21 +239,7 @@ g_m(\mathbf u)\,h_{\theta_m}
 \qquad \mathbf u=\boldsymbol\tau(t;\phi).
 \]
 
-Here \(I_m\) is the set of representation components accessible to module m; h is its computation and \(g_m\) controls its activity. Initially, a few gates select coarse configurations such as a relatively clean condition and a noisy target. We will then learn smooth gates, with their parameters included in \(\theta\), under the same denoising objective while updating the schedules during the probe. Section 2.4 specifies the module inputs, outputs, and sharing patterns. Shared backbone computations can remain active across all configurations.
-
-\textbf{Explain when a computation is needed.} At fixed noisy inputs, remove or replace a head or MLP contribution and measure which component predictions change. Repeat across noise configurations and trace selected interventions through the remaining generation trajectory. This reveals which computations become useful when a condition is clearer and which remain reusable when the prediction target changes. The measured roles guide which modules to activate; the analysis includes the shared backbone as well as the gated additions.
-
-For revision, use the semantic task loss to optimize selected component vectors toward the requested change, with preservation measured after reconstruction into fixed encoder coordinates. The initial task is changing participant roles. Add noise to the changed components and candidate dependent groups, then denoise conditionally while retaining the others. Task predictions on the re-encoded output image will assess whether the semantic edit is realized, and fixed image features will assess the requirements to preserve. A useful denoising dependency proposes a resampling group; the final image determines whether the group was sufficient or needs to expand. The corresponding module interventions explain how the revision propagates.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=7in]{figures/fig2_recovery_schedule.pdf}
-\caption{\textbf{Denoising dependencies guide schedules and module activity.} Make component j cleaner while holding target i's noise, the other inputs, and the transformer fixed. The change in i's flow-prediction error measures the benefit of information from j. Learned schedules balance these benefits against the difficulty of denoising a component before its useful context is available; module activity can depend on the same noise configuration. The curves and module assignments are illustrative.}
-\label{fig:2}
-\end{figure}
-
-\hypertarget{train-shared-and-specialized-transformer-computations-for-compositional-denoising}{%
-\subsection{2.4 Train shared and specialized transformer computations for compositional denoising}\label{train-shared-and-specialized-transformer-computations-for-compositional-denoising}}
+Here \(I_m\) is the set of representation components accessible to module m; h is its computation and \(g_m\) controls its activity. Initially, a few gates select coarse configurations such as a relatively clean condition and a noisy target. We will then learn smooth gates, with their parameters included in \(\theta\), under the same denoising objective while updating the schedules during the probe. The constructions below specify the module inputs, outputs, and sharing patterns. Shared backbone computations can remain active across all configurations.
 
 \textbf{Use diverse conditional prediction tasks to learn composition.} Section 2.2 supplies tasks such as predicting B from A, C from A, or D from B and C, with varying noise on the conditions and targets. Across training examples, we will vary the participants, relationships, and their combinations. Thus the model encounters both different semantic compositions and different uses of the same representation. These tasks encourage it to reuse a useful computation whenever the relevant information recurs.
 
@@ -260,9 +257,11 @@ The initial construction will use a shared transformer backbone and a small fami
 
 These are alternative sharing patterns within one implementation. We will begin by freezing the pretrained backbone and training the small added modules, then release selected backbone parameters where conditional prediction requires it. In the small-model studies, we can also replace or share existing MLP blocks directly. The preliminary attention/MLP interpretation motivates these choices; the experiments will identify the useful division of computation. Compositional Attention \citep{compositional} provides a related separation of selection and retrieval.
 
-\textbf{Identify the computations that transfer across compositions.} Hold the representation and noise configuration fixed, then remove or swap a module between conditional tasks. Component-wise denoising errors show where the computation remains useful; completed generations show whether it preserves the intended meaning in a new participant--relation combination. Replacing a candidate module with one serving an unrelated task provides a direct check of its assigned role. Restrictions establish which inputs an added module can access; these interventions determine what it contributes in the full transformer. Effects transmitted through the shared backbone are included in the analysis.
+\textbf{Explain when computations are needed and reusable.} At fixed noisy inputs, remove or replace a head or MLP contribution and measure which component predictions change. Repeat across noise configurations and conditional tasks, then trace selected interventions through the remaining generation trajectory. This reveals which computations become useful when a condition is clearer and which transfer to a new target or participant--relation combination. Replacing a candidate module with one serving an unrelated task checks its assigned role. The analysis includes the shared backbone and gated additions, and its findings guide the next refinement of schedules and module access.
 
 A tractable analysis begins with squared-error denoising: separate the prediction error caused by removing useful inputs from the error of the learned predictor using retained inputs. Linear models with Gaussian features provide an initial setting for identifying when conditional tasks can share a predictor or require different projections. The analysis and module interventions will guide which restrictions to retain or relax. The resulting architecture will support selective generation and revision through reusable computations, without requiring each human-named concept to occupy a unique module.
+
+\textbf{Use the learned organization for revision.} Use the semantic task loss to optimize selected component vectors toward the requested change, with preservation measured after reconstruction into fixed encoder coordinates. The initial task is changing participant roles. Add noise to the changed components and candidate dependent groups, then denoise conditionally while retaining the others. Task predictions on the re-encoded output image will assess whether the semantic edit is realized, and fixed image features will assess the requirements to preserve. A useful denoising dependency proposes a resampling group; the final image determines whether the group was sufficient or needs to expand. The corresponding module interventions explain how the revision propagates.
 
 \begin{figure}[H]
 \centering
@@ -306,7 +305,7 @@ The sharing result uses one training seed. The transfer metric compares outputs 
 
 ELF's reasoning accuracy is a functional demonstration that diffusion-generated Qwen states retain precise language information. This motivates semantic targets capable of carrying complex prompt requirements. Our anisotropic trajectory optimization research \citep{trajectory} provides joint network/schedule learning and estimators accounting for a changing noise process; our asynchronous flow work provides another direct algorithmic starting point.
 
-These results establish starting points for representation generation, schedule design, and component reuse. The proposed research connects them within the same conditional denoising tasks. Existing encoders, checkpoints, and schedule-learning code let the four steps begin from a common implementation; learned projections and small modules can then be incorporated progressively.
+These results establish starting points for representation generation, schedule design, and component reuse. The proposed research connects them within the same conditional denoising tasks. Existing encoders, checkpoints, and schedule-learning code let the three parts begin from a common implementation; learned projections and small modules can then be incorporated progressively.
 
 \begin{figure}[H]
 \centering
@@ -329,7 +328,7 @@ The initial study will use a bounded vocabulary of annotated interactions and pa
 \hypertarget{work-plan-and-deliverables}{%
 \section{5. Work plan and deliverables}\label{work-plan-and-deliverables}}
 
-\textbf{The core deliverable is a generation and revision method whose representation dependencies, denoising schedules, and transformer computations are understood together.} All four research steps use the same component interface and conditional prediction tasks.
+\textbf{The core deliverable is a generation and revision method whose representation dependencies, denoising schedules, and transformer computations are understood together.} The three research parts use the same component interface and conditional prediction tasks, with dependency measurements repeated during joint transformer/schedule learning.
 
 \hypertarget{concrete-execution}{%
 \subsection{Concrete execution}\label{concrete-execution}}
@@ -379,8 +378,8 @@ Concrete output
 \bottomrule\noalign{}
 \endlastfoot
 Months 1--3 & Obtain pretrained targets, learn initial projections using semantic tasks and reconstruction, and train mixed-noise conditional denoisers. & A fixed initial component interface and conditional prediction tasks; baseline generation and denoising measurements. \\
-Months 4--6 & Measure component dependencies and jointly optimize schedules and denoiser parameters; analyze module activity across noise configurations. & Learned schedules and an initial account of which computations are needed as conditions become informative. \\
-Months 7--9 & Train sparse attention and shared or specialized MLP computations across conditional tasks and participant--relation combinations. & A transformer construction with measured module roles and a working selective-revision procedure. \\
+Months 4--6 & Jointly train transformer and schedules; measure dependencies at selected checkpoints and refine component divisions and access. Analyze module activity across noise configurations. & Learned denoising order and an evolving dependence structure, with an initial account of the computations used. \\
+Months 7--9 & Train sparse attention and shared or specialized MLP computations across conditional tasks; revisit dependencies and schedules after module changes. & A transformer construction with measured module roles and a working selective-revision procedure. \\
 Months 10--12 & Consolidate the text-and-reference image workflow, assess preservation and transfer to new combinations, and document the internal computations. & Creator demonstration, implementation, mechanistic findings, reproducible evaluation materials, and final report. \\
 \end{longtable}
 
