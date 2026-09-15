@@ -9,47 +9,38 @@
 
 ## Abstract
 
-We will develop controllable and adaptable multimodal generators through a joint study of representations, Transformer modules, and the denoising process. Images, videos, and associated language can be represented as collections of token vectors. Aim 1 will jointly learn semantic components within or across these vectors and design their denoising procedures, using features from discriminators, reward models, language models, and other tasks. Aim 2 will explain and shape how attention and MLPs store knowledge and compose these components. Its findings will guide representation and schedule design; the resulting semantic dependencies will guide network design and training. The goal is precise control of objects, attributes, actions, and relationships while preserving other requirements of a creator's request. Meta-learning and training on diverse compositions will support reusable representations and computations; context-generated weight updates will make desired changes transferable across prompts. Existing results on diffusion-generated Qwen states, asynchronous semantic/visual generation, and component sharing and replacement provide a foundation. The project will deliver coupled representation and denoising methods, network design principles, and selective parameter updates, with training efficiency and generation quality as additional objectives.
+We will connect meaningful components of multimodal representations to the network computations that generate them and the denoising stages in which those computations matter. This correspondence will enable creators to revise an action or relationship while preserving other requirements, and to incorporate learned concepts into new scenes. Aim 1 will obtain representations from pretrained models and downstream tasks, learn their semantic divisions, and jointly optimize their asynchronous denoising schedules. Aim 2 will identify and construct network mechanisms that store and combine these components, then use the resulting parameter organization for model merging and updates generated from demonstrations. Meta-learning and compositional training will make these representations and computations reusable. Existing results on diffusion-generated Qwen states, asynchronous generation, and component sharing and replacement provide the foundation. The one-year project will deliver a coupled representation, denoising procedure, and mechanistic account, demonstrated through selective scene revision and the integration of additional character or interaction knowledge.
 
 ## 1. The proposed contribution
 
-**Our approach jointly studies multimodal representations, the generative process, and the network modules that connect them, to enable precise control and efficient adaptation of image generation.** The representation determines which semantic information the model can express; attention and MLPs determine how that information is stored and combined; the denoising process determines when it becomes available. Designing these together gives us several ways to realize a creator's intent: change selected semantic vectors, change when they are generated, or change the weights that make their effects reusable.
+**We will learn and construct a correspondence between semantic representation components, the network modules that act on them, and their evolution during generation.** Our approach jointly studies these three elements to explain how a generative model realizes a complex instruction and to design more precise control over its consequences.
 
-### Three linked hypotheses
-
-**1. Multimodal representations can be decomposed into meaningful semantic components.** Let x denote an image or video together with its available language description. An encoder E converts this example into N token vectors of dimension d, after any projections needed to give the tokens a common width:
-
-```math
-Z=E(x)=(z_1,\ldots,z_N)^\top\in\mathbb{R}^{N\times d},
-\qquad z_i\in\mathbb{R}^{d}.
-```
-
-Here E is the representation function and Z is the represented example. Tokens may describe image regions, video frames, or language semantics. During training, encoders provide these target vectors; during generation, the diffusion model produces their counterparts from noise, conditioned on the creator's prompt and any supplied references.
-
-A *semantic component* is a vector extracted from this representation. It can be a subset of coordinates within tokens, a group of tokens, or the output of a learned map spanning several tokens:
-
-```math
-s_k=P_k(Z)\in\mathbb{R}^{d_k},
-\qquad k=1,\ldots,K.
-```
-
-The maps Pₖ may overlap: an object identity can be relevant to several relationships. We can also add semantic tokens to Z when a useful concept is not readily exposed by coordinate selection. A learned recombination map will combine the components, together with residual features where needed, to recover a representation suitable for image generation. This permits semantic decomposition while retaining visual information.
-
-Compositional benchmarks such as [GenEval][geneval] motivate explicit treatment of objects, attributes, and relationships. For a creator-facing illustration, consider:
+Consider a creator's request:
 
 > “A woman in a red coat hands a blue cup to a man in a green sweater. A child beside them reads a book.”
 
-Candidate components could represent the woman's identity, the association between the cup and its color, the assignment of giver and receiver, or the child's separate activity. These components can span both language and image tokens. The same principle extends to temporal semantics in video, such as “a child presses a switch, causing a toy train to start moving.”
+The creator may reverse who hands over the cup while retaining the characters, clothing, and child's activity. Our approach will identify the semantic states expressing that change, the computations translating it into the image, and how the affected states should develop together. A second use case will incorporate characters or interactions learned from additional collections and reuse them in new combinations. These connect mechanistic understanding to scene revision and reusable creative knowledge.
 
-We will learn these components from tasks that make the relevant distinctions useful: discrimination, reward or preference prediction, language modeling, and visual or multimodal understanding. Meta-learning will further organize the representation so that a limited change to selected vectors or weights produces a desired effect across new examples. The aim is a representation in which complex instructions can be expressed and revised through identifiable semantic components.
+### Three linked hypotheses
 
-**2. Transformer modules specialize in computations that store and compose these components.** Write fθ for the denoising network, with θ its learned weights. A *network component* means an identifiable computation and its parameters: an attention head and its query/key/value/output projections, an MLP layer, or a selected set of rows or columns of a weight matrix. We use θⱼ to denote the parameters selected for such a component.
+**1. Multimodal representations can be decomposed into meaningful semantic components.** Let x denote an image or video together with its available language description. An encoder E maps it to N token vectors of dimension d, with projections to a common width where needed:
 
-Our preliminary studies show how MLPs can store training samples or patches in the analyzed models, and how attention can combine locally relevant information for denoising and composition. This motivates a finer hypothesis: **module specialization can follow semantic components within and across tokens.** An attention head or part of an MLP may help maintain agreement between language and visual features for a relation such as “a fork resting on a spoon.” Its role can involve selecting relevant coordinates, transmitting features, or transforming them into a consistent visual prediction.
+```math
+Z=E(x)=(z_1,\ldots,z_N)^\top\in\mathbb{R}^{N\times d},
+\qquad s_k=P_k(Z)\in\mathbb{R}^{d_k},\quad k=1,\ldots,K.
+```
 
-Locality here means dependence on a small set of relevant semantic or visual components; those components can occupy distant image regions or different modalities. We will identify these computations and use them to design reusable attention mechanisms and shared prediction banks. Training attention on diverse compositional rules will encourage reuse across new concepts, while meta-learning will help organize representations, parameter sharing, and initialization for selective adaptation.
+Z is the representation; sₖ is a component extracted by a map Pₖ. A component may select token coordinates, group tokens, or combine features across tokens. Components can overlap, and additional semantic tokens can expose information absent from a coordinate selection. A recombination map, together with residual visual features, retains the information needed for image generation. Encoders supply training targets; the diffusion model generates their counterparts from noise, conditioned on the prompt and references.
 
-**3. The denoising procedure should follow the chosen representation and its network interactions.** A conventional diffusion model typically applies a common noise schedule across its generated coordinates. Asynchronous denoising allows each selected component to follow its own schedule. For a simple flow-matching construction, a training state for clean component sₖ is:
+For the example, components could describe participants, the cup's attributes, the giver–receiver assignment, and the child's activity. We will begin with a small set of participant and interaction components, using downstream tasks to give them semantic meaning and recovery objectives to learn their dependencies. Discrimination, reward or preference prediction, and visual or language understanding provide useful training signals. Meta-learning will further organize components for selective change across examples. The construction can later extend to temporal relationships, such as a switch press causing a toy train to move.
+
+**2. Network specialization can follow these components and their changing information needs.** Let fθ denote the denoising network. A network component is an identifiable computation and its parameters θₘ: an attention head with its query/key/value/output projections, an MLP, or selected rows or columns of a weight matrix.
+
+Our preliminary analyses show how MLPs can store training samples or patches in the studied models, and how attention combines locally relevant information for denoising. We will investigate which semantic components a module reads, which states it influences, and under which noise configurations. Locality means dependence on a small set of relevant components, potentially spanning distant image regions or different modalities.
+
+Sparse representation dependencies need not be implemented by isolated weights. An explicit contribution will therefore be to identify the computations carrying those dependencies and construct feature-access projections and shared prediction components that make their roles reusable. These will support selective changes even when several modules must act together. Training across varied semantic relationships will develop compositional computations; meta-learning will help organize their access and initialization.
+
+**3. Denoising should be designed for the representation and its network interactions.** A conventional diffusion model typically uses a common noise schedule across generated coordinates. For asynchronous flow matching, component k has its own progress schedule τₖ:
 
 ```math
 s_{k,t}=(1-\tau_k(t))\,\varepsilon_k+\tau_k(t)\,s_k,
@@ -57,62 +48,54 @@ s_{k,t}=(1-\tau_k(t))\,\varepsilon_k+\tau_k(t)\,s_k,
 \qquad \tau_k(0)=0,\quad \tau_k(1)=1.
 ```
 
-Here t runs from noise at t=0 to the clean target at t=1, and τₖ(t) specifies component k's progress. Using the same τₖ for every component gives a shared schedule. With different schedules, each component progresses from noise to data at its own rate; the curves may cross, and several components may develop together without a fixed ranking. Shared noise levels need not produce equal semantic progress. When components overlap, the model jointly learns their compatible clean values; the noise variables act on their represented copies.
+Time t runs from noise to data. Each τₖ increases from zero to one; the curves may cross, and several components can develop together without a fixed ranking. For overlapping components, noise acts on their represented copies, whose clean values must be compatible.
 
-The representation choice therefore determines which generation schedules are available. [SFD][sfd], our [Learning When to Denoise][schedule], and [Latent Forcing][latentforcing] demonstrate benefits from coordinating complementary representations. [Diffusion Forcing][diffusionforcing] further shows how different token noise levels support flexible generation and guidance. We will extend this principle to learned semantic components and use the computations identified above to design their denoising procedures.
+[SFD][sfd], our [Learning When to Denoise][schedule], and [Latent Forcing][latentforcing] demonstrate benefits from coordinating representations; [Diffusion Forcing][diffusionforcing] supports generation under different token noise levels. We will extend these ideas to learned semantic divisions. In the handover example, coordinating the reliability of the role assignment and the interacting visual states can help preserve their agreement during revision.
 
-For the example, making the giver–receiver assignment available earlier can guide the network's generation of the exchange. Changing that assignment may require the relevant image states to remain revisable while the child's activity is retained. Knowledge of which modules use, transmit, or overwrite the assignment will guide when to advance these states and which to revise together. The network will be trained for the combinations of noise levels used by the chosen procedure.
+This relationship also shapes training: changing representations or schedules changes the prediction problems and parameter updates. Changing network computations, in turn, changes which denoising procedures are effective. Our contribution will connect these effects to semantic dependencies and use them to guide generation and knowledge integration.
 
-This interaction also shapes learning. Changing the representation or its noise schedules changes the prediction problems presented to the network and hence its parameter updates. Conversely, changing an attention or MLP component changes how semantic information is used, which can call for a different denoising procedure. We will use this two-way relationship to develop generators whose semantic and parameter changes are easier to explain and control.
+### The two aims and their practical outcomes
 
-### What the joint approach enables
+1. **Learn semantic representations and design their denoising process.** Obtain useful token vectors, learn semantic component maps and recovery dependencies, and coordinate their asynchronous generation for precise scene revision.
+2. **Understand and design network mechanisms for knowledge storage and composition.** Identify the computations implementing those dependencies and organize them for reuse, model merging, and targeted updates from demonstrations.
 
-**The proposed advance is a coordinated design of semantic representations, generative procedures, and network modules.** Joint representation generation and asynchronous scheduling provide established starting points; our contribution is to connect them to the mechanisms that store, compose, and modify semantic content. This supports three practical outcomes:
+The aims will guide each other throughout the project. A module carrying the giver–receiver assignment into visual predictions can guide when Aim 1 generates or revises that component. A useful decomposition from Aim 1 can guide which interactions Aim 2 supports through learned projections, shared knowledge, and training. Both begin with existing representations and generators.
 
-- **Precise generation and editing:** express the requested change through selected semantic components and use the denoising procedure to carry it into the image while preserving other requirements.
-- **Reusable adaptation:** identify parameter changes that implement the desired behavior across prompts, then infer compact updates from context or demonstrations.
-- **Efficient model construction:** share reusable prediction knowledge and compositional computations, and allocate training and denoising effort according to their dependencies.
+**The distinctive outcome is interpretable control through the correspondence between representations, computation, and denoising.** It will guide both immediate representation edits and parameter changes that make a desired effect reusable. Text-and-reference image generation is the main application; video motivates future temporal and cross-frame extensions. The practical goals are reliable scene revision and the integration of additional creative knowledge without repeatedly training the entire generator.
 
-This organization makes control more interpretable: each intervention is tied to a semantic component, the computations that act on it, and its evolution during generation. These connections will guide both representation edits and compact parameter updates, including LoRA, and help manage interference when separately learned changes are combined.
-
-### The two aims
-
-1. **Learn semantic representations and design their denoising process.** Jointly learn token vectors, semantic component maps, and generation procedures that enable precise semantic control. Task learning and meta-learning will organize the representation around how it is generated and revised.
-2. **Understand and design network mechanisms for knowledge storage and composition.** Establish how attention and prediction components implement semantic interactions, then use that understanding to design reusable computations, denoising procedures, and selective parameter updates.
-
-**The aims will guide each other throughout the project.** If Aim 2 identifies a computation that carries the giver–receiver relationship into visual predictions, Aim 1 can use it to decide when to generate or revise the relevant semantic component. Conversely, a useful decomposition from Aim 1 can identify interactions that the network should support through its projections, attention, or training. Both aims will begin with existing representations and generators, then refine their designs through this feedback.
-
-Text-and-reference image generation will provide the main application, with video motivating richer temporal and cross-frame semantics. The intended result is a creator who can change an object, action, or relationship with precise control over its consequences, and reuse learned concepts across new scenes. Existing results on rich semantic states, asynchronous denoising, and component reuse provide the foundation for this program.
-
-> **Figure 1 — Explanatory overview; no new results needed.** Use the woman/man/child prompt to connect three elements: token vectors Z and semantic components sₖ; attention heads, MLP weight slices, and shared prediction features; and separate denoising schedules τₖ. Illustrate reversing who hands over the cup while preserving identities, clothing, and the child's activity. Show module findings guiding component maps and schedules, and semantic dependencies guiding network design. Distinguish established preliminary findings from the proposed finer semantic specialization. Use simple drawings, vector blocks, and schematic schedules only.
+> **Figure 1 — Main explanatory figure; no new results needed.** Follow one handover revision through semantic components sₖ, the attention/MLP computations connecting them, and overlapping asynchronous schedules τₖ. Mark the changed relationship and the identities, clothing, and activity to preserve. Add a small panel showing character and interaction knowledge from separate collections used in a new scene. Use schematic entities, vector blocks, and curves; distinguish established preliminary findings from proposed semantic specialization.
 
 ## 2. Aim 1: Learn semantic representations and design their denoising process
 
-**This aim will develop representations whose semantic structure supports precise control through asynchronous generation.** The work has three parts: obtain the token representation Z=E(x); learn component maps sₖ=Pₖ(Z) and the dependencies among them; and jointly learn the denoising network and schedules τₖ. Representation learning determines which information is available. Structure learning determines how that information is divided and used across components. Aim 2 will identify the network computations implementing these dependencies and guide their refinement.
+**This aim will learn meaningful components and coordinate their generation for precise semantic control.** Representation learning determines what information is available; structure learning determines how it is divided and used. We will obtain token vectors Z=E(x), learn component maps sₖ=Pₖ(Z), and jointly train the denoiser and asynchronous schedules. Aim 2 will identify the computations implementing these dependencies and guide their refinement.
 
-### 2.1 Obtain and learn representations
+### 2.1 Obtain representations and give their components semantic meaning
 
 We will proceed through three approaches of increasing training complexity.
 
-**Start with activations from existing models.** Frozen [DINOv2][dino] features and Qwen hidden states provide immediate visual and language representations. Our existing results support generating both kinds of states through diffusion. We will generate selected features alongside image latents, comparing the same feature source as conditioning, an auxiliary training target, and an explicit generated state. This establishes a practical starting point for structure and schedule learning.
+**Start with pretrained activations.** Frozen [DINOv2][dino] features and Qwen hidden states provide immediate visual and language representations. We will generate selected features alongside image latents, beginning with token groups and coordinate projections. Our existing results support generating both kinds of states through diffusion; they provide a starting point for learning finer semantic divisions.
 
-**Train representations for useful downstream tasks.** When existing features do not expose the desired distinctions, we will train an adversarial discriminator or a reward/preference model and use its intermediate activations as representation targets. A discriminator can learn distinctions between real and generated examples; a task-conditioned evaluator can learn which image better satisfies specified objects, actions, or relationships. General visual and language tasks remain additional sources. [Discriminator feature losses][vaegan] and [ImageReward][imagereward] support these routes. We will compare feature-based generation with scalar reward supervision. For evaluator-derived states, examples satisfying the request, or conditioning on task success, will define the desired generation target.
+**Learn representations through downstream tasks.** Adversarial discriminators, reward/preference models, and visual or language understanding tasks can expose distinctions needed for generation. [Discriminator feature losses][vaegan] and [ImageReward][imagereward] support using such learned signals. Intermediate activations will provide representation targets; task losses applied to selected components will actively give those components meaning.
 
-**Use meta-learning to construct representations that support selective change.** A concrete first example is learning a representation that lets a small context vector capture a new character from a few demonstrations. Begin with a learned projection of frozen encoder features and restrict the context vector's influence to selected representation components. Section 2.2 will refine these components and their connections. Each training episode contains a small support set of images of one character and a separate query set showing that character in different scenes or actions:
+A concrete initial construction will use a small set of participant vectors and an interaction vector, extracted by learned projections from image and language tokens, together with residual visual features. For the handover example, image-derived components will predict which participants give and receive the cup; language-derived components will predict the corresponding roles in the description. Each task predictor will initially read only its own modality's components; agreement on correctly paired examples will then connect the two modalities. Varying participants and role assignments will encourage separation of identity from the particular action role. These tasks anchor the semantic division, while Section 2.2 learns how the components depend on one another.
+
+This construction supports revision: changing the interaction component should alter the giver–receiver assignment, while participant and independent-activity information remains available. Other tasks can extend the component vocabulary. For discriminator or reward-derived representations, task-successful examples or explicit success conditioning will specify the desired generation targets. Predictive task losses and reconstruction will remain part of learning; semantic meaning will not be inferred from sparse recovery dependencies alone.
+
+**Use meta-learning to make a semantic contribution reusable.** Begin with a learned projection of frozen features and a small context vector a whose influence is restricted to selected representation components. Each episode supplies a few images of one character and separate examples of that character in other scenes:
 
 | Stage | Operation |
 |---|---|
-| Adapt to the support set | Initialize a small vector a, supplied as an additional context token, and update only a using the support examples' denoising loss. Shared encoder and generator weights stay fixed during these few steps. |
-| Evaluate on query examples | Use the adapted a with new scene descriptions. Measure denoising/reconstruction error and independently assessed character identity and instruction agreement. |
-| Learn across episodes | Update the shared representation projection through the support-update computation, using query loss to favor features that make a small adaptation transfer across scenes. Train the generator on the shared generation objective. |
+| Adapt to support examples | Update only a through denoising loss, keeping shared encoder and generator weights fixed during these steps. |
+| Learn from query examples | Update the shared representation projection through the support-update computation, using query denoising/reconstruction loss to make the adapted vector useful in new scenes. |
+| Retain generative information | Train the generator on its shared objective and retain encoder-feature reconstruction and fixed image latents. |
 
-Query denoising and reconstruction losses give a tractable initial outer objective; final generated images establish identity preservation and control of the new scene. Encoder-feature reconstruction and a fixed image representation retain the information needed for generation. New characters and compositions will be held out for evaluation. This instantiates ideas from [MAML][maml] and context adaptation such as [CAVIA][cavia], while specifying exactly what is adapted within an episode and what is learned across episodes. Aim 1 focuses on the representation; Aim 2 extends the same episodes to model initialization, sharing structure, and selected weight updates.
+This instantiates [MAML][maml] and context adaptation ideas such as [CAVIA][cavia] with a concrete learning target: features that let a small change capture a character across different compositions. Independent identity and instruction assessment will establish the resulting control. Aim 2 will extend these episodes to selected parameter updates and their shared initialization.
 
-### 2.2 Learn structure from recovery at different noise levels
+### 2.2 Learn dependencies through recovery at different noise levels
 
-**Structure consists of both the component maps Pₖ and the dependence of one component's recovery on information in the others.** Even a fixed encoder can support different decompositions. We will begin with token or coordinate groups and information-preserving rotations, then learn more general projections with reconstruction constraints.
+**Structure consists of the component maps and the information one component needs from the others.** We will begin with token or coordinate groups and information-preserving rotations, then refine learned projections while retaining semantic task losses and reconstruction.
 
-Our main learning signal will be recovery under independently varied noise levels. Using the interpolation in Section 1, let u collect the K components' denoising progress, with larger values indicating less noise. For component i, define the average flow-matching error per coordinate:
+Let u collect the K components' denoising progress, with larger values indicating less noise. For component i, define average flow-matching error per coordinate:
 
 ```math
 L_i(\mathbf{u})=
@@ -123,9 +106,9 @@ L_i(\mathbf{u})=
 \right].
 ```
 
-Here c is the supplied prompt or reference context, and fθ,i predicts the velocity for component i from the noisy collection of components. The target is the velocity per unit of that component's own progress. Thus the diagnostic does not become smaller merely because a learned schedule slows that component down.
+Here c is the supplied context, and fθ,i predicts component i's velocity from the noisy collection. The target is velocity per unit of that component's own progress, so slowing its schedule does not trivially reduce the diagnostic.
 
-For distinct components i and j, measure whether information in j helps recover i by changing only j's noise level:
+For distinct components i and j, change only j's noise level:
 
 ```math
 D_{j\to i}(\mathbf{u})=
@@ -136,116 +119,81 @@ L_i(\mathbf{u}_{j\leftarrow u_j^{\mathrm{cleaner}}}),
 u_j^{\mathrm{noisy}}<u_j^{\mathrm{cleaner}}.
 ```
 
-A positive value means that cleaner information in j improves recovery of i. Both evaluations use the same network, examples, Gaussian noise draws, prompt, target noise level uᵢ, and other components' noise levels. We will normalize feature scales and component dimensions, including during projection learning, so that rescaling a component cannot artificially improve its recovery loss. Repeating the comparison across noise configurations and contexts reveals dependencies that change during generation. Varying small sets of components together will capture interactions missed by pairwise comparisons. Masked recovery, as in [MultiMAE][multimae], offers a related training principle; in our diffusion setting, fully noised components contain no sample-specific information.
+A positive value means cleaner information in j improves recovery of i. The network, examples, noise draws, context, target noise level, and all other noise levels stay fixed. Repeating this comparison across configurations reveals dependencies that change during generation; varying small groups together captures interactions missed by pairwise comparisons. [Masked recovery][multimae] supplies a related training principle.
 
-These measurements will also guide **learning the decomposition**. We will optimize rotations, group assignments, or maps Pₖ so that each component can be recovered accurately from a limited subset of other components. Candidate subsets will be informed by the recovery benefits above, with omitted components replaced by independent noise. Fixed dimension and reconstruction requirements will retain information; semantic evaluation will ensure that the resulting groups correspond to useful concepts. Overlapping components and residual features will count toward the total representation budget.
+We will learn component maps that maintain semantic prediction and reconstruction while recovering each component from a limited subset of others. The measured benefits guide which inputs to retain; omitted components are replaced by independent noise. Normalized feature scales and a fixed total dimension prevent gains through rescaling or adding redundant copies. Overlapping components and residual features count toward that budget.
 
-The resulting structure describes the information used by the current generator at particular noise levels. It provides a concrete bridge to Aim 2: if cleaner component j helps recover i, we can identify which attention heads, feature projections, or MLP components carry that benefit by removing and restoring their contributions. Their identified roles will guide both component maps and network design.
+These dependencies describe information useful to the current generator. Aim 2 will establish which attention heads, projections, and MLP computations carry the measured benefits and construct more selective access where needed. This connects a learned semantic division to the network mechanisms required for its generation.
 
 ### 2.3 Jointly learn asynchronous denoising and use it for control
 
-**All K components will have asynchronous schedules, with no imposed ranking between them.** Each τₖ progresses from noise to data, but the curves may cross: a component can advance relatively faster during one interval and slower during another. Several components can develop together throughout generation. The semantic/texture split in our preliminary work is a useful special case of this broader construction.
+**All K components have asynchronous schedules without an imposed ranking.** Each τₖ progresses from noise to data, but curves may cross and components may develop together. The semantic/texture split in our preliminary work is a special case.
 
-Our [anisotropic trajectory optimization work][trajectory] provides a direct foundation: it learns a matrix-valued noise path jointly with the score network through a trajectory-level objective. [Learning When to Denoise][schedule] supplies a complementary flow-matching formulation with corrected weighting as schedules change. We will build on these methods to learn schedules for the components discovered above.
+Our [anisotropic trajectory optimization work][trajectory] jointly learns a matrix-valued noise path and score network through a trajectory-level objective. [Learning When to Denoise][schedule] supplies a complementary flow-matching formulation with corrected weighting as schedules change. We will extend these methods to the learned components through three alternating updates:
 
-A concrete procedure will alternate three coupled updates:
+1. Train the denoiser on scheduled and additional mixed-noise configurations.
+2. Update schedules using the trajectory or appropriately weighted flow-matching objective, retaining each component's noise-to-data endpoints.
+3. Refine component maps through semantic prediction, recovery, and reconstruction, then update their measured dependencies.
 
-1. **Train the denoiser** on the current representation, sampling the scheduled noise configurations together with additional mixed-noise configurations needed to measure recovery dependencies.
-2. **Update the component schedules** using a trajectory or appropriately weighted flow-matching objective, favoring noise configurations in which the network can recover each component effectively. Every component retains its noise-to-data endpoints; no semantic-leading constraint is imposed.
-3. **Refine the component maps** using the recovery objective and information constraints in Section 2.2, then recompute dependencies and continue network and schedule learning.
+When cleaner information in j reduces i's prediction error, schedule optimization can exploit that interaction while balancing all components' recovery. The key tradeoff is that denoising one component earlier can reduce other components' prediction errors while increasing its own because it has less informative context, linking schedule optimization to the conditional dependencies that make different factorizations of the joint distribution easier or harder to learn.
 
-This connects structure discovery to joint training. When cleaner information in j reduces i's prediction error at a particular stage, the schedule optimizer can exploit that interaction while balancing the recovery of all other components. The key tradeoff is that denoising one component earlier can reduce other components' prediction errors while increasing its own because it has less informative context, linking schedule optimization to the conditional dependencies that make different factorizations of the joint distribution easier or harder to learn. An evolving collection of such interactions determines relative denoising rates, without requiring a fixed generation order.
+We will adapt our prior schedule weighting and gradient estimators, including the learned denoiser's dependence on the noise process. Diagnostics at fixed noise configurations and corrected local-noise weighting will distinguish improved information use from merely downweighting difficult prediction problems.
 
-We will adapt the schedule weighting and gradient estimators from our prior work, including the dependence of the learned denoiser on the chosen noise process. Recovery diagnostics will also be evaluated at fixed noise configurations. In the flow-matching implementation, schedule corrections will keep each component's local-noise weighting fixed. This distinguishes improved use of cross-component information from simply assigning less loss weight to difficult prediction problems. Coordinate-flow loss guides learning; final generation quality, edit fidelity, and preservation determine practical success.
+For the handover revision, the learned dependencies and Aim 2's module analysis will guide which semantic and visual components to update together and how their denoising rates should change. A late edit can revisit selected components through forward noising followed by conditional denoising, with training covering the required mixed-noise configurations. This makes asynchronous generation a means of preserving the creator's other requirements while realizing a specific change.
 
-For a concrete control task, revise the running prompt so that the man hands the cup to the woman, while retaining their clothing and the child's reading activity. Dependency measurements and Aim 2's module analysis will guide which semantic and visual components to update together and how their schedules should change. As an extension for late edits, a specified forward-noising step followed by conditional denoising will revisit selected components. The model will be trained for the required mixed-noise configurations.
+**Expected result:** a task-grounded semantic decomposition, measurable recovery dependencies, and a jointly trained denoising procedure for selective scene revision.
 
-Paired examples can support this evaluation: supply an existing generator with the original and revised prompts, reuse its initial random seed where possible, and independently check the changed action and preserved requirements. Generated editing pairs, as in [InstructPix2Pix][instruct], offer a practical source. These pairs validate semantic effects; noise-level interventions provide the defined structure-learning signal.
-
-We will compare a common schedule, fixed multi-component schedules, and schedules learned directly for generation quality or control on matched representations and computation budgets. Additional comparisons will learn the decomposition and schedule jointly, with and without the mechanistic guidance from Aim 2. All methods will be evaluated on new prompts and compositions; training convergence and FID complement independent measurements of semantic control.
-
-**Expected result:** a representation, a learned decomposition with measurable recovery dependencies, and jointly trained denoising procedures that support precise semantic changes across prompts.
-
-> **Figure 2 — Explanatory method diagram; no new results needed.** Show three sources of representations: pretrained activations, task-trained features, and the character adaptation episode. For structure learning, draw the same target component at a fixed noise level while another component is made cleaner, and label the comparison as a proposed recovery-loss measurement. Show several asynchronous schedules that overlap and can cross, together with updates to the component maps and denoising network. Connect the measured dependence to an attention head or MLP component analyzed in Aim 2. Use schematic examples and curves only; no new samples or measured results are required.
+> **Figure 2 — Compact explanatory method panel.** Illustrate participant/interaction components learned from task prediction, followed by a recovery comparison with the target noise level fixed and another component made cleaner. Show overlapping asynchronous schedules and the tradeoff between improving others' recovery and reducing information available to an early component. Include the character meta-learning episode as a small inset if space permits. All curves and examples are schematic; no new measured results or samples are needed.
 
 ## 3. Aim 2: Understand and design network mechanisms for knowledge storage and composition
 
-**This aim will establish how network components implement semantic interactions and use that knowledge to guide architecture, denoising, and parameter updates.** We will begin with pretrained models and fixed representations, and incorporate Aim 1's learned components and schedules as they develop. The resulting account will guide both network construction and revisions to the representation and generation process.
+**This aim will connect semantic dependencies to network computations that can be reused, combined, and changed selectively.** We will identify which computations connect representation components during denoising, construct more selective access to those computations, and use the resulting organization to incorporate knowledge from collections or demonstrations. The initial setting uses a small number of components, a common base generator, and a shared representation interface.
 
-### 3.1 Stored knowledge and compositional computation
+### 3.1 Identify and organize computations across components and denoising stages
 
-By stored knowledge we mean information acquired through training and reused across prompts: concept features, associations, and prediction rules. We will investigate how this knowledge is represented in MLPs and shared prediction banks, and how attention accesses and combines it with the current semantic and visual states.
+For an attention head, feature projection, or selected MLP weights, we will ask: **which representation components does it read, which does it influence, and under which noise configurations?** With asynchronous generation, a stage is described by the vector u of component noise levels. The same weights may perform different functions as available information changes.
 
-Our mechanistic analysis motivates three interacting operations:
+Aim 1's recovery measurements make these questions concrete. If cleaner giver–receiver features improve recovery of the visual exchange, we will identify the computations carrying that benefit. Removing and restoring selected contributions, with controls for general disruption, will establish their role. Value projections, MLPs, residual paths, and later denoising steps can all affect how an attention interaction reaches the output.
 
-- **Select information:** query–key interactions determine which tokens attention uses.
-- **Pass features:** value and output projections determine which information is transmitted.
-- **Predict a denoising update:** MLPs and surrounding components transform the available information into a refined state.
+Our preliminary analysis provides candidate mechanisms: attention combines information across tokens, while MLPs can contribute reusable predictions and stored knowledge. We will investigate these roles across semantic components without assuming an exclusive division of functions. Timestep specialization has precedents such as [Decouple-Then-Merge][deme]; our objective is to explain and design specialization through changing semantic dependencies.
 
-[Compositional Attention][compositional] provides a precedent for separating search and retrieval. We will test the roles of these operations through feature and parameter replacement, removal, and restoration, measuring immediate changes and the final image. For example, we will ask which components provide knowledge of an activity and which connect its participants to a relation specified in the prompt. Information may be distributed across components; the experiments will establish the roles of MLPs alongside attention and other network weights.
+**We will actively construct parameter organization that supports the identified roles.** Learned feature-access projections will select relevant components and connect them to shared prediction banks: reusable prediction features, potentially stored in MLP weights, accessed across layers through layer- or component-specific projections. This extends sharing beyond the usual reuse of an MLP at different token positions. Access can depend on component reliability, activating a computation when its inputs become informative. Residual computation will retain interactions that require coordinated treatment. [Compositional Attention][compositional] provides a precedent for separating information selection from retrieval.
 
-Aim 1's recovery measurements provide a specific starting point: when cleaner information in component j improves recovery of component i, we will interrupt and restore selected attention or MLP contributions to identify which computations carry that benefit. We will measure both the change in this benefit and baseline recovery, with matched interventions, to distinguish a specific dependence from general damage to the network. Feature replacements at different noise levels will further reveal how the influence persists through denoising. The results will guide Aim 1's component maps and schedules. When a useful semantic interaction is poorly supported, we will use these findings to guide projections and sharing choices in Section 3.3. Attention weights alone will not identify the mechanism: value projections, MLPs, residual paths, and subsequent steps can alter its effect.
+This organization supports learning from partial representations. If demonstrations supply character-identity features, we can supervise those targets and adapt the associated computations while the base generator supplies new scenes and actions. Different demonstrations can provide different semantic components without depicting every complete combination. The intended benefit is less learning of incidental scene details and fewer required combinations. Module roles will also guide Aim 1's schedules: related computations can indicate which states should develop or be revised together.
 
-We will also study **shared prediction banks**: learned features accessed by several layers through layer-specific projections. Which information can be shared, and which access rules must remain distinct? We will compare sharing and replacement with separate layer parameters, measuring quality against the number of stored parameters. Sharing across depth extends beyond the ordinary sharing of MLP weights across token positions and does not by itself imply faster computation.
+### 3.2 Learn reusable computations through diverse semantic dependencies
 
-### 3.2 Train attention on diverse compositions and test reuse
+**Compositional training will vary both the relationships in examples and the information available during recovery.** We will change participants in the handover, reverse their roles, and combine the exchange with independent activities. This varies which concepts interact while providing repeated opportunities to reuse familiar relationships.
 
-We will actively test whether exposure to diverse composition rules produces more reusable attention computations. Controlled training sets will vary how concepts and relations are combined while keeping the concept inventory, sample count, and compute comparable. We will then measure transfer to new concepts or requirements from limited examples.
+Aim 1's components and independently varied noise levels turn these examples into conditional recovery problems. Clear role information can guide a noisy visual exchange; clearer visual information can help recover participant roles. Other configurations require components to develop together. Training shared access projections and prediction components across these problems will encourage computations that remain useful when participants or surrounding activities change.
 
-The scientific question is whether broader composition exposure improves the information selected and passed by attention, allowing other learned knowledge to change with less disruption. Better adaptation alone will not establish this explanation; component interventions must identify the computations responsible.
+New character knowledge could then be incorporated while retaining computations for familiar interactions. New relationships may require changes to both knowledge and its combination. For squared prediction error, a tractable theoretical starting point will separate information lost by reusing a fixed attention output from the remaining error in predicting with that output. Linear models with Gaussian data will provide initial conditions for reuse, informing the network construction.
 
-We will first test new combinations without adaptation. Where training is required, the main comparison will separate changes in concepts from changes in their composition:
+We will extend Aim 1's meta-learning episodes to this parameter organization. A few support examples will update selected parameters; query examples with different compositions will guide the shared initialization and access projections through those updates. This makes adaptability a concrete objective for constructing reusable computations, alongside ordinary compositional training.
 
-| What changes? | Question about the network |
-|---|---|
-| New entities or activities; familiar relationships | Can existing attention supply the information needed by adapted prediction components? |
-| Familiar concepts; new combinations of roles, references, or instructions | Must information selection or combination change while other knowledge remains useful? |
-| Both change | Which components must adapt together? |
-| Neither changes | How much drift does unnecessary adaptation introduce? |
+### 3.3 Incorporate knowledge through model merging and generated updates
 
-From limited diagnostic examples, we will predict which heads, feature groups, or parameter components can be retained. Separate tasks and compositions will test those predictions through direct restricted training and component replacement. Comparisons will match examples, updated parameter counts, and compute. One test will retain attention learned on one data subset while fitting prediction components on another.
+The preceding organization connects parameter changes to their effects on represented concepts and recovery dependencies. Two applications will use the same representation interface and restricted parameter family.
 
-For squared prediction error, our theoretical starting point separates the information lost by reusing a fixed attention output from the error in learning a new predictor from that output. We will study this first in linear models with Gaussian data, then test the resulting criteria in small diffusion Transformers. Existing bounds on removed attention contributions provide a starting point for examining how errors accumulate across layers and denoising steps.
+**Integrate knowledge from separately trained collections.** Begin with models or adapters trained from a common base on different datasets, using fixed encoders and component maps and the same allowed parameter groups. One collection might contribute characters and another interactions. The goal is to let those characters participate in the learned interactions while retaining existing generation capabilities.
 
-### 3.3 Learn model structure and initialization for selective change
+For each source model, we will identify the representation components and recovery dependencies changed by training. We will combine source updates within these parameter groups, retaining contributions that serve compatible components and fitting mixing coefficients or connecting projections where their effects overlap. New interactions will require focused learning in the computations connecting the contributions. Retained examples or samples from the source generators will provide targets for this focused training.
 
-We will extend Aim 1's character adaptation episode from a context vector to selected parameter updates. A few updates on the support images will adapt the allowed weights; query examples will guide the shared initialization and feature-access projections across episodes. Comparisons of sharing structures and update locations will establish which network designs support a small, selective change that transfers to new scenes under the chosen denoising procedure.
+This reuses learning already performed on individual datasets. For an unprocessed collection, we will train selected knowledge components before integration. The opportunity is to avoid repeatedly fine-tuning the complete generator on the growing union of collections. [ZipLoRA][ziplora] establishes the usefulness of adapter merging; our proposed advantage is a semantic and computational account of which contributions can be combined and where additional learning is needed.
 
-We will use separate changes to representation, schedule, and parameter organization to identify their contributions, then refine them together. A network design that makes a semantic component easier to use will feed back into Aim 1; the dependencies exposed there will guide which projections or sharing structures to learn here.
+**Generate targeted updates from demonstrations.** Demonstrations will specify desired semantic contributions, and a conditional diffusion model will generate coefficients in a shared update basis associated with the relevant parameter groups. Successful adaptations within this organization will provide initial training targets. Training will also match their effects on represented components and denoising behavior, since equivalent weights can implement the same function. Partial representations can specify the contribution to learn without requiring demonstrations of complete scenes.
 
-Mechanistic tests will compare which information each component uses, which weights respond during adaptation, and whether the predicted effects persist. This can reveal how meta-learning changes the model's organization, including cases where fast adaptation remains distributed and difficult to interpret.
+[DiffLoRA][difflora] already generates personalization weights, and [Concept Sliders][sliders] provides selective parameter directions. Our approach adds an explicit connection between the requested change, the computations implementing it, and their roles during denoising. This can reduce the update space to predict and help preserve behavior outside the intended change. A generated update will be reused across prompts and image-noise realizations; when demonstrations admit alternatives, sampled updates can represent different reusable interpretations. Generated updates and merged contributions will share the same interface, supporting their combined use.
 
-### 3.4 Predict parameter effects and training responses
-
-Given a weight change and generation process, we will predict the effects on evolving states and the final image. Given a changed representation, target, dataset, or training noise schedule, we will predict the learning response. These are related processes, not inverse maps.
-
-A first approximation will use the sensitivity of a prediction to each weight. For a fixed input and squared-error loss, this same sensitivity determines how a changed target alters one gradient update. We will then update the approximation along short training runs and account for interactions between components. Changing an MLP, for example, can change the states seen by later attention even if attention's weights remain fixed. We will test whether such component changes alter the useful generation order or the point at which an edit is preserved or overwritten. Predictions of final effects must account for the remaining denoising steps.
-
-Extensive flow training on development tasks will provide reference trajectories and well-trained endpoints. They specify behaviors to approximate, without assuming unique optimal weights. We will test predictions on held-out tasks using limited diagnostic examples. Varying Aim 1's source tasks, component maps, and noise schedules will reveal how information available during training shapes parameter responses. These findings will guide representation and schedule choices that support selective learning.
-
-### 3.5 Generate weight updates from context or demonstrations
-
-**Can context specify a reusable parameter change whose effects we can explain?** We will train a model to generate compact weight deltas from contextual instructions or a few demonstrations. This asks whether the learning process studied above can be approximated with less data and computation.
-
-The update will initially be expressed through coefficients in a shared basis or selected parameter groups. The attention and knowledge analyses will inform their locations and structure. Reference adaptations will supply initial training targets; training and evaluation will also compare denoising behavior, semantic effects, and preservation. Equivalent weights can implement the same function, so coefficient matching alone is insufficient.
-
-[DiffLoRA][difflora] establishes a precedent for generating personalization updates from reference images. We will compare a direct context-to-update model with one using the representation and parameter organization developed here, alongside ordinary LoRA and Concept Sliders under comparable budgets. A conditional diffusion model over updates will be compared with deterministic prediction. When demonstrations admit several interpretations, we will test whether sampled updates express useful, distinct behaviors; one sampled update will be reused across multiple prompts with independently varied image noise.
-
-The goal is to turn a semantic correction realized through Aim 1's representation and denoising procedure into a reusable parameter update. We will evaluate its effects across new compositions and establish how the update acts through the identified network computations. Combining two updates from the same base will provide a bounded test of interference and model merging.
-
-This study can begin with ordinary representations, parameter bases, and reference training. Its progress does not require every proposed representation or architecture to succeed first.
-
-**Expected result:** a mechanistic account of knowledge storage, composition, and learning that guides reusable network designs and selective parameter updates, and supplies Aim 1 with concrete guidance on which semantic components to generate or revise together.
+**Expected result:** an interpretable organization of semantic access and shared prediction computations, with bounded methods for adapting, combining, and generating parameter updates that incorporate new knowledge.
 
 > **Figure 3 — Existing component-reuse results only.** Use the already reported CelebA→AAHQ and CelebA→STL-10 results, with paired DINO recovery values 0.815 and 0.143. Draw which weights were restored to the source model and which remained adapted. Reuse existing illustrative images if suitable; the reported values alone are sufficient. Label the experiment as restoring components after joint adaptation. Do not add new runs, uncertainty estimates, direct restricted-training results, or predicted-versus-observed results from the proposed project.
 
 ## 4. Why the proposed work is feasible
 
-Existing work supports several of the connections we will study. SFD and SeFi-Image show that generated semantic information can guide image generation. The locality study shows that restricting dependencies can improve composition in a controlled setting and finds suggestive structure in SDXL features. Concept Sliders uses controlled changes in StyleGAN to create paired examples and learn corresponding diffusion-model weight updates. Vision-language binding studies show that interventions can trace how references influence an image. These results support the proposed approach while leaving our central question—how representation structure relates to reusable weights—open. [SFD][sfd], [SeFi-Image][sefi], [Local Mechanisms][local], [Concept Sliders][sliders], [Vision-Language Binding][binding].
+Existing work supports the connections underlying the proposal. [SFD][sfd] and [SeFi-Image][sefi] show that generated semantic information can guide image generation; [Latent Forcing][latentforcing] and [Diffusion Forcing][diffusionforcing] support varying generation across representations or token noise levels. [Local Mechanisms][local] demonstrates benefits of restricted dependencies for composition in a controlled setting, with suggestive structure in SDXL features. [Vision-Language Binding][binding] shows that interventions can trace how references influence an image.
 
-[Latent Forcing][latentforcing] directly analyzes the ordering of latent and pixel generation, while [Diffusion Forcing][diffusionforcing] demonstrates flexible sampling and guidance using different noise levels across tokens. Together with our scheduling results, these support varying the generation process as a practical research method. They do not establish the proposed correspondence between complex semantic dependencies, internal computations, and selective revision.
-
-Existing work also supports the constructive methods. [VAE/GAN][vaegan] uses discriminator features in a reconstruction objective, while [REPA][repa] aligns diffusion-network features with pretrained visual representations. [ImageReward][imagereward] provides a learned preference signal for generation. [MAML][maml] and [CAVIA][cavia] supply methods for learning from adaptation episodes, and [DiffLoRA][difflora] demonstrates conditional generation of parameter updates. These establish practical ingredients; the proposed connection between representation choice, parameter roles, and predictable learning remains to be tested.
+The constructive methods also have practical foundations. [VAE/GAN][vaegan] uses discriminator features for reconstruction, [REPA][repa] aligns diffusion features with pretrained representations, and [ImageReward][imagereward] supplies learned preference supervision. [MAML][maml] and [CAVIA][cavia] support learning from adaptation episodes. [DiffLoRA][difflora], [Concept Sliders][sliders], and [ZipLoRA][ziplora] establish useful parameter generation, editing, and merging operations. The proposed advance connects these operations to learned semantic divisions, conditional recovery, and the computations carrying their effects through denoising.
 
 Our existing results provide the following evidence:
 
@@ -258,40 +206,44 @@ Our existing results provide the following evidence:
 
 The sharing result uses one training seed. The transfer metric compares outputs in DINO feature space against the jointly adapted generator. Those experiments restored weights after training; they do not establish that keeping those weights fixed throughout training would work equally well. This distinction motivates the proposed reuse tests.
 
-ELF is useful here because it demonstrates generation of language states that retain reasoning-relevant information. This motivates generating semantic states rich enough to carry a prompt's logical and relational requirements. The proposed work will develop useful divisions of these states, coordinate their asynchronous generation, and connect them to image generation. Our [anisotropic trajectory optimization research][trajectory] supplies a joint network/schedule-learning objective and estimators accounting for the changing noise process. Together with our asynchronous flow work, this provides an algorithmic starting point for learning the recovery dependencies and multi-component schedules in Aim 1.
+ELF's reasoning accuracy is a functional demonstration that diffusion-generated Qwen states retain precise language information. This motivates semantic targets capable of carrying complex prompt requirements. Our [anisotropic trajectory optimization research][trajectory] provides joint network/schedule learning and estimators accounting for a changing noise process; our asynchronous flow work provides another direct algorithmic starting point.
 
-Together, these results support generating rich internal states, coordinating their evolution, and studying reusable network components. They give the five approaches independent starting points. Their synthesis will test whether representations obtained through task learning or meta-learning make attention, stored knowledge, and parameter updates easier to explain. If a representation supports prediction but not selective change, we will examine missing information, shared computations, and the effects of later denoising.
+These results establish separate foundations for representation generation, schedule design, and component reuse. The proposed research connects them through task-grounded component maps and module-specific information access. Existing encoders and generators let both aims begin immediately, while improvements to their organization can be incorporated progressively.
 
 > **Figure 4 — Existing representation-generation results only.** Use two panels: (a) a diagram of ELF's frozen-Qwen feature extraction and diffusion generation, with the already reported 61.94% reasoning accuracy; (b) the existing semantic/texture scheduling result, reusing a published plot or displaying the reported 200- versus 800-epoch comparison. Explain that asynchronous generation already improves training and quality; coordinating many representation components for selective control is proposed work. Do not request new seeds, runs, decoded examples, or comparisons. Figure 3 already covers the transfer evidence, so it need not be repeated here.
 
-## 5. Proposed creator demonstration and relevance to Sony
+## 5. Creator demonstrations and relevance to Sony
 
-During the award period, we will build a demonstration in which a creator supplies reference characters or objects and a prompt specifying roles, actions, and relationships. The creator can revise one instruction while preserving the others. We will show how the revision changes semantic states and which subsequent updates realize it. The demonstration will compare advancing, retaining, or revisiting selected states under the proposed generation process. For a new concept or recurring instruction error, a few demonstrations will specify a reusable correction. We will compare a representation intervention, a fitted parameter update, and a context-generated update across new prompts.
+**Reliable scene revision.** A creator supplies character references and a description of the handover scene, then reverses who gives the cup while retaining identities, clothing, and the child's activity. The demonstration will expose the relevant semantic change and show how identified network computations and asynchronous denoising carry it into the image. Learning from selected representation components will also let demonstrations supply identity or interaction information without specifying every complete scene.
 
-Evaluation will measure reference identity, counts, action and attribute assignments, and stated relationships separately, including instructions where one relationship identifies the subject of another clause. FID and prompt–image alignment will provide broader quality measures. Independent checks and blinded human assessment will complement any learned evaluator used in training. Comparisons will account for training examples, denoising and adaptation steps, parameter count, and the offline cost of selecting schedules, meta-learning, or generating updates. We will report failures alongside successful edits.
+**Expand a reusable collection.** Starting with two source models or adapters trained from the same base, the creator will incorporate character knowledge from one collection and interaction knowledge from another, then request a new scene using both. Focused reconciliation will address the computations connecting the contributions. A compact update generated from demonstrations will provide a complementary way to add or correct a contribution and reuse it across prompts.
 
-A limited extension will add a collection of reference characters through a separate group of parameters. Enabling, replacing, or disabling those parameters will test which generated features depend on the collection and how their use in different roles passes through the model. This could support more explicit control over newly added sources. Removing those parameters would not imply that related information has been erased from the original model.
+These workflows target fewer unintended changes during revision and less repeated training as a collection grows. They could support visual asset development for games, animation, and film. They also address [Sony's stated interests][sony] in modality binding, generation dynamics, causal interventions, and externalized knowledge. We will retain the identity of newly added source modules so their contributions can be enabled, replaced, and traced. Disabling an added module does not imply removal of related knowledge from the pretrained base.
 
-The demonstration addresses Sony's interests in internal mechanisms, the use of different sources, editing, and controllable contributions. It could inform visual asset development for games, animation, and film. Video and audio provide longer-term motivations.
+Validation will connect internal effects to the creator's requirements: reference identity, participant roles, attributes, and independent activities will be assessed separately, alongside generation quality. Independent evaluators and human assessment will complement training signals. Source integration will track preservation and the compute used for learning, merging, and inference. Comparisons will isolate the benefit of the proposed correspondence at comparable budgets. Prompt-grounded assessment such as [GenEval][geneval] provides a starting point, extended to action roles.
 
-> **Figure 5 — Conceptual workflow only.** Use reference labels, schematic entities, and prompt clauses to show a revised requirement and the requirements to preserve. Illustrate a representation correction and selective revision of dependent states, followed by contextual demonstrations producing a compact weight update reused across new prompts. Label this “Proposed workflow.” Use explanatory drawings only; no new generated images or completed demonstration is needed for submission.
+Existing generators can supply original/revised prompt pairs, following the practical precedent of [InstructPix2Pix][instruct]. Shared initial noise can aid comparison, but pairs will be checked for the intended change and preserved requirements before use. These are proposed award-period resources and demonstrations.
+
+> **Figure 5 — Optional creator-workflow panel.** Show scene revision and collection expansion using reference labels and schematic entities. Reuse the handover example from Figure 1; merge this panel into that figure if space is limited. Label parameter merging and demonstration-generated updates as proposed capabilities. No new samples or completed demonstration are required before submission.
 
 ## 6. Work plan and deliverables
 
-All experiments in this work plan are proposed for the 12-month award period.
+**The core deliverable is a working correspondence between semantic components, their denoising process, and the network computations enabling selective control.** Task-derived features, meta-learning, and compositional training are methods for constructing it. Partial-representation adaptation, model merging, and generated updates will use the same representation interface and restricted parameter family.
 
-| Period | Main task | Deliverable |
+All experiments below are proposed for the 12-month award period.
+
+| Period | Main work | Concrete output |
 |---|---|---|
-| Months 1–3 | Begin both aims with shared semantic tasks, existing representations and generators, and reference adaptation procedures. | Baseline representations and schedules; initial analyses of module roles and independent evaluation. |
-| Months 4–6 | Jointly refine component maps and schedules using module analysis; apply meta-learning to representations, processes, and model structure. | Semantic control methods and mechanistic guidance connecting representation, denoising, and network design. |
-| Months 7–9 | Train for diverse compositions; develop knowledge sharing/replacement and context-generated updates, feeding findings back into representations and schedules. | Reusable network designs, selective updates, and comparisons of their effects on generation and learning. |
-| Months 10–12 | Consolidate the coupled methods on natural images and complete the creator demonstration. | Mechanistic findings and their limits, reusable editing examples, reproducible evaluation materials, and final report. |
+| Months 1–3 | Begin both aims with existing image/language features; learn participant and interaction projections using semantic tasks; measure recovery dependencies and identify candidate network computations. | Initial component maps, recovery measurements, and module assignments for the shared scene workflow. |
+| Months 4–6 | Jointly refine component maps and schedules; learn selective feature access and shared prediction components, using compositional training and compact meta-learning episodes. | An asynchronous denoising procedure and network organization supporting selective scene revision. |
+| Months 7–9 | Use the shared organization for partial-representation adaptation, integration of two source models/adapters, and generation of compact updates from demonstrations. | Bounded merging and update-generation methods that add character or interaction knowledge through identified parameter groups. |
+| Months 10–12 | Consolidate both creator workflows on natural images and document how the identified computations support preservation and reuse. | Demonstrations, implementation, mechanistic findings, reproducible evaluation materials, and final report. |
 
-The core studies will use small diffusion Transformers, our existing training pipeline, and pretrained generators, sharing tasks, extracted features, and adaptation episodes. Both aims can start immediately: task-derived representations and schedules can be developed with an existing generator, module roles with fixed representations, and generated updates with ordinary parameter bases. Throughout the project, module findings will guide representation and process design, while semantic dependencies and adaptation needs will guide network design and training.
+The core studies will use small diffusion Transformers, our existing training pipeline, and pretrained generators. Learned projections, a small number of component groups, and restricted updates provide tractable initial constructions; the generator, extracted features, adaptation episodes, and parameter basis will be shared across applications. Initial module analysis uses fixed representations, so it can guide Aim 1 before a new decomposition is learned.
 
-The meta-learning studies will begin with compact representations, initializations, and feature-access or sharing choices; update generation will begin in a restricted parameter family. These provide tractable implementations of all five approaches within the two aims. Adaptation quality alone will not establish the proposed mechanism: improvements must be connected to changes in information use, stored knowledge, or parameter responses.
+The first merging setting uses a common base and shared representation interface, avoiding a requirement to align unrelated architectures. Generated updates begin in the same restricted parameter family, using successful adaptations as training targets. Where useful dependencies span several computations, the methods will operate on those groups and focus reconciliation there. This retains a concrete route to control and integration without requiring a perfectly separated network.
 
-We will provide three quarterly reports, a final research summary, and the required progress-questionnaire responses. The outputs will explain what information the model uses, how training organizes it, and when a change can preserve the other requirements of a creator's request.
+Text-and-reference image generation defines the award-period application. Larger collections, broader architectural changes, and temporal/audio extensions provide future directions. We will provide three quarterly reports, a final research summary, and the required progress-questionnaire responses.
 
 ## References
 
@@ -318,6 +270,8 @@ We will provide three quarterly reports, a final research summary, and the requi
 20. Chen et al. [Diffusion Forcing: Next-token Prediction Meets Full-Sequence Diffusion][diffusionforcing]. arXiv:2407.01392, 2024.
 21. Baade et al. [Latent Forcing: Reordering the Diffusion Trajectory for Pixel-Space Image Generation][latentforcing]. arXiv:2602.11401, 2026.
 22. Ghosh, Hajishirzi, and Schmidt. [GenEval: An Object-Focused Framework for Evaluating Text-to-Image Alignment][geneval]. arXiv:2310.11513, 2023.
+23. Ma et al. [Decouple-Then-Merge: Finetune Diffusion Models as Multi-Task Learning][deme]. CVPR, 2025.
+24. Shah et al. [ZipLoRA: Any Subject in Any Style by Effectively Merging LoRAs][ziplora]. ECCV, 2024.
 
 **Unpublished preliminary materials.** *A Mechanistic View of Diffusion Transformers as Adaptive Patchwise Denoisers*, working manuscript; associated Experiment 1 and Experiment 3 reports; ELF-L experimental summary and accuracy records, 2026. These materials support the explicitly labeled preliminary results in Section 4.
 
@@ -335,7 +289,7 @@ We will provide three quarterly reports, a final research summary, and the requi
 
 ## Editorial notes for finalization — remove before submission
 
-- Prepare figures using only explanatory drawings and already reported results. Figures 1, 2, and 5 are diagrams; Figures 3 and 4 use existing evidence. Existing images and plots can be reused, and reported numbers can be redrawn. No additional training, sampling, ablations, evaluation, or completed demonstration is needed before submission.
+- Prepare figures using only explanatory drawings and already reported results. Figure 1 carries the main explanatory story; Figure 2 can be a compact method panel and Figure 5 can be merged into Figure 1. Figures 3 and 4 use existing evidence. Existing images and plots can be reused, and reported numbers can be redrawn. No additional training, sampling, ablations, evaluation, or completed demonstration is needed before submission.
 - Fit the narrative and references within ten pages, with the budget on a separate eleventh page. Shorten prose as figures are laid out; page count has not yet been checked in a submission PDF.
 - Complete PI contact details and the institutional budget. The PI CV is a separate submission item.
 - Check the planned model choices and computing costs against the budget. This is a planning decision and does not require a new experiment.
@@ -369,3 +323,6 @@ We will provide three quarterly reports, a final research summary, and the requi
 [latentforcing]: https://arxiv.org/abs/2602.11401
 
 [geneval]: https://arxiv.org/abs/2310.11513
+
+[deme]: https://arxiv.org/abs/2410.06664
+[ziplora]: https://arxiv.org/abs/2311.13600
