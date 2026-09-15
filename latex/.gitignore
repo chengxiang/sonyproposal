@@ -1,0 +1,8 @@
+build/
+*.aux
+*.out
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+proposal.pdf

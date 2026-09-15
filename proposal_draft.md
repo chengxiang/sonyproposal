@@ -262,7 +262,7 @@ Image latents will be augmented with frozen DINOv2 features and Qwen3-4B-Instruc
 
 We will select a bounded vocabulary of annotated activities and relations and form descriptions from their labels. Some participant–relation combinations will be held out to assess composition. SWiG and Visual Genome provide scene supervision; CelebA supplies the separate identity task. We will obtain the identity annotations for the existing image collection as needed. Independently checked generated scene variations can extend demonstrations during the award; success on facial identity alone will not stand in for control of full scenes.
 
-Knowledge integration will start with two adaptations trained during the award from the same generator and fixed representation interface, using different annotated subsets. Their shared allowed parameter groups will also define the output of the context-to-update model. Training will fit source updates first, then learn mixing coefficients or connecting projections for integration. This shared implementation makes merging and generated updates applications of the same mechanisms. The small-model work builds on our existing mechanistic experiments; funded staffing and computing allocations will be specified in the budget.
+Knowledge integration will start with two adaptations trained during the award from the same generator and fixed representation interface, using different annotated subsets. Their shared allowed parameter groups will also define the output of the context-to-update model. Training will fit source updates first, then learn mixing coefficients or connecting projections for integration. This shared implementation makes merging and generated updates applications of the same mechanisms. The small-model work builds on our existing mechanistic experiments. The budget requests 1.5 months of PI salary and 12 months of graduate research assistant support; no separate computing costs are requested.
 
 All experiments below are proposed for the 12-month award period.
 
@@ -313,23 +313,29 @@ Text-and-reference image generation defines the award-period application. Larger
 
 **Unpublished preliminary materials.** *A Mechanistic View of Diffusion Transformers as Adaptive Patchwise Denoisers*, working manuscript; associated Experiment 1 and Experiment 3 reports; ELF-L experimental summary and accuracy records, 2026. These materials support the explicitly labeled preliminary results in Section 4.
 
-## Budget summary — separate page in the submission
+## Budget summary
 
-*Editorial note: complete amounts and effort with the institutional budget. The [Focused Research Award limit][sony] is USD 150,000 inclusive of indirect costs; no award amount or staffing commitment is assumed in this draft.*
+**Total requested: USD 144,300 for 12 months.** The budget supports 1.5 months of PI salary and 12 months of support for one graduate research assistant, together with associated fringe benefits and graduate tuition remission. Personnel will carry out the proposed representation learning, mechanistic analysis, model development, and creator demonstrations.
 
-| Cost category | Research purpose | Amount (USD) |
-|---|---|---|
-| Personnel and associated benefits | Research on representations and weights, model training, and evaluation | [To complete] |
-| Computing | Training and adapting models, extracting features, and evaluating generation | [To complete] |
-| Other justified direct costs, if applicable | [Specify or remove] | [To complete] |
-| Indirect costs | Institutional rate and applicable cost base | [To complete] |
-| **Total requested** | **At or below USD 150,000** | **[To complete]** |
+| Budget category | Amount (USD) |
+|---|---:|
+| PI salary: Xiang Cheng, 1.5 months | 23,833 |
+| Graduate research assistant stipend: 12 months | 44,213 |
+| PI fringe benefits: 28.83% of PI salary | 6,871 |
+| Graduate research assistant fringe benefits: 11.45% of stipend | 5,062 |
+| Graduate tuition remission: 34.23% of stipend | 15,134 |
+| **Total direct costs** | **95,113** |
+| Indirect costs: 61.5% of modified total direct costs | 49,187 |
+| **Total requested** | **144,300** |
+
+**Budget basis.** Amounts follow the supplied institutional budget, rounded to whole dollars. PI salary uses a nine-month salary basis of USD 143,000. The modified total direct cost base is USD 79,979, consisting of salaries/stipend and fringe benefits; tuition remission is excluded. Applying the 61.5% indirect cost rate gives USD 49,187. No funding is requested for equipment, supplies, travel, other expenses, or subcontracts. The total includes indirect costs and is within the [Focused Research Award limit][sony] of USD 150,000.
 
 ## Editorial notes for finalization — remove before submission
 
 - Figures 1 and 2 are explanatory diagrams; Figures 3 and 4 use existing results. Figure sources, selected image panels, and reproduction instructions are documented in [figures/README.md](figures/README.md). No additional experiments are required before submission.
-- Fit the narrative and references within ten pages, with the budget on a separate eleventh page. Shorten prose as figures are laid out; page count has not yet been checked in a submission PDF.
-- Complete PI contact details and the institutional budget. The PI CV is a separate submission item.
+- The LaTeX version in `latex/proposal.tex` has been compiled and checked: ten pages of narrative, figures, and references, followed by a separate budget page, with 10-point body text. Recheck pagination after further edits.
+- Complete PI contact details. The PI CV is a separate submission item.
+- Confirm the budget calendar dates with the institutional administrator. The supplied workbook lists July 1, 2026–June 30, 2027, but its student stipend and tuition calculations blend eight months of 2026–27 rates and four months of 2027–28 rates. The proposal preserves the supplied amounts and 12-month duration without assigning replacement dates.
 - Check the planned model choices and computing costs against the budget. This is a planning decision and does not require a new experiment.
 - Review the bibliography and complete the authorship/citation form for unpublished preliminary materials. Preserve the qualifications about the existing sharing and transfer results in their figure captions.
 - Remove all drafting notes and figure-production instructions from the submission.
