@@ -9,7 +9,7 @@
 
 ## Abstract
 
-We will develop controllable and adaptable multimodal generators through a joint study of representations, Transformer modules, and the denoising process. Images, videos, and associated language can be represented as collections of token vectors. We will learn semantic components within these vectors, across groups of tokens, or through additional semantic tokens, using features from discriminators, reward models, language models, and other tasks. Our approach connects this decomposition to the roles of attention and MLPs in storing knowledge and composing concepts, and uses those roles to design how different components are denoised. The goal is precise control of objects, attributes, actions, and relationships while preserving the other requirements of a creator's request. Meta-learning and training on diverse compositions will support representations and networks that are easy to adapt; generating weight updates from demonstrations will make desired changes reusable across prompts. Existing results on diffusion-generated Qwen states, asynchronous semantic/visual generation, and network component sharing and replacement provide a foundation. The project will deliver methods for selective generation and adaptation, supported by a mechanistic account of their behavior, with improved training efficiency and generation quality as additional objectives.
+We will develop controllable and adaptable multimodal generators through a joint study of representations, Transformer modules, and the denoising process. Images, videos, and associated language can be represented as collections of token vectors. Aim 1 will jointly learn semantic components within or across these vectors and design their denoising procedures, using features from discriminators, reward models, language models, and other tasks. Aim 2 will explain and shape how attention and MLPs store knowledge and compose these components. Its findings will guide representation and schedule design; the resulting semantic dependencies will guide network design and training. The goal is precise control of objects, attributes, actions, and relationships while preserving other requirements of a creator's request. Meta-learning and training on diverse compositions will support reusable representations and computations; context-generated weight updates will make desired changes transferable across prompts. Existing results on diffusion-generated Qwen states, asynchronous semantic/visual generation, and component sharing and replacement provide a foundation. The project will deliver coupled representation and denoising methods, network design principles, and selective parameter updates, with training efficiency and generation quality as additional objectives.
 
 ## 1. The proposed contribution
 
@@ -77,14 +77,18 @@ This organization makes control more interpretable: each intervention is tied to
 
 ### The two aims
 
-1. **Learn representations that expose useful semantic structure.** Obtain semantic token vectors and component maps from task learning and meta-learning, and design generation procedures around their dependencies.
-2. **Understand and shape how network components store, compose, and modify knowledge.** Establish the roles of attention and prediction components, use them to improve generation and adaptation, and generate reusable weight updates from context.
+1. **Learn semantic representations and design their denoising process.** Jointly learn token vectors, semantic component maps, and generation procedures that enable precise semantic control. Task learning and meta-learning will organize the representation around how it is generated and revised.
+2. **Understand and design network mechanisms for knowledge storage and composition.** Establish how attention and prediction components implement semantic interactions, then use that understanding to design reusable computations, denoising procedures, and selective parameter updates.
+
+**The aims will guide each other throughout the project.** If Aim 2 identifies a computation that carries the giver–receiver relationship into visual predictions, Aim 1 can use it to decide when to generate or revise the relevant semantic component. Conversely, a useful decomposition from Aim 1 can identify interactions that the network should support through its projections, attention, or training. Both aims will begin with existing representations and generators, then refine their designs through this feedback.
 
 Text-and-reference image generation will provide the main application, with video motivating richer temporal and cross-frame semantics. The intended result is a creator who can change an object, action, or relationship with precise control over its consequences, and reuse learned concepts across new scenes. Existing results on rich semantic states, asynchronous denoising, and component reuse provide the foundation for this program.
 
-> **Figure 1 — Explanatory overview; no new results needed.** Use the woman/man/child prompt to connect three elements: token vectors Z and semantic components sₖ; attention heads, MLP weight slices, and shared prediction features; and separate denoising schedules τₖ. Illustrate reversing who hands over the cup while preserving identities, clothing, and the child's activity. Distinguish established preliminary findings from the proposed finer semantic specialization. Use simple drawings, vector blocks, and schematic schedules only.
+> **Figure 1 — Explanatory overview; no new results needed.** Use the woman/man/child prompt to connect three elements: token vectors Z and semantic components sₖ; attention heads, MLP weight slices, and shared prediction features; and separate denoising schedules τₖ. Illustrate reversing who hands over the cup while preserving identities, clothing, and the child's activity. Show module findings guiding component maps and schedules, and semantic dependencies guiding network design. Distinguish established preliminary findings from the proposed finer semantic specialization. Use simple drawings, vector blocks, and schematic schedules only.
 
-## 2. Aim 1: Learn representations that expose useful semantic structure
+## 2. Aim 1: Learn semantic representations and design their denoising process
+
+**This aim will deliver a semantic representation together with a denoising procedure for precise generation and editing.** We will learn the encoder E and component maps Pₖ, or build on pretrained features, while designing the schedules τₖ that generate and revise those components. Representation and schedule choices will inform each other, guided by the network mechanisms established in Aim 2.
 
 ### 2.1 Obtain semantic spaces from tasks
 
@@ -116,17 +120,17 @@ Rotations and groupings of fixed features provide a controlled starting point. W
 
 ### 2.3 Use meta-learning to define and construct useful representations
 
-**A good representation should help a limited change produce the intended effect while preserving other requirements.** We will use this criterion both to evaluate representations and to learn them.
+**A good representation and denoising procedure should together make a limited change produce the intended effect while preserving other requirements.** We will use this criterion to learn component maps and schedules, as well as to evaluate them.
 
-In each training episode, a small support set will specify a new concept, contextual rule, or desired correction. A few update steps will change selected representation variables or a restricted set of generator parameters. Separate query examples will test whether the resulting model applies that change in new compositions and preserves the other requirements. Across episodes, we will update the representation or its projection to improve this behavior. [MAML][maml] and methods for adapting compact context variables such as [CAVIA][cavia] provide starting points.
+In each training episode, a small support set will specify a new concept, contextual rule, or desired correction. A few update steps will change selected representation variables or a restricted set of generator parameters, followed by denoising under the selected procedure. Separate query examples will assess the change in new compositions and the preservation of other requirements. Across episodes, we will update the representation or its projection and a compact family of schedules to improve this behavior. [MAML][maml] and methods for adapting compact context variables such as [CAVIA][cavia] provide starting points.
 
-This supplies a concrete objective for representation learning: quality after limited adaptation, preservation, and reuse across examples. We will control representation size and update budgets, and test entirely held-out tasks. In Aim 2, the same episode design will investigate model initialization and parameter-sharing structure.
+This supplies a concrete objective for joint representation and process design: quality after limited adaptation, preservation, and reuse across examples. We will control representation size, update and denoising budgets, and evaluate entirely held-out tasks. Aim 2 will use the same episodes to learn model initialization, feature-access projections, and parameter-sharing structure.
 
 Adaptation speed alone will not establish a mechanism. We will examine whether the learned representation makes dependencies easier to identify, whether successful changes use the predicted components, and when several components must change together. The learned and fixed representations will undergo the same tests.
 
 ### 2.4 Use semantic dependencies to organize generation and revision
 
-**A useful decomposition should help us choose how generation proceeds.** We will measure recovery accuracy as we restrict the other groups available to a predictor, then test those restrictions in the generator. Useful sparsity must preserve semantic information and image quality. Comparisons will control group size, total dimension, and the cost of computing shared summaries or selecting inputs.
+**The decomposition and the generation process will be designed together.** We will measure component recovery as we vary both the available information and its noise levels, and use these dependencies to revise the maps Pₖ and schedules τₖ. Aim 2 will identify the computations that support or limit these choices. Useful sparsity must preserve semantic information and image quality; comparisons will control group size, total dimension, and the cost of shared summaries or input selection.
 
 Building on our asynchronous diffusion work, we will assign separate noise levels to selected token or coordinate groups. Their schedules determine which states advance earlier, remain uncertain longer, or develop together. We will use recovery tests and the network interventions in Aim 2 to choose candidate schedules. For the running prompt, does making the giver–receiver assignment reliable earlier help generate the exchange of the cup? If it does, which computations transmit that information, and when can the assignment still be reversed?
 
@@ -134,14 +138,17 @@ Selective revision provides the main test. After reversing who hands over the cu
 
 The model will receive each group's noise level and train on the combinations required by these processes. Pausing, conditioning on retained states, and restarting recovery must be supported by this training. Low noise alone does not establish that a semantic decision is correct; we will measure whether the intended requirement has actually been resolved.
 
-First, we will hold the representation and trained network fixed and compare simultaneous denoising, a fixed semantic-first schedule, asynchronous schedules tuned directly for either quality or control, and schedules informed by measured dependencies. Comparisons will match computation and schedule-selection budgets. Next, separate training comparisons will test how scheduling changes convergence and the computations learned. This separates inference-process effects from changes due to training.
+Controlled comparisons will first hold the representation and trained network fixed: simultaneous denoising, a fixed semantic-first schedule, asynchronous schedules tuned directly for either quality or control, and schedules informed by measured dependencies. We will then learn the decomposition and schedule together, initially by alternating their updates, with network findings from Aim 2 guiding each revision. Comparisons will match computation and schedule-selection budgets. Separate training comparisons will establish how scheduling changes convergence and the computations learned, distinguishing inference-process effects from changes due to training.
 
 We will predict successful edit timing and the states requiring revision from limited diagnostic examples, then test new prompts and compositions. Edit fidelity, persistence, and preservation are the primary outcomes; training cost and generation quality are additional outcomes. Independent evaluation will use the original or explicitly revised request. A model supplying semantic features will not be the sole judge of success.
-**Expected result:** an account of how task and adaptation objectives shape representations, and whether their dependencies predict a generation process that makes semantic revisions more selective and persistent.
 
-> **Figure 2 — Explanatory learning diagram; no new results needed.** Show task-trained activations, masked recovery, and support/query feedback for learning the representation. Add a schematic schedule for several semantic and visual groups: one advances earlier, dependent groups follow, and selected groups resume after an edit. Label all schedules as proposed, with no measured curves or new samples.
+**Expected result:** semantic token representations and component maps paired with denoising procedures for selective, persistent revisions, together with an explanation of the dependencies that make them effective.
 
-## 3. Aim 2: Understand and shape how network components store, compose, and modify knowledge
+> **Figure 2 — Explanatory learning diagram; no new results needed.** Show task-trained activations, masked recovery, and support/query feedback updating both component maps and denoising schedules. Include feedback from Aim 2's module analysis. Illustrate several semantic and visual groups advancing at different rates and selected groups resuming after an edit. Label all schedules as proposed, with no measured curves or new samples.
+
+## 3. Aim 2: Understand and design network mechanisms for knowledge storage and composition
+
+**This aim will establish how network components implement semantic interactions and use that knowledge to guide architecture, denoising, and parameter updates.** We will begin with pretrained models and fixed representations, and incorporate Aim 1's learned components and schedules as they develop. The resulting account will guide both network construction and revisions to the representation and generation process.
 
 ### 3.1 Stored knowledge and compositional computation
 
@@ -155,7 +162,7 @@ Our mechanistic analysis motivates three interacting operations:
 
 [Compositional Attention][compositional] provides a precedent for separating search and retrieval. We will test the roles of these operations through feature and parameter replacement, removal, and restoration, measuring immediate changes and the final image. For example, we will ask which components provide knowledge of an activity and which connect its participants to a relation specified in the prompt. Information may be distributed across components; the experiments will establish the roles of MLPs alongside attention and other network weights.
 
-At different noise levels, we will replace a candidate semantic feature, interrupt its passage through selected attention or MLP components, and test restoration. This asks when a computation uses the feature and whether its influence persists through later denoising. The results will inform the schedules in Aim 1. Attention weights alone will not identify the mechanism: value projections, MLPs, residual paths, and subsequent steps can alter its effect.
+At different noise levels, we will replace a candidate semantic feature, interrupt its passage through selected attention or MLP components, and test restoration. This will identify when a computation uses the feature and how its influence persists through denoising. The results will guide Aim 1's component maps and schedules. When a useful semantic interaction is poorly supported, we will use these findings to guide projections and sharing choices in Section 3.3. Attention weights alone will not identify the mechanism: value projections, MLPs, residual paths, and subsequent steps can alter its effect.
 
 We will also study **shared prediction banks**: learned features accessed by several layers through layer-specific projections. Which information can be shared, and which access rules must remain distinct? We will compare sharing and replacement with separate layer parameters, measuring quality against the number of stored parameters. Sharing across depth extends beyond the ordinary sharing of MLP weights across token positions and does not by itself imply faster computation.
 
@@ -180,9 +187,9 @@ For squared prediction error, our theoretical starting point separates the infor
 
 ### 3.3 Learn model structure and initialization for selective change
 
-The meta-learning procedure in Aim 1 will also help construct the parameter organization under study. Across support/query episodes, we will learn initializations and feature-access projections, and compare alternative sharing structures or allowed update locations. The criterion is whether a small update achieves the requested change on new examples while preserving other requirements.
+Aim 1's support/query episodes will also help construct the parameter organization under study. Here the learned objects will be model initializations and feature-access projections, with comparisons of sharing structures and allowed update locations. The objective is a small update that realizes the requested change on new examples while preserving other requirements under the chosen denoising procedure.
 
-We will vary representation choice and parameter organization separately before testing their interaction. This asks whether a representation that is easy to edit also makes a particular architecture easy to adapt, and whether an architecture can make otherwise entangled features more usable.
+We will use separate changes to representation, schedule, and parameter organization to identify their contributions, then refine them together. A network design that makes a semantic component easier to use will feed back into Aim 1; the dependencies exposed there will guide which projections or sharing structures to learn here.
 
 Mechanistic tests will compare which information each component uses, which weights respond during adaptation, and whether the predicted effects persist. This can reveal how meta-learning changes the model's organization, including cases where fast adaptation remains distributed and difficult to interpret.
 
@@ -192,7 +199,7 @@ Given a weight change and generation process, we will predict the effects on evo
 
 A first approximation will use the sensitivity of a prediction to each weight. For a fixed input and squared-error loss, this same sensitivity determines how a changed target alters one gradient update. We will then update the approximation along short training runs and account for interactions between components. Changing an MLP, for example, can change the states seen by later attention even if attention's weights remain fixed. We will test whether such component changes alter the useful generation order or the point at which an edit is preserved or overwritten. Predictions of final effects must account for the remaining denoising steps.
 
-Extensive flow training on development tasks will provide reference trajectories and well-trained endpoints. They specify behaviors to approximate, without assuming unique optimal weights. We will test predictions on held-out tasks using limited diagnostic examples. Changing the source task or meta-learning objective from Aim 1 will test whether representation construction makes these parameter responses more localized or predictable.
+Extensive flow training on development tasks will provide reference trajectories and well-trained endpoints. They specify behaviors to approximate, without assuming unique optimal weights. We will test predictions on held-out tasks using limited diagnostic examples. Varying Aim 1's source tasks, component maps, and noise schedules will reveal how information available during training shapes parameter responses. These findings will guide representation and schedule choices that support selective learning.
 
 ### 3.5 Generate weight updates from context or demonstrations
 
@@ -202,11 +209,11 @@ The update will initially be expressed through coefficients in a shared basis or
 
 [DiffLoRA][difflora] establishes a precedent for generating personalization updates from reference images. We will compare a direct context-to-update model with one using the representation and parameter organization developed here, alongside ordinary LoRA and Concept Sliders under comparable budgets. A conditional diffusion model over updates will be compared with deterministic prediction. When demonstrations admit several interpretations, we will test whether sampled updates express useful, distinct behaviors; one sampled update will be reused across multiple prompts with independently varied image noise.
 
-The central test starts from a semantic correction that works through a representation intervention. Can the generated weight update reproduce that correction across new compositions, and do its internal effects agree with our prediction? Combining two updates from the same base will provide a bounded test of interference and model merging.
+The goal is to turn a semantic correction realized through Aim 1's representation and denoising procedure into a reusable parameter update. We will evaluate its effects across new compositions and establish how the update acts through the identified network computations. Combining two updates from the same base will provide a bounded test of interference and model merging.
 
 This study can begin with ordinary representations, parameter bases, and reference training. Its progress does not require every proposed representation or architecture to succeed first.
 
-**Expected result:** an account of where reusable knowledge is stored, how attention composes it across denoising, and how training shapes that organization. It should predict how changes to the generation process or parameters affect a requested revision.
+**Expected result:** a mechanistic account of knowledge storage, composition, and learning that guides reusable network designs and selective parameter updates, and supplies Aim 1 with concrete guidance on which semantic components to generate or revise together.
 
 > **Figure 3 — Existing component-reuse results only.** Use the already reported CelebA→AAHQ and CelebA→STL-10 results, with paired DINO recovery values 0.815 and 0.143. Draw which weights were restored to the source model and which remained adapted. Reuse existing illustrative images if suitable; the reported values alone are sufficient. Label the experiment as restoring components after joint adaptation. Do not add new runs, uncertainty estimates, direct restricted-training results, or predicted-versus-observed results from the proposed project.
 
@@ -253,12 +260,12 @@ All experiments in this work plan are proposed for the 12-month award period.
 
 | Period | Main task | Deliverable |
 |---|---|---|
-| Months 1–3 | Establish shared semantic tasks, pretrained and task-trained representation candidates, and reference adaptation procedures. | Baselines for generation, controlled changes, and independent evaluation; initial feature and parameter analyses. |
-| Months 4–6 | Learn representation groups; test generation and revision schedules, plus meta-learning of representations and model structure. | Predictions and tests of edit timing and preservation; comparisons of scheduling effects during inference and training. |
-| Months 7–9 | Test composition-diverse training, knowledge sharing/replacement, and context-conditioned weight generation. | Tests of component reuse and its effect on generation order; update generators compared with reference learning and direct adaptation. |
-| Months 10–12 | Test the interaction of the approaches on natural images and complete the creator demonstration. | Mechanistic findings and their limits, reusable editing examples, reproducible evaluation materials, and final report. |
+| Months 1–3 | Begin both aims with shared semantic tasks, existing representations and generators, and reference adaptation procedures. | Baseline representations and schedules; initial analyses of module roles and independent evaluation. |
+| Months 4–6 | Jointly refine component maps and schedules using module analysis; apply meta-learning to representations, processes, and model structure. | Semantic control methods and mechanistic guidance connecting representation, denoising, and network design. |
+| Months 7–9 | Train for diverse compositions; develop knowledge sharing/replacement and context-generated updates, feeding findings back into representations and schedules. | Reusable network designs, selective updates, and comparisons of their effects on generation and learning. |
+| Months 10–12 | Consolidate the coupled methods on natural images and complete the creator demonstration. | Mechanistic findings and their limits, reusable editing examples, reproducible evaluation materials, and final report. |
 
-The core studies will use small diffusion Transformers, our existing training pipeline, and pretrained generators. They will share tasks, extracted features, and adaptation episodes. Each approach also has an independent baseline: task-derived representations can be studied with an existing generator, attention and memory with fixed representations, and generated updates with ordinary parameter bases. Their combination will test whether a learned representation or model structure improves the predictions and interventions of the other aim.
+The core studies will use small diffusion Transformers, our existing training pipeline, and pretrained generators, sharing tasks, extracted features, and adaptation episodes. Both aims can start immediately: task-derived representations and schedules can be developed with an existing generator, module roles with fixed representations, and generated updates with ordinary parameter bases. Throughout the project, module findings will guide representation and process design, while semantic dependencies and adaptation needs will guide network design and training.
 
 The meta-learning studies will begin with compact representations, initializations, and feature-access or sharing choices; update generation will begin in a restricted parameter family. These provide tractable implementations of all five approaches within the two aims. Adaptation quality alone will not establish the proposed mechanism: improvements must be connected to changes in information use, stored knowledge, or parameter responses.
 
