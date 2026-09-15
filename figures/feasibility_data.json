@@ -14,11 +14,13 @@
     "ema": 0.9999
   },
   "schedule": {
-    "source": "Learning When to Denoise, arXiv:2606.19662v1, abstract and Section 4.3",
+    "source": "Learning When to Denoise, submitted PDF Table 2; Semantic Flow Diffusion, Table 2; matched AutoGuidance + dopri5 sampling",
     "url": "https://arxiv.org/html/2606.19662v1",
     "lwd_epochs": 200,
     "sfd_xl_epochs": 800,
-    "autoguidance_fid_both": 1.05,
+    "lwd_autoguidance_fid": 1.05,
+    "sfd_xl_autoguidance_fid": 1.06,
+    "sampler": "dopri5",
     "denoiser_parameters_millions": 675
   },
   "sharing": {

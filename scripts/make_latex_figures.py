@@ -80,15 +80,15 @@ def overview():
         box(ax, x, .177, .292, .55, color)
     arrow(ax, (.163, .777), (.163, .739), ORANGE)
     arrow(ax, (.839, .777), (.839, .739), ORANGE)
-    text(ax, .032, .683, "1  Representations", 10.5, "bold", BLUE)
-    text(ax, .032, .618, "Token groups / projections")
+    text(ax, .032, .683, "1  Learned components", 10, "bold", BLUE)
+    text(ax, .032, .618, "Labels are illustrative")
     for y, label, color, vals in [
         (.549, "Participants", BLUE, [.8,.45,.2,.7,.5,.9,.4,.6]),
-        (.411, "Giver–receiver relation", ORANGE, [.35,.9,.7,.2,.85,.4,.65,.3]),
-        (.273, "Other visual information", GRAY, [.5,.25,.8,.35,.65,.5,.4,.75])]:
+        (.411, "Giver–receiver roles", ORANGE, [.35,.9,.7,.2,.85,.4,.65,.3]),
+        (.273, "Other features", GRAY, [.5,.25,.8,.35,.65,.5,.4,.75])]:
         text(ax, .032, y, label, 10, "bold", color)
         vector(ax, .032, y-.077, .253, .039, vals, color)
-    text(ax, .371, .683, "2  Network modules", 10.5, "bold", TEAL)
+    text(ax, .371, .683, "2  Transformer modules", 10, "bold", TEAL)
     text(ax, .371, .618, "Which information, when?")
     box(ax, .371, .438, .258, .133, "white", "#BEDCD8")
     text(ax, .5, .536, "Attention + projections", 10, "bold", TEAL, ha="center")
@@ -111,13 +111,13 @@ def overview():
     arrow(ax,(.315,.472),(.345,.472),BLUE,both=True)
     arrow(ax,(.654,.472),(.684,.472),TEAL,both=True)
     box(ax,.015,.015,.97,.112,PT)
-    text(ax,.032,.071,"Selective revision  •  Preserve other requirements  •  Reuse learned knowledge",10,"bold",TEAL)
+    text(ax,.032,.071,"Goal: reverse who gives the cup; keep clothing and the child reading.",10,"bold",TEAL)
     save(fig,"fig1_mechanism_overview")
 
 def recovery():
     fig, ax = canvas(3.4)
-    text(ax,.017,.960,"A. Controlled recovery",10.5,"bold",BLUE)
-    text(ax,.017,.899,"Same target noise, other inputs, and network")
+    text(ax,.017,.960,"A. Controlled denoising",10.5,"bold",BLUE)
+    text(ax,.017,.899,"Same target noise and transformer")
     text(ax,.188,.814,"Target i",10,"bold",ha="center")
     text(ax,.310,.814,"Source j",10,"bold",ha="center")
     target = [.35,.75,.45,.6,.25,.8]
@@ -134,7 +134,7 @@ def recovery():
     text(ax,.188,.617,"fixed",10,color=BLUE,ha="center")
     text(ax,.310,.617,"vary",10,color=TEAL,ha="center")
     text(ax,.017,.373,r"$D_{j\to i}=L_i(\mathrm{noisier}\ j)-L_i(\mathrm{cleaner}\ j)$",10.5)
-    text(ax,.017,.309,"Positive D: cleaner j helps recover i.",10,"bold",TEAL)
+    text(ax,.017,.309,"Positive D: cleaner j helps denoise i.",10,"bold",TEAL)
     text(ax,.017,.247,"Repeat over noise levels and contexts.",10,color=MUTED)
     ax.plot([.556,.556],[.222,.976],color=RULE,linewidth=.8)
     text(ax,.587,.960,"B. Coordinate denoising",10.5,"bold",TEAL)
@@ -158,7 +158,7 @@ def recovery():
     text(ax,.587,.247,"Relative rates can change.",10,color=MUTED)
     box(ax,.017,.017,.966,.159,PO)
     text(ax,.033,.132,"Scheduling tradeoff",10,"bold",ORANGE)
-    text(ax,.033,.070,"Advancing j can help recover i, but j then has less context for its own recovery.",10)
+    text(ax,.033,.070,"Advancing j can help denoise i, but leaves less context for denoising j.",10)
     save(fig,"fig2_recovery_schedule")
 
 def reuse():
@@ -203,8 +203,8 @@ def feasibility():
           [data["sharing"]["baseline"]["fid_50k"],data["sharing"]["shared"]["fid_50k"]]]
     for k,(ax,values,title,sub,ticks,ylabel,limit) in enumerate(zip(axes,vals,
        ["A. Qwen states","B. Learned schedules","C. Shared MLPs"],
-       ["Same ELF checkpoint","FID 1.05 (AutoGuidance)","About 10.2M weights"],
-       [["Sync.","Async."],["SFD-XL","LWD"],["DiT","Shared\nDiT-MLP"]],
+       ["Same ELF checkpoint","Comparable FID (~1.05)","About 10.2M weights"],
+       [["Sync.","Async."],["SFD-XL\nFID 1.06","LWD\nFID 1.05"],["DiT","Shared\nDiT-MLP"]],
        ["GSM8K accuracy (%)","Training epochs","FID-50k"], [75,1000,22])):
         pos=ax.get_position()
         # Titles aligned above their panels; no oversized figure headline.
@@ -223,5 +223,12 @@ def feasibility():
     save(fig,"fig4_existing_feasibility")
 
 if __name__ == "__main__":
-    overview(); recovery(); reuse(); feasibility()
-    print("Created four 7-inch-wide PDF figures; all labels are at least 10 pt.")
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--figures", nargs="+", type=int, choices=[1, 2, 3, 4],
+                        default=[1, 2, 3, 4], help="Figure numbers to rebuild")
+    selected = parser.parse_args().figures
+    makers = {1: overview, 2: recovery, 3: reuse, 4: feasibility}
+    for number in selected:
+        makers[number]()
+    print(f"Created 7-inch-wide PDF figures {selected}; all labels are at least 10 pt.")

@@ -89,7 +89,7 @@ def save(fig, basename):
 
 def overview():
     fig, ax = canvas((10.2, 5.5))
-    txt(ax, 0.035, 0.953, "Representations, network mechanisms, and denoising", 15, "bold")
+    txt(ax, 0.035, 0.953, "Representations, transformer mechanisms, and denoising", 15, "bold")
     txt(ax, 0.035, 0.912, "Proposed mechanism (schematic)", 10.5, color=MUTED)
 
     # One creator request runs through all three views of the generative model.
@@ -107,19 +107,19 @@ def overview():
     for x in [0.17, 0.83]:
         arrow(ax, (x, 0.735), (x, 0.682), color=ORANGE)
 
-    txt(ax, 0.053, 0.631, "1  Semantic components", 11.6, "bold", BLUE)
-    txt(ax, 0.053, 0.589, "Token groups or projections", 10, color=MUTED)
-    txt(ax, 0.053, 0.533, "Participants", 10.5, "bold")
+    txt(ax, 0.053, 0.631, "1  Learned components", 11.6, "bold", BLUE)
+    txt(ax, 0.053, 0.589, "Labels below are illustrative", 10, color=MUTED)
+    txt(ax, 0.053, 0.533, "Participants (example)", 10.5, "bold")
     vector(ax, 0.054, 0.477, 0.224, 0.031,
            [.8, .45, .2, .7, .5, .9, .4, .6], BLUE)
-    txt(ax, 0.053, 0.426, "Giver–receiver relation", 10.5, "bold", ORANGE)
+    txt(ax, 0.053, 0.426, "Giver–receiver roles (example)", 10.5, "bold", ORANGE)
     vector(ax, 0.054, 0.370, 0.224, 0.031,
            [.35, .9, .7, .2, .85, .4, .65, .3], ORANGE)
-    txt(ax, 0.053, 0.319, "Remaining visual information", 9.8, "bold")
+    txt(ax, 0.053, 0.319, "Other features (example)", 10.5, "bold")
     vector(ax, 0.054, 0.263, 0.224, 0.031,
            [.5, .25, .8, .35, .65, .5, .4, .75], GRAY)
 
-    txt(ax, 0.383, 0.631, "2  Network computations", 11.6, "bold", TEAL)
+    txt(ax, 0.383, 0.631, "2  Transformer modules", 11.6, "bold", TEAL)
     txt(ax, 0.383, 0.589, "Which information, where, when?", 9.5, color=MUTED)
     box(ax, (0.385, 0.446, 0.230, 0.105), "white", "#BEDCD8")
     txt(ax, 0.50, 0.517, "Attention + projections", 10.5, "bold", TEAL, ha="center")
@@ -152,20 +152,20 @@ def overview():
 
     box(ax, (0.035, 0.060, 0.93, 0.104), PALE_TEAL, "#C3DDD9")
     arrow(ax, (0.83, 0.214), (0.83, 0.176), TEAL)
-    txt(ax, 0.053, 0.135, "INTENDED CAPABILITIES", 9.5, "bold", TEAL)
+    txt(ax, 0.053, 0.135, "GOAL: LEARN WHICH STATES AND WEIGHTS REALIZE THE REQUEST", 9.5, "bold", TEAL)
     txt(ax, 0.053, 0.094,
-        "Selective scene revision   •   Preservation of other requirements   •   Reusable learned knowledge",
+        "Reverse who gives the cup; keep the characters, clothing, and the child reading.",
         10.1, "bold")
     save(fig, "fig1_mechanism_overview")
 
 
 def recovery_schedule():
     fig, ax = canvas((10.2, 4.8))
-    txt(ax, 0.035, 0.950, "Learn dependencies by varying component noise", 15, "bold")
+    txt(ax, 0.035, 0.950, "Measure denoising dependencies by varying component noise", 15, "bold")
     txt(ax, 0.035, 0.901, "Proposed measurement and scheduling method (schematic)", 10.5, color=MUTED)
     ax.plot([0.548, 0.548], [0.225, 0.824], color=RULE, lw=1)
-    txt(ax, 0.035, 0.826, "A. Controlled recovery", 12, "bold", BLUE)
-    txt(ax, 0.035, 0.777, "Same target noise, other inputs, and network", 10.1, color=MUTED)
+    txt(ax, 0.035, 0.826, "A. Controlled denoising", 12, "bold", BLUE)
+    txt(ax, 0.035, 0.777, "Same target noise, other inputs, and transformer", 10.1, color=MUTED)
 
     # Noise indicators are pictograms, never claimed samples or measurements.
     txt(ax, 0.164, 0.718, "Target i", 10.5, "bold", ha="center")
@@ -189,7 +189,7 @@ def recovery_schedule():
     txt(ax, 0.035, 0.365,
         r"$D_{j\to i}=L_i(\mathrm{noisier}\ j)-L_i(\mathrm{cleaner}\ j)$",
         12.5, "bold")
-    txt(ax, 0.035, 0.310, "Positive D: cleaner j helps recover i.", 10.5, "bold", TEAL)
+    txt(ax, 0.035, 0.310, "Positive D: cleaner j helps denoise i.", 10.5, "bold", TEAL)
     txt(ax, 0.035, 0.260, "Repeat across noise levels and contexts.", 10, color=MUTED)
 
     txt(ax, 0.588, 0.826, "B. Coordinate denoising", 12, "bold", TEAL)
@@ -222,7 +222,7 @@ def recovery_schedule():
     box(ax, (0.035, 0.060, 0.93, 0.121), PALE_ORANGE, "#E7CDB2")
     txt(ax, 0.053, 0.147, "SCHEDULING TRADEOFF", 9.5, "bold", ORANGE)
     txt(ax, 0.053, 0.102,
-        "Advancing j can help recover i, but may make j harder to recover because it has less context.",
+        "Advancing j can help denoise i, but leaves less context for denoising j itself.",
         10.5)
     save(fig, "fig2_recovery_schedule")
 

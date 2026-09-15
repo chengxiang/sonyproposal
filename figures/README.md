@@ -5,7 +5,7 @@ The proposal embeds PNG versions. Matching SVG files preserve editable text and 
 | Figure | Content | Evidence status |
 |---|---|---|
 | `fig1_mechanism_overview` | Semantic components, network computations, and asynchronous revision | Proposed mechanism; all vectors and schedules are schematic |
-| `fig2_recovery_schedule` | Fixed-target-noise recovery comparison and crossing schedules | Proposed measurement; no loss values, empirical dependency graph, or learned schedules are fabricated |
+| `fig2_recovery_schedule` | Fixed-target-noise denoising comparison and crossing schedules | Proposed measurement; no loss values, empirical dependency graph, or learned schedules are fabricated |
 | `fig3_component_reuse` | Existing image panels plus reported recovery scores | Experiment 3 report, pages 2, 5, and 10 |
 | `fig4_existing_feasibility` | Language-state generation, schedule learning, and parameter sharing | ELF-L summary, LWD paper, and Experiment 1 report |
 
@@ -28,7 +28,7 @@ The plotted values 0.815 (CelebA to AAHQ) and 0.143 (CelebA to STL-10) are **sep
 The exact plotted values and settings are recorded in `feasibility_data.json`.
 
 - **ELF-L:** `elf_l_grant_summary.md`, prepared 12 September 2026, matched epoch-12 comparison. Synchronous inference: 1,429/2,638 trials = 54.1698%; reversed asynchronous inference: 1,634/2,638 = 61.9409%. Both use the same synchronously trained checkpoint, EMA 0.9999, 32 ODE steps, and inference seeds 42/123 over the same 1,319 distinct GSM8K questions. The comparison uses no extra training. Qwen encodes the prompt once; ELF generates the answer states and decodes the tokens. This is not an AR-baseline comparison or an estimate of end-to-end latency.
-- **LWD:** [Learning When to Denoise, arXiv:2606.19662v1](https://arxiv.org/html/2606.19662v1), abstract and Section 4.3. AutoGuidance FID 1.05 at 200 LWD epochs versus 800 SFD-XL epochs, with a matched 675M backbone. The figure shows documented epoch budgets, not a fabricated convergence curve or wall-clock benchmark.
+- **LWD:** *Learning When to Denoise*, submitted manuscript `19994_Learning_When_to_Denoise.pdf`, Table 2, and [SFD Table 2](https://arxiv.org/html/2512.04926v1). AutoGuidance FID 1.05 at 200 LWD epochs versus 1.06 at 800 SFD-XL epochs, with matched 675M backbones and dopri5 sampling. The previous exact-1.05 SFD comparison used a different fixed-step sampler; this figure now uses the matched comparison. The bars show documented epoch budgets, not a convergence curve or wall-clock benchmark. The proposal's REPA comparison comes from LWD Table 1: 120K main updates/FID 4.93 versus 4M/FID 5.84, plus a 10K-update LWD schedule-learning probe.
 - **Parameter sharing:** `experiment1.pdf`, page 6. DiT F1024: 10,215,472 parameters, FID-50k 17.574. Shared DiT-MLP H14/d32/W256: 10,239,536 parameters, FID-50k 14.304. CelebA64, one training seed, prespecified epoch-400 EMA, common 50-step sampler. The original page-5 plots omit the H14 model, so these bars are redrawn from the page-6 table.
 
 ## Reproduce

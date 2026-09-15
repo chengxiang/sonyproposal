@@ -1,18 +1,18 @@
 # Sony proposal: LaTeX source
 
-`proposal.tex` is the editable LaTeX version of the current `proposal_draft.md`, including its updated institutional budget. The four figure PDFs in `figures/` must remain alongside it.
+`proposal.tex` is the editable LaTeX version of the current `proposal_draft.md`, including its updated institutional budget. Keep `references.bib`, `sonyabbrvnat.bst`, and the four figure PDFs in `figures/` alongside it.
 
 ## Compile
 
-Use pdfLaTeX with a standard TeX Live installation. No BibTeX run is needed: references and hyperlinks are included directly in the source.
+Use pdfLaTeX and BibTeX with a standard TeX Live installation. Citations use natbib's author–year format. The included `sonyabbrvnat.bst` is a lightly modified `abbrvnat` style that links reference titles instead of printing a separate URL.
 
 ```bash
 latexmk -pdf -interaction=nonstopmode -halt-on-error proposal.tex
 ```
 
-Alternatively, run `pdflatex proposal.tex` twice. For Overleaf, upload this directory's files and select pdfLaTeX and `proposal.tex` as the main document.
+Alternatively, run `pdflatex proposal.tex`, then `bibtex proposal`, then `pdflatex proposal.tex` twice. For Overleaf, upload this directory's files and select pdfLaTeX and `proposal.tex` as the main document.
 
-The checked output is 11 letter-size pages: ten pages of narrative, figures, and references, followed by one budget page. Body text, tables, and captions use 10-point type; figures use labels of at least 10 points at their specified seven-inch width, except normal mathematical subscripts. The PDF is approximately 0.3 MB. All research prose, equations, references, and evidence qualifications are retained. Internal drafting notes appear after `\end{document}` as comments and are not printed.
+The checked output is 11 letter-size pages: ten pages of narrative, figures, and references, followed by one budget page. Body text, tables, and captions use 10-point type; figures use labels of at least 10 points at their specified seven-inch width, except normal mathematical subscripts. The PDF is approximately 0.3 MB. Research prose, equations, references, and evidence qualifications match the current Markdown draft; scholarly citations are formatted through BibTeX. Internal drafting notes appear after `\end{document}` as comments and are not printed.
 
 ## Budget and remaining details
 
