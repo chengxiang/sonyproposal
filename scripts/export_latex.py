@@ -81,7 +81,8 @@ def figure(match):
     # The explicit bold title and all evidence qualifications are retained.
     caption = convert('**' + caption)
     pdf_path = 'figures/' + Path(path).stem + '.pdf'
-    return ('\n\\begin{figure}[H]\n\\centering\n'
+    placement = '!htbp' if n == '1' else 'H'
+    return ('\n\\begin{figure}[' + placement + ']\n\\centering\n'
             + r'\includegraphics[width=7in]{' + pdf_path + '}\n'
             + r'\caption{' + caption + '}\n'
             + r'\label{fig:' + n + '}\n\\end{figure}\n')

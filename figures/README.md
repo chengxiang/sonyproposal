@@ -7,7 +7,7 @@ The proposal embeds PNG versions. Matching SVG files preserve editable text and 
 | `fig1_mechanism_overview` | Three connected aspects: learn representations/extractors; jointly learn denoising order, dependencies, and the transformer; share/specialize transformer computations | Proposed program for selective generation and revision; component labels, vectors, and module activity are illustrative |
 | `fig2_recovery_schedule` | A diagnostic with a fixed model within each checkpoint comparison, illustrative crossing schedules, and an explicit measurement/training feedback loop | Proposed measurement and joint design; no loss values, empirical dependency graph, or learned schedules are fabricated |
 | `fig3_component_reuse` | Existing image panels plus reported recovery scores | Experiment 3 report, pages 2, 5, and 10 |
-| `fig4_existing_feasibility` | Language-state generation, schedule learning, and parameter sharing | ELF-L summary, LWD paper, and Experiment 1 report |
+| `fig4_existing_feasibility` | Continuous diffusion language reasoning in published benchmark context, schedule learning, and parameter sharing | Language experiment summary; Nie et al., Table 1; LWD paper; Experiment 1 report |
 
 ## Conceptual figures
 
@@ -31,10 +31,11 @@ The plotted values 0.815 (CelebA to AAHQ) and 0.143 (CelebA to STL-10) are **sep
 
 ## Feasibility figure
 
-The exact plotted values and settings are recorded in `feasibility_data.json`.
+The exact plotted values and settings are recorded in `feasibility_data.json`. The PNG, SVG, and PDF share the builder in `scripts/make_feasibility_figure.py`; each is 7 inches wide and 3 inches high, with labels of at least 10 points.
 
-- **ELF-L:** `elf_l_grant_summary.md`, prepared 12 September 2026, matched epoch-12 comparison. Synchronous inference: 1,429/2,638 trials = 54.1698%; reversed asynchronous inference: 1,634/2,638 = 61.9409%. Both use the same synchronously trained checkpoint, EMA 0.9999, 32 ODE steps, and inference seeds 42/123 over the same 1,319 distinct GSM8K questions. The comparison uses no extra training. Qwen encodes the prompt once; ELF generates the answer states and decodes the tokens. This is not an AR-baseline comparison or an estimate of end-to-end latency.
-- **LWD:** *Learning When to Denoise*, submitted manuscript `19994_Learning_When_to_Denoise.pdf`, Table 2, and [SFD Table 2](https://arxiv.org/html/2512.04926v1). AutoGuidance FID 1.05 at 200 LWD epochs versus 1.06 at 800 SFD-XL epochs, with matched 675M backbones and dopri5 sampling. The previous exact-1.05 SFD comparison used a different fixed-step sampler; this figure now uses the matched comparison. The bars show documented epoch budgets, not a convergence curve or wall-clock benchmark. The proposal's REPA comparison comes from LWD Table 1: 120K main updates/FID 4.93 versus 4M/FID 5.84, plus a 10K-update LWD schedule-learning probe.
+- **Continuous diffusion language model (ours):** `elf_l_grant_summary.md`, prepared 12 September 2026, epoch-12 comparison. The displayed 61.9409% is reversed asynchronous inference: 1,634/2,638 trials. Synchronous inference on the same checkpoint gives 1,429/2,638 = 54.1698%. Both use EMA 0.9999, 32 ODE steps, and inference seeds 42/123 over the same 1,319 distinct GSM8K questions; each trial is scored separately, without majority voting or best-of-two selection. The 795M-parameter denoiser is trained on mathematical question–solution data. A frozen Qwen3-4B-Instruct-2507 encodes the prompt once; the continuous diffusion model generates answer representations and decodes them to tokens. The 795M count therefore describes the denoiser, not the whole inference pipeline.
+- **Published language-model context:** [Nie et al., *Large Language Diffusion Models*, arXiv v3, Table 1](https://arxiv.org/html/2502.09992v3) reports GSM8K 48.7% for Llama-3-8B Base (autoregressive) and 70.3% for LLaDA-8B Base (discrete diffusion), both with four-shot prompting. Panel A labels these as published context because training data, conditioning, model size, and evaluation settings differ from our mathematical language experiment. It gives a familiar scale for the continuous diffusion result, not a controlled ranking of model families or a claim of superior parameter efficiency.
+- **LWD:** [*Learning When to Denoise*, arXiv v1, Table 2](https://arxiv.org/html/2606.19662v1), also reported in the supplied manuscript `19994_Learning_When_to_Denoise.pdf`, and [SFD Table 2](https://arxiv.org/html/2512.04926v1). Panel B shows AutoGuidance FID 1.05 at 200 LWD epochs versus 1.06 at 800 SFD-XL epochs, with matched 675M backbones and dopri5 sampling. The bars show documented epoch budgets, not a convergence curve or wall-clock benchmark. The public LWD paper additionally reports FID 1.02 at 600 epochs for its 675M model versus 1.04 at 800 epochs for 1B-parameter SFD-XXL; these final results are recorded in the JSON but are not additional bars. The proposal's REPA comparison comes from LWD Table 1: 120K main updates/FID 4.93 versus 4M/FID 5.84, plus a 10K-update LWD schedule-learning probe.
 - **Parameter sharing:** `experiment1.pdf`, page 6. DiT F1024: 10,215,472 parameters, FID-50k 17.574. Shared DiT-MLP H14/d32/W256: 10,239,536 parameters, FID-50k 14.304. CelebA64, one training seed, prespecified epoch-400 EMA, common 50-step sampler. The original page-5 plots omit the H14 model, so these bars are redrawn from the page-6 table.
 
 ## Reproduce
@@ -46,6 +47,7 @@ python scripts/make_conceptual_figures.py
 python scripts/make_latex_figures.py --figures 1 2
 python scripts/make_reuse_figure.py
 python scripts/make_feasibility_figure.py
+python scripts/make_latex_figures.py --figures 3 4
 ```
 
 The scripts resolve paths relative to the repository. No GPU, source-model checkpoint, new sampling, or additional experiment is needed. Original source reports remain the authority for interpretation; cropping coordinates and selected states are explicit above.

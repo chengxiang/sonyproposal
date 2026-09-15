@@ -101,7 +101,7 @@ s_{k,t}=(1-\tau_k(t;\phi))\varepsilon_k+\tau_k(t;\phi)s_k,
 
 The parameters \(\phi\) determine monotone schedules from noise to data. Their curves may cross; there is no required first/second ordering. The transformer can likewise vary which modules are active as different components become informative.
 
-\textbf{Our work provides a practical basis for learning these schedules.} Learning When to Denoise (LWD) \citep{schedule} reaches unguided FID 4.93 after 120,000 main-training updates, versus the reported REPA \citep{repa} result of 5.84 after 4 million updates, using 675M-parameter models: 33 times fewer main-training updates, plus LWD's 10,000-update schedule-learning probe. These update counts compare the complete methods; they are not measured wall-clock speedups. Our variational trajectory optimization \citep{trajectory} and LWD jointly learn the noise process and score/flow network. Benefits from coordinating generation across representations or tokens have also been reported in SFD \citep{sfd}, Latent Forcing \citep{latentforcing}, and Diffusion Forcing \citep{diffusionforcing}.
+\textbf{Our work provides a practical basis for learning these schedules.} Our variational trajectory optimization \citep{trajectory} and Learning When to Denoise (LWD) \citep{schedule} jointly learn the noise process and score/flow network. LWD achieves leading image-generation quality with substantially fewer training updates, as detailed in Section 3. Benefits from coordinating generation across representations or tokens have also been reported in SFD \citep{sfd}, Latent Forcing \citep{latentforcing}, and Diffusion Forcing \citep{diffusionforcing}.
 
 The interaction with training is explicit. With extractor parameters \(\psi\) and schedule parameters \(\phi\), a training step is
 
@@ -111,27 +111,6 @@ The interaction with training is explicit. With extractor parameters \(\psi\) an
 \]
 
 Changing \(\psi\) changes the prediction targets; changing \(\phi\) changes the noisy inputs and their weighting. Both therefore change the parameter update. Section 2.1 learns the targets; Section 2.2 jointly learns denoising order, dependencies, and the transformer; Section 2.3 organizes its computations across conditional prediction tasks.
-
-\hypertarget{differentiation-from-existing-approaches}{%
-\subsection{Differentiation from existing approaches}\label{differentiation-from-existing-approaches}}
-
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.5000}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Existing capability
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-What this proposal adds
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-Semantic feature generation and coordinated schedules (SFD \citep{sfd}, our LWD \citep{schedule} and trajectory optimization \citep{trajectory}). & Extend our joint schedule/denoiser learning to learned component divisions, with transformer module activity governed by the components' noise levels. \\
-Sparse score dependencies and feature-space composition (Local Mechanisms \citep{local}). & Learn component divisions and refine their dependence structure together with the transformer and generation schedules. Component denoising losses connect the learned order to the information the model can use. \\
-Modality-binding interventions, timestep specialization, and separated attention operations (Vision-Language Binding \citep{binding}, DeMe \citep{deme}, Compositional Attention \citep{compositional}). & Identify which computations can be shared across conditional denoising tasks and which must specialize as conditions, targets, and noise configurations change. Use those findings to support selective revision. \\
-\end{longtable}
 
 \hypertarget{one-research-program-in-three-connected-parts}{%
 \subsection{One research program in three connected parts}\label{one-research-program-in-three-connected-parts}}
@@ -149,7 +128,7 @@ Modality-binding interventions, timestep specialization, and separated attention
 
 These are interacting parts of one training procedure. Transformer learning changes which dependencies it can exploit, and schedule learning changes the conditional prediction problems it encounters. Measurements at selected checkpoints guide refinements to component divisions and module access, followed by further joint training. Selective generation and revision of text-and-reference images provide the common application.
 
-\begin{figure}[H]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=7in]{figures/fig1_mechanism_overview.pdf}
 \caption{\textbf{Learning a representation, transformer, and denoising procedure together.} The creator requests a reversal of who gives the cup. We learn an edit to the component vectors that realizes this change, while preserving the clothing and the child's activity. Participants and relations illustrate possible information in the vectors; the actual division is learned and can be more complex. The diagram describes the proposed method, not an already demonstrated semantic assignment to modules.}
@@ -266,51 +245,31 @@ A tractable analysis begins with squared-error denoising: separate the predictio
 \begin{figure}[H]
 \centering
 \includegraphics[width=7in]{figures/fig3_component_reuse.pdf}
-\caption{\textbf{Existing component-reuse evidence.} Images are extracted from the first report-selected noise input (seed 0, latent 1) in Experiment 3, pages 2 and 5. Restoring source query/key weights while retaining adapted value/output projections and MLPs preserves much of the AAHQ change but does not reproduce the STL-10 joint result. Bars report \(1-E_{\mathrm{hybrid}}/E_{\mathrm{source}}\), where E is mean squared distance to the paired joint output in normalized DINOv2 features: 1,024 matched latents per adaptation seed, averaged over two seeds. The score measures recovery of joint-model outputs, not target fidelity. These are 20M-model post-training reversion experiments; joint endpoints were selected using the existing test-FID results.}
+\caption{\textbf{Existing evidence of selective component reuse.} Restoring source query/key weights while retaining adapted value/output projections and MLPs preserves much of the AAHQ adaptation; the larger shift to STL-10 requires more coordinated changes. Bars show the fraction of the joint model's adaptation recovered, measured relative to the source model in DINO feature space. These results motivate identifying which transformer computations remain reusable as conditional prediction tasks change.}
 \label{fig:3}
 \end{figure}
 
-\hypertarget{why-the-proposed-work-is-feasible}{%
-\section{3. Why the proposed work is feasible}\label{why-the-proposed-work-is-feasible}}
+\hypertarget{differentiation-from-the-current-state-of-the-art}{%
+\section{3. Differentiation from the current state of the art}\label{differentiation-from-the-current-state-of-the-art}}
 
-Existing work supports the connections underlying the proposal. SFD \citep{sfd} and SeFi-Image \citep{sefi} show that generated semantic information can guide image generation; Latent Forcing \citep{latentforcing} and Diffusion Forcing \citep{diffusionforcing} support varying generation across representations or token noise levels. Local Mechanisms \citep{local} demonstrates benefits of restricted dependencies for composition in a controlled setting, with suggestive structure in SDXL features. Vision-Language Binding \citep{binding} shows that interventions can trace how references influence an image.
+\textbf{Our contribution is a method for learning how representation components, denoising order, and transformer computations work together.} This joint understanding will support precise semantic revision: identifying what information must change, when to regenerate it, and which computations carry the change. Three advances distinguish the proposed program.
 
-The representation-learning methods also have practical foundations. VAE/GAN \citep{vaegan} uses discriminator features for reconstruction, REPA \citep{repa} aligns diffusion features with pretrained representations, and ImageReward \citep{imagereward} supplies learned preference supervision. UniDiffuser \citep{unidiffuser} demonstrates training a shared transformer for different multimodal conditional generation tasks. Our proposed advance connects learned component divisions and schedules to shared or specialized transformer computations for those tasks.
+\textbf{1. A strong foundation in continuous language generation, image quality, and parameter efficiency.} Our preliminary \textbf{continuous diffusion language model}, based on Embedded Language Flows \citep{elf}, generates projected Qwen contextual states and achieves \textbf{61.94\% GSM8K accuracy}. A frozen Qwen model encodes the question; the diffusion model generates the answer states and decodes the solution. This demonstrates that continuous generation can retain reasoning-relevant language information, providing a practical foundation for combining precise prompt semantics with visual generation.
 
-Our existing results provide the following evidence:
+For context, published GSM8K results include \textbf{48.7\% for Llama-3-8B Base} and \textbf{70.3\% for LLaDA-8B Base}, both evaluated with four examples in the prompt in the LLaDA paper \citep{llada}. TESS 2 \citep{tess} reports \textbf{66.6\%} for continuous simplex diffusion after mathematics-specific fine-tuning. These reference points use different training and evaluation settings; they place our preliminary result among capable diffusion reasoning systems. Our preliminary result establishes a practical foundation for generating reasoning-relevant contextual states. We will extend this capability to joint semantic and visual generation, learning how their components interact.
 
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.2400}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.4300}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3300}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Existing work
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Result
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-What it establishes
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-ELF-L, unpublished & A separate diffusion model generates projected frozen-Qwen answer states and reaches 61.94\% GSM8K accuracy. Qwen encodes the question but does not generate the solution autoregressively at inference. & Diffusion can generate language-model states that retain enough information for substantial reasoning performance. \\
-Learning When to Denoise \citep{schedule} & With a matched 675M-parameter backbone, AutoGuidance, and dopri5 sampler, LWD reaches FID 1.05 after 200 epochs versus SFD-XL's 1.06 after 800 epochs. & We can train models that generate semantic and visual representations together and control their relative timing. \\
-From Softmax to Score \citep{softmax} and our working mechanistic manuscript & Constructive connections between attention and denoising; analysis of the information needed for prediction and the effect of removing attention contributions. & We have analytical tools for studying what attention computes and when its output can be reused. \\
-Parameter sharing and transfer, unpublished & A shared prediction-feature variant improves CelebA64 FID from 17.574 to 14.304 at approximately 10.2M parameters. Restoring source query/key weights after joint adaptation gives recovery scores of 0.815 for CelebA\(\to\)AAHQ and 0.143 for CelebA\(\to\)STL-10. & Sharing can improve parameter allocation, while reuse succeeds on some changes and fails on others. \\
-\end{longtable}
+Our LWD \citep{schedule} results establish \textbf{state-of-the-art quality within the paper's comparison of 675M-parameter image generators}: FID \textbf{1.02}, also improving on the \textbf{1.04} of the larger, 1B-parameter SFD-XXL. At 200 epochs, LWD reaches FID \textbf{1.05}, versus \textbf{1.06} for SFD-XL at 800 epochs. Against REPA, it reaches unguided FID \textbf{4.93} after \textbf{120,000} main-training updates, versus \textbf{5.84} after \textbf{4 million} updates: \textbf{33 times fewer main-training updates}, with a further 10,000-update schedule-learning probe. These ImageNet-256 results demonstrate gains in training efficiency and final quality from learning the generation process. In our preliminary mechanistic experiments, sharing prediction computations improves CelebA64 FID from \textbf{17.574 to 14.304} at approximately \textbf{10.2M parameters}, showing how understanding transformer roles can improve parameter allocation.
 
-The sharing result uses one training seed. The transfer metric compares outputs in DINO feature space against the jointly adapted generator. Those experiments restored weights after training; they do not establish that keeping those weights fixed throughout training would work equally well. This distinction motivates the proposed reuse tests.
+\textbf{2. Use ordered denoising to learn and refine dependency structure.} SFD \citep{sfd} and SeFi-Image \citep{sefi} demonstrate semantic-first generation; Diffusion Forcing \citep{diffusionforcing} supports independent token noise levels; Latent Forcing \citep{latentforcing} analyzes how cleaner states in one representation improve prediction in another. Our LWD learns schedules for a given pair of representations. We will turn these ideas into a learning loop: jointly train schedules and the transformer, measure which components improve one another's denoising, and use those measurements to refine the component divisions and permitted inputs before resuming joint training. The advance is \textbf{using generation order to help discover the representation's useful dependencies, while learning the model that exploits them}. Learned dependencies then guide which components to regenerate together after a semantic edit.
 
-ELF's reasoning accuracy is a functional demonstration that diffusion-generated Qwen states retain precise language information. This motivates semantic targets capable of carrying complex prompt requirements. Our anisotropic trajectory optimization research \citep{trajectory} provides joint network/schedule learning and estimators accounting for a changing noise process; our asynchronous flow work provides another direct algorithmic starting point.
+\textbf{3. Connect those dependencies to interpretable transformer computations.} Local Mechanisms \citep{local} relates sparse score dependencies to composition, while Vision-Language Binding \citep{binding} traces the influence of reference information. Our attention-as-denoising analysis \citep{softmax} and working manuscript, \emph{A Mechanistic View of Diffusion Transformers as Adaptive Patchwise Denoisers}, provide a complementary starting point: attention aggregates information for prediction, while MLPs can store reusable sample or patch information. We will connect these roles to the learned representation components and their noise levels. Sparse attention specifies which components interact; shared or specialized MLPs implement conditional predictions; noise-dependent gates determine when each computation is used. Module removal, replacement, and sharing will identify how these computations support composition. This gives selective control an interpretable basis in both the generated states and the parameters acting on them.
 
-These results establish starting points for representation generation, schedule design, and component reuse. The proposed research connects them within the same conditional denoising tasks. Existing encoders, checkpoints, and schedule-learning code let the three parts begin from a common implementation; learned projections and small modules can then be incorporated progressively.
+The project therefore extends demonstrated capabilities through a common training procedure. Existing encoders, checkpoints, and schedule-learning code support immediate implementation, with learned extractors and conditional modules added progressively. The resulting understanding will guide generation and revision that preserve a creator's other requirements.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=7in]{figures/fig4_existing_feasibility.pdf}
-\caption{\textbf{Existing results support representation generation, schedule design, and parameter sharing.} (A) ELF generates projected frozen-Qwen contextual states; decoded answers reach 54.17\% GSM8K accuracy with synchronous inference and 61.94\% with asynchronous inference from the same checkpoint (EMA 0.9999, 32 ODE steps, two inference seeds over the same 1,319 questions). This supports reasoning-relevant information in generated language states; no matched AR advantage is claimed. (B) LWD \citep{schedule} reaches FID 1.05 at 200 epochs versus SFD-XL's 1.06 at 800 epochs, with matched 675M backbones, AutoGuidance, and dopri5 sampling. (C) Experiment 1, page 6, reports FID-50k 17.574 versus 14.304 for 10,215,472 versus 10,239,536 parameters on CelebA64, using one training seed, epoch-400 EMA, and a 50-step sampler. Values are redrawn from documented results; no new evaluations are included.}
+\caption{\textbf{Existing results demonstrate reasoning capability, efficient training, and improved parameter allocation.} (A) Our continuous diffusion language model alongside published autoregressive Llama-3 and discrete-diffusion LLaDA Base results from the LLaDA paper \citep{llada}; training and evaluation settings differ. (B) LWD reaches comparable image quality with one quarter of SFD-XL's training epochs, using 675M backbones and the same sampling setup. (C) Shared prediction computations improve image quality at approximately 10.2M parameters. Panels A and C show our preliminary results; panel B uses our LWD paper \citep{schedule}.}
 \label{fig:4}
 \end{figure}
 
@@ -335,7 +294,7 @@ The initial study will use a bounded vocabulary of annotated interactions and pa
 
 We will begin with our existing 10--20M-parameter diffusion Transformers and semantic/visual diffusion pipeline, reusing checkpoints, component-replacement code, and schedule-learning implementations. For the text-to-image prototype, we will use the released \textbf{PixArt-\(\Sigma\) 512-pixel model}, with an approximately 0.6B-parameter denoising Transformer and available training/adaptation code. Its native T5 text conditioning and VAE will remain in place. PixArt-\(\Sigma\) \citep{pixart}
 
-The initial representation combines image latents with frozen DINOv2 features and Qwen3-4B-Instruct-2507 states from the representation pipeline used in ELF. We will learn four to eight component groups using semantic tasks, reconstruction, and denoising losses. The groups begin as disjoint projected coordinates or token groups. Small projections, a semantic denoising branch, and trainable attention interfaces connect the generated features to image latents. Reference-image features enter as clean conditioning; generated component states carry the features of the requested scene. Qwen targets are extracted from annotated training scene descriptions containing participant and role information. T5 receives the supplied prompt, which can specify only a subset of that information; conditional tasks withhold the attributes or roles being inferred. At inference, the description-derived target states are generated; reference features and prompt conditioning remain available as inputs.
+The initial representation combines image latents with frozen DINOv2 features and Qwen3-4B-Instruct-2507 states from our continuous diffusion language-model pipeline. We will learn four to eight component groups using semantic tasks, reconstruction, and denoising losses. The groups begin as disjoint projected coordinates or token groups. Small projections, a semantic denoising branch, and trainable attention interfaces connect the generated features to image latents. Reference-image features enter as clean conditioning; generated component states carry the features of the requested scene. Qwen targets are extracted from annotated training scene descriptions containing participant and role information. T5 receives the supplied prompt, which can specify only a subset of that information; conditional tasks withhold the attributes or roles being inferred. At inference, the description-derived target states are generated; reference features and prompt conditioning remain available as inputs.
 
 The first prototype will freeze the pretrained image backbone and train the projections, semantic branch, and added conditional modules. Caching encoder outputs limits repeated feature extraction. We will release selected backbone parameters only where the restricted additions cannot support the required denoising tasks. The same fixed conditioning will be used when comparing module interventions, so changes can be traced through the proposed representation path.
 
@@ -393,7 +352,7 @@ Text-and-reference image generation and selective revision define the award-peri
 
 \bibliography{references}
 
-\textbf{Unpublished preliminary materials.} \emph{A Mechanistic View of Diffusion Transformers as Adaptive Patchwise Denoisers}, working manuscript; associated Experiment 1 and Experiment 3 reports; ELF-L experimental summary and accuracy records, 2026. These materials support the explicitly labeled preliminary results in Section 3.
+\textbf{Unpublished preliminary materials.} \emph{A Mechanistic View of Diffusion Transformers as Adaptive Patchwise Denoisers}, working manuscript; associated Experiment 1 and Experiment 3 reports; continuous diffusion language-model summary and accuracy records, 2026. These materials support the explicitly labeled preliminary results in Section 3.
 
 \clearpage
 
@@ -435,10 +394,10 @@ Indirect costs: 61.5\% of modified total direct costs & 49,187 \\
 %  — remove before submission
 % 
 % - Figures 1 and 2 are explanatory diagrams; Figures 3 and 4 use existing results. Figure sources, selected image panels, and reproduction instructions are documented in [figures/README.md](figures/README.md). No additional experiments are required before submission.
-% - The LaTeX version in `latex/proposal.tex` has been compiled and checked: ten pages of narrative, figures, and references, followed by a separate budget page, with 10-point body text. Recheck pagination after further edits.
+% - The LaTeX version in `latex/proposal.tex` has been compiled and checked: nine pages of narrative, figures, and references, followed by a separate budget page, with 10-point body text. Recheck pagination after further edits.
 % - Complete PI contact details. The PI CV is a separate submission item.
 % - Confirm the budget calendar dates with the institutional administrator. The supplied workbook lists July 1, 2026–June 30, 2027, but its student stipend and tuition calculations blend eight months of 2026–27 rates and four months of 2027–28 rates. The proposal preserves the supplied amounts and 12-month duration without assigning replacement dates.
 % - Check the planned model choices and computing costs against the budget. This is a planning decision and does not require a new experiment.
-% - Review the bibliography and complete the authorship/citation form for unpublished preliminary materials. Preserve the qualifications about the existing sharing and transfer results in their figure captions.
+% - Review the bibliography and complete the authorship/citation form for unpublished preliminary materials. Detailed experimental settings and figure provenance are retained in figures/README.md.
 % - Remove all drafting notes and figure-production instructions from the submission.
 % - [Sony's submission requirements][sony]: ten proposal pages including references, one budget page, minimum 10-point font, PDF under 16 MB; deadline 15 September 2026 at 11:59 p.m. PDT.

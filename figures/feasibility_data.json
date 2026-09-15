@@ -1,8 +1,12 @@
 {
   "elf": {
     "source": "elf_l_grant_summary.md, matched epoch-12 comparison (2026-09-12)",
+    "display_name": "Continuous diffusion language model",
     "synchronous_accuracy_percent": 54.1698,
     "asynchronous_accuracy_percent": 61.9409,
+    "denoiser_parameters_millions": 795,
+    "prompt_encoder": "Frozen Qwen3-4B-Instruct-2507; encodes the prompt once",
+    "training": "Math-trained denoiser generates continuous answer states",
     "ode_steps": 32,
     "distinct_test_questions": 1319,
     "generation_trials": 2638,
@@ -13,15 +17,48 @@
     "same_checkpoint": true,
     "ema": 0.9999
   },
+  "language_context": {
+    "source": "Nie et al., Large Language Diffusion Models, arXiv v3, Table 1",
+    "url": "https://arxiv.org/html/2502.09992v3",
+    "comparison": "Published benchmark context; training and evaluation settings differ",
+    "baselines": [
+      {
+        "name": "Llama-3-8B Base",
+        "generation": "Autoregressive",
+        "gsm8k_accuracy_percent": 48.7,
+        "shots": 4
+      },
+      {
+        "name": "LLaDA-8B Base",
+        "generation": "Discrete diffusion",
+        "gsm8k_accuracy_percent": 70.3,
+        "shots": 4
+      }
+    ]
+  },
   "schedule": {
-    "source": "Learning When to Denoise, submitted PDF Table 2; Semantic Flow Diffusion, Table 2; matched AutoGuidance + dopri5 sampling",
+    "source": "Learning When to Denoise, Table 2; Semantic Flow Diffusion, Table 2; matched AutoGuidance + dopri5 sampling",
     "url": "https://arxiv.org/html/2606.19662v1",
+    "sfd_url": "https://arxiv.org/html/2512.04926v1",
     "lwd_epochs": 200,
     "sfd_xl_epochs": 800,
     "lwd_autoguidance_fid": 1.05,
     "sfd_xl_autoguidance_fid": 1.06,
     "sampler": "dopri5",
-    "denoiser_parameters_millions": 675
+    "denoiser_parameters_millions": 675,
+    "final_public_result": {
+      "source": "Learning When to Denoise, arXiv v1, Table 2",
+      "lwd": {
+        "epochs": 600,
+        "parameters_millions": 675,
+        "autoguidance_fid": 1.02
+      },
+      "sfd_xxl": {
+        "epochs": 800,
+        "parameters_millions": 1000,
+        "autoguidance_fid": 1.04
+      }
+    }
   },
   "sharing": {
     "source": "experiment1.pdf, page 6, matched-budget architecture table",

@@ -110,32 +110,8 @@ def reuse():
     save(fig,"fig3_component_reuse")
 
 def feasibility():
-    data=json.loads((ROOT/"figures"/"feasibility_data.json").read_text())
-    fig, axes=plt.subplots(1,3,figsize=(7,2.65))
-    fig.subplots_adjust(left=.075,right=.995,top=.74,bottom=.225,wspace=.65)
-    vals=[[data["elf"]["synchronous_accuracy_percent"],data["elf"]["asynchronous_accuracy_percent"]],
-          [data["schedule"]["sfd_xl_epochs"],data["schedule"]["lwd_epochs"]],
-          [data["sharing"]["baseline"]["fid_50k"],data["sharing"]["shared"]["fid_50k"]]]
-    for k,(ax,values,title,sub,ticks,ylabel,limit) in enumerate(zip(axes,vals,
-       ["A. Qwen states","B. Learned schedules","C. Shared MLPs"],
-       ["Same ELF checkpoint","Comparable FID (~1.05)","About 10.2M weights"],
-       [["Sync.","Async."],["SFD-XL\nFID 1.06","LWD\nFID 1.05"],["DiT","Shared\nDiT-MLP"]],
-       ["GSM8K accuracy (%)","Training epochs","FID-50k"], [75,1000,22])):
-        pos=ax.get_position()
-        # Titles aligned above their panels; no oversized figure headline.
-        fig.text(pos.x0+pos.width/2,.933,title,fontsize=10.5,fontweight="bold",ha="center")
-        fig.text(pos.x0+pos.width/2,.856,sub,fontsize=10,color=MUTED,ha="center")
-        bars=ax.bar([0,1],values,width=.59,color=["#7497BD",TEAL])
-        ax.set_xticks([0,1],ticks,fontsize=10)
-        ax.set_ylim(0,limit)
-        ax.set_ylabel(ylabel,fontsize=10,labelpad=3)
-        ax.tick_params(axis="both",labelsize=10,length=2,pad=3)
-        ax.grid(axis="y",color="#e6ebef",lw=.6)
-        ax.set_axisbelow(True)
-        for b,value in zip(bars,values):
-            label=f"{value:.2f}" if k==0 else f"{value:.0f}" if k==1 else f"{value:.3f}"
-            ax.text(b.get_x()+b.get_width()/2,value+limit*.025,label,ha="center",fontsize=10.5,fontweight="bold")
-    save(fig,"fig4_existing_feasibility")
+    from make_feasibility_figure import build_feasibility
+    save(build_feasibility(), "fig4_existing_feasibility")
 
 if __name__ == "__main__":
     import argparse
