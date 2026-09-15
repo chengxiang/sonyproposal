@@ -1,0 +1,41 @@
+{
+  "elf": {
+    "source": "elf_l_grant_summary.md, matched epoch-12 comparison (2026-09-12)",
+    "synchronous_accuracy_percent": 54.1698,
+    "asynchronous_accuracy_percent": 61.9409,
+    "ode_steps": 32,
+    "distinct_test_questions": 1319,
+    "generation_trials": 2638,
+    "inference_seeds": [
+      42,
+      123
+    ],
+    "same_checkpoint": true,
+    "ema": 0.9999
+  },
+  "schedule": {
+    "source": "Learning When to Denoise, arXiv:2606.19662v1, abstract and Section 4.3",
+    "url": "https://arxiv.org/html/2606.19662v1",
+    "lwd_epochs": 200,
+    "sfd_xl_epochs": 800,
+    "autoguidance_fid_both": 1.05,
+    "denoiser_parameters_millions": 675
+  },
+  "sharing": {
+    "source": "experiment1.pdf, page 6, matched-budget architecture table",
+    "baseline": {
+      "name": "DiT F1024",
+      "parameters": 10215472,
+      "fid_50k": 17.574
+    },
+    "shared": {
+      "name": "Shared DiT-MLP H14/d32/W256",
+      "parameters": 10239536,
+      "fid_50k": 14.304
+    },
+    "dataset": "CelebA64",
+    "training_seeds": 1,
+    "checkpoint_epoch": 400,
+    "sampler_steps": 50
+  }
+}

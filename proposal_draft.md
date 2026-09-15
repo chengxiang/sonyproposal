@@ -54,6 +54,16 @@ Time t runs from noise to data. Each τₖ increases from zero to one; the curve
 
 This relationship also shapes training: changing representations or schedules changes the prediction problems and parameter updates. Changing network computations, in turn, changes which denoising procedures are effective. Our contribution will connect these effects to semantic dependencies and use them to guide generation and knowledge integration.
 
+### Differentiation from existing approaches
+
+**Our advance is to connect a semantic division to the computations and denoising stages that realize it, then use that correspondence to design control and knowledge integration.** Existing methods provide important ingredients; the proposed correspondence determines how those ingredients should work together.
+
+| Existing capability | What this proposal adds |
+|---|---|
+| Generate semantic features and coordinate representation schedules ([SFD][sfd], [LWD][schedule], [anisotropic trajectory optimization][trajectory]). | Task-grounded divisions with measured conditional recovery dependencies, jointly informing component maps and asynchronous generation. |
+| Edit concept directions, trace modality binding, or specialize across timesteps ([Concept Sliders][sliders], [Vision-Language Binding][binding], [DeMe][deme]). | Identify which components a module reads and changes at each noise configuration, then construct selective access to reusable prediction knowledge. |
+| Generate personalization weights or merge adapters ([DiffLoRA][difflora], [ZipLoRA][ziplora]). | Use the shared semantic and parameter organization to retain compatible contributions, localize reconciliation, and generate updates for specified sub-representations. |
+
 ### The two aims and their practical outcomes
 
 1. **Learn semantic representations and design their denoising process.** Obtain useful token vectors, learn semantic component maps and recovery dependencies, and coordinate their asynchronous generation for precise scene revision.
@@ -63,7 +73,9 @@ The aims will guide each other throughout the project. A module carrying the giv
 
 **The distinctive outcome is interpretable control through the correspondence between representations, computation, and denoising.** It will guide both immediate representation edits and parameter changes that make a desired effect reusable. Text-and-reference image generation is the main application; video motivates future temporal and cross-frame extensions. The practical goals are reliable scene revision and the integration of additional creative knowledge without repeatedly training the entire generator.
 
-> **Figure 1 — Main explanatory figure; no new results needed.** Follow one handover revision through semantic components sₖ, the attention/MLP computations connecting them, and overlapping asynchronous schedules τₖ. Mark the changed relationship and the identities, clothing, and activity to preserve. Add a small panel showing character and interaction knowledge from separate collections used in a new scene. Use schematic entities, vector blocks, and curves; distinguish established preliminary findings from proposed semantic specialization.
+![Figure 1: fig1 mechanism overview](figures/fig1_mechanism_overview.png)
+
+**Figure 1. Proposed correspondence between representations, network computations, and denoising.** A role reversal is expressed through semantic components; the network's information access and the components' asynchronous evolution determine how it reaches the image. The intended outcome is selective revision with preservation and reusable knowledge. All vectors and schedules are schematic.
 
 ## 2. Aim 1: Learn semantic representations and design their denoising process
 
@@ -143,7 +155,9 @@ For the handover revision, the learned dependencies and Aim 2's module analysis 
 
 **Expected result:** a task-grounded semantic decomposition, measurable recovery dependencies, and a jointly trained denoising procedure for selective scene revision.
 
-> **Figure 2 — Compact explanatory method panel.** Illustrate participant/interaction components learned from task prediction, followed by a recovery comparison with the target noise level fixed and another component made cleaner. Show overlapping asynchronous schedules and the tradeoff between improving others' recovery and reducing information available to an early component. Include the character meta-learning episode as a small inset if space permits. All curves and examples are schematic; no new measured results or samples are needed.
+![Figure 2: fig2 recovery schedule](figures/fig2_recovery_schedule.png)
+
+**Figure 2. Recovery dependencies guide asynchronous generation.** Make component j cleaner while holding target i's noise, other inputs, and the network fixed. The change in target recovery loss measures the benefit of information from j. Schedules can cross as relative information needs change. Advancing j can help i while making j's own recovery harder because less context is available. The schedules are illustrative, not measured.
 
 ## 3. Aim 2: Understand and design network mechanisms for knowledge storage and composition
 
@@ -187,7 +201,9 @@ This reuses learning already performed on individual datasets. For an unprocesse
 
 **Expected result:** an interpretable organization of semantic access and shared prediction computations, with bounded methods for adapting, combining, and generating parameter updates that incorporate new knowledge.
 
-> **Figure 3 — Existing component-reuse results only.** Use the already reported CelebA→AAHQ and CelebA→STL-10 results, with paired DINO recovery values 0.815 and 0.143. Draw which weights were restored to the source model and which remained adapted. Reuse existing illustrative images if suitable; the reported values alone are sufficient. Label the experiment as restoring components after joint adaptation. Do not add new runs, uncertainty estimates, direct restricted-training results, or predicted-versus-observed results from the proposed project.
+![Figure 3: fig3 component reuse](figures/fig3_component_reuse.png)
+
+**Figure 3. Existing component-reuse evidence.** Images are extracted from the first report-selected noise input (seed 0, latent 1) in Experiment 3, pages 2 and 5. Restoring source query/key weights while retaining adapted value/output projections and MLPs preserves much of the AAHQ change but does not reproduce the STL-10 joint result. Bars report 1 − E_hybrid/E_source, where E is mean squared distance to the paired joint output in normalized DINOv2 features: 1,024 matched latents per adaptation seed, averaged over two seeds. The score measures recovery of joint-model outputs, not target fidelity. These are 20M-model post-training reversion experiments; joint endpoints were selected using the existing test-FID results.
 
 ## 4. Why the proposed work is feasible
 
@@ -210,7 +226,9 @@ ELF's reasoning accuracy is a functional demonstration that diffusion-generated 
 
 These results establish separate foundations for representation generation, schedule design, and component reuse. The proposed research connects them through task-grounded component maps and module-specific information access. Existing encoders and generators let both aims begin immediately, while improvements to their organization can be incorporated progressively.
 
-> **Figure 4 — Existing representation-generation results only.** Use two panels: (a) a diagram of ELF's frozen-Qwen feature extraction and diffusion generation, with the already reported 61.94% reasoning accuracy; (b) the existing semantic/texture scheduling result, reusing a published plot or displaying the reported 200- versus 800-epoch comparison. Explain that asynchronous generation already improves training and quality; coordinating many representation components for selective control is proposed work. Do not request new seeds, runs, decoded examples, or comparisons. Figure 3 already covers the transfer evidence, so it need not be repeated here.
+![Figure 4: fig4 existing feasibility](figures/fig4_existing_feasibility.png)
+
+**Figure 4. Existing results support representation generation, schedule design, and parameter sharing.** (A) ELF generates projected frozen-Qwen contextual states; decoded answers reach 54.17% GSM8K accuracy with synchronous inference and 61.94% with asynchronous inference from the same checkpoint (EMA 0.9999, 32 ODE steps, two inference seeds over the same 1,319 questions). This supports reasoning-relevant information in generated language states; no matched AR advantage is claimed. (B) [LWD][schedule] reaches AutoGuidance FID 1.05 at 200 epochs, matching SFD-XL at 800 epochs with a 675M backbone. (C) Experiment 1, page 6, reports FID-50k 17.574 versus 14.304 for 10,215,472 versus 10,239,536 parameters on CelebA64, using one training seed, epoch-400 EMA, and a 50-step sampler. Values are redrawn from documented results; no new evaluations are included.
 
 ## 5. Creator demonstrations and relevance to Sony
 
@@ -224,11 +242,27 @@ Validation will connect internal effects to the creator's requirements: referenc
 
 Existing generators can supply original/revised prompt pairs, following the practical precedent of [InstructPix2Pix][instruct]. Shared initial noise can aid comparison, but pairs will be checked for the intended change and preserved requirements before use. These are proposed award-period resources and demonstrations.
 
-> **Figure 5 — Optional creator-workflow panel.** Show scene revision and collection expansion using reference labels and schematic entities. Reuse the handover example from Figure 1; merge this panel into that figure if space is limited. Label parameter merging and demonstration-generated updates as proposed capabilities. No new samples or completed demonstration are required before submission.
 
 ## 6. Work plan and deliverables
 
 **The core deliverable is a working correspondence between semantic components, their denoising process, and the network computations enabling selective control.** Task-derived features, meta-learning, and compositional training are methods for constructing it. Partial-representation adaptation, model merging, and generated updates will use the same representation interface and restricted parameter family.
+
+### Concrete execution
+
+We will begin with our existing 10–20M-parameter diffusion Transformers and semantic/visual diffusion pipeline, reusing checkpoints, component-replacement code, and schedule-learning implementations. For the text-to-image prototype, we will use the released **PixArt-Σ 512-pixel model**, with an approximately 0.6B-parameter denoising Transformer and available training/adaptation code. Its native T5 text conditioning and VAE will remain in place. [PixArt-Σ][pixart]
+
+Image latents will be augmented with frozen DINOv2 features and Qwen3-4B-Instruct-2507 states from the representation pipeline used in ELF. We will initially learn four to eight component groups for participants, relations, and remaining visual information. Small projections, a semantic denoising branch, and trainable attention interfaces will allow these states to evolve with image latents; compact parameter updates will adapt the pretrained image generator. Caching encoder outputs and retaining frozen text/image encoders will concentrate training on the component maps, denoising branch, and selected network parameters.
+
+| Resource | Role in the initial implementation |
+|---|---|
+| Existing CelebA64, AAHQ, and STL-10 experiment pipelines | Establish module reuse and shared prediction behavior in small models before applying the same analyses to the text-to-image prototype. |
+| [SWiG grounded situation recognition][swig] | Activity labels, participant-role labels, and entity locations for training participant and interaction components. |
+| [Visual Genome][visualgenome] | Objects, attributes, and pairwise relationships for compositional training and semantic prediction. |
+| [CelebA identity annotations][celeba] | Support/query episodes for facial identity across photographs, with identities separated between training and evaluation. |
+
+We will select a bounded vocabulary of annotated activities and relations and form descriptions from their labels. Some participant–relation combinations will be held out to assess composition. SWiG and Visual Genome provide scene supervision; CelebA supplies the separate identity task. We will obtain the identity annotations for the existing image collection as needed. Independently checked generated scene variations can extend demonstrations during the award; success on facial identity alone will not stand in for control of full scenes.
+
+Knowledge integration will start with two adaptations trained during the award from the same generator and fixed representation interface, using different annotated subsets. Their shared allowed parameter groups will also define the output of the context-to-update model. Training will fit source updates first, then learn mixing coefficients or connecting projections for integration. This shared implementation makes merging and generated updates applications of the same mechanisms. The small-model work builds on the mechanistic experiments conducted with the PI's student Hun; funded staffing and computing allocations will be specified in the budget.
 
 All experiments below are proposed for the 12-month award period.
 
@@ -272,6 +306,10 @@ Text-and-reference image generation defines the award-period application. Larger
 22. Ghosh, Hajishirzi, and Schmidt. [GenEval: An Object-Focused Framework for Evaluating Text-to-Image Alignment][geneval]. arXiv:2310.11513, 2023.
 23. Ma et al. [Decouple-Then-Merge: Finetune Diffusion Models as Multi-Task Learning][deme]. CVPR, 2025.
 24. Shah et al. [ZipLoRA: Any Subject in Any Style by Effectively Merging LoRAs][ziplora]. ECCV, 2024.
+25. Chen et al. [PixArt-Σ: Weak-to-Strong Training of Diffusion Transformer for 4K Text-to-Image Generation][pixart]. Implementation and released checkpoints.
+26. Pratt et al. [Grounded Situation Recognition (SWiG)][swig]. ECCV, 2020; project and annotations.
+27. Krishna et al. [Visual Genome: Connecting Language and Vision Using Crowdsourced Dense Image Annotations][visualgenome]. IJCV, 2017.
+28. Liu et al. [Deep Learning Face Attributes in the Wild (CelebA)][celeba]. ICCV, 2015; dataset and annotations.
 
 **Unpublished preliminary materials.** *A Mechanistic View of Diffusion Transformers as Adaptive Patchwise Denoisers*, working manuscript; associated Experiment 1 and Experiment 3 reports; ELF-L experimental summary and accuracy records, 2026. These materials support the explicitly labeled preliminary results in Section 4.
 
@@ -289,7 +327,7 @@ Text-and-reference image generation defines the award-period application. Larger
 
 ## Editorial notes for finalization — remove before submission
 
-- Prepare figures using only explanatory drawings and already reported results. Figure 1 carries the main explanatory story; Figure 2 can be a compact method panel and Figure 5 can be merged into Figure 1. Figures 3 and 4 use existing evidence. Existing images and plots can be reused, and reported numbers can be redrawn. No additional training, sampling, ablations, evaluation, or completed demonstration is needed before submission.
+- Figures 1 and 2 are explanatory diagrams; Figures 3 and 4 use existing results. Figure sources, selected image panels, and reproduction instructions are documented in [figures/README.md](figures/README.md). No additional experiments are required before submission.
 - Fit the narrative and references within ten pages, with the budget on a separate eleventh page. Shorten prose as figures are laid out; page count has not yet been checked in a submission PDF.
 - Complete PI contact details and the institutional budget. The PI CV is a separate submission item.
 - Check the planned model choices and computing costs against the budget. This is a planning decision and does not require a new experiment.
@@ -326,3 +364,8 @@ Text-and-reference image generation defines the award-period application. Larger
 
 [deme]: https://arxiv.org/abs/2410.06664
 [ziplora]: https://arxiv.org/abs/2311.13600
+
+[pixart]: https://github.com/PixArt-alpha/PixArt-sigma
+[swig]: https://prior.allenai.org/projects/gsr
+[visualgenome]: https://arxiv.org/abs/1602.07332
+[celeba]: https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html
