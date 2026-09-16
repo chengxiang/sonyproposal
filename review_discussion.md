@@ -19,7 +19,7 @@ Numbering follows the review's eight ranked criticisms, rather than its shorter 
 | 1 | Predictive dependence and module ablation do not, by themselves, establish the promised semantic mechanism. | Direction agreed; candidate methods recorded below; implementation choices remain open. |
 | 2 | No decisive evaluation isolates the value of learning representations, denoising, and transformer computations together. | Working table accepted for now. Criticism 3 narrows the claim; corresponding H1/H4 revisions are recorded below for discussion. |
 | 3 | The representation-refinement algorithm is underspecified. | Scope decision agreed: obtain representations from pretrained or task-trained models, then hold them fixed during dependency/schedule learning. Remove representation refinement from that stage. |
-| 4 | Useful information in corrupted ground-truth states may not remain useful in generated states. | Awaiting discussion. |
+| 4 | Useful information in corrupted ground-truth states may not remain useful in generated states. | Treat as a bounded technical risk; add one short diagnostic paragraph and mention rollout-based training as a possible mitigation. |
 | 5 | Integration, resources, and the minimum 12-month scope need firmer bounds. | Awaiting discussion. |
 | 6 | The differentiation does not yet isolate one new scientific relationship. | Awaiting discussion. |
 | 7 | Preliminary evidence takes more space than its direct support for the proposal warrants. | Awaiting discussion. |
@@ -222,13 +222,36 @@ For criticism 1, the noise-availability objective remains a diagnostic for usefu
 
 Only this discussion record has been updated. The proposal draft, figures, LaTeX, and compiled deliverables remain unchanged until the coordinated revision.
 
+## 4. Check the gap between training states and generated states
+
+### Agreed framing
+
+The user considers this a useful question, but less damaging than the earlier criticisms: it concerns the practical discrepancy between states produced by sampling and states constructed by corrupting clean training examples. It should be handled as a bounded technical risk within the proposed method, with one short diagnostic paragraph. It does not require a new research aim or an elaborate experiment matrix.
+
+For a correctly specified exact flow and exact integration, the generated and prescribed training states have matching time marginals. In practice, model approximation, numerical sampling, and errors in generated semantic components can create a gap. Matching nominal noise levels does not itself establish equal usefulness for downstream generation. This qualification belongs in the discussion record; the proposal need not expand it into a theoretical detour.
+
+### Proposed paragraph for the final revision
+
+We will compare conditional generation using components obtained by corrupting ground-truth examples with components produced by the model's own sampling procedure at the same noise levels. Keeping the downstream model and requested scene requirements fixed, we will assess prompt satisfaction and image quality to determine whether the useful dependencies persist during generation. If a substantial gap limits performance, we will investigate fine-tuning with model-generated conditioning states from short rollouts, drawing on approaches such as [Self Forcing](https://arxiv.org/abs/2506.08009).
+
+### Feasibility and scope notes
+
+[Self Forcing: Bridging the Train-Test Gap in Autoregressive Video Diffusion](https://arxiv.org/abs/2506.08009) trains on self-generated context and supervises generated sequences using distribution-matching losses. It provides a relevant precedent for training under the conditions encountered at inference. Adapting that principle to our representation components is a candidate mitigation, not an already demonstrated solution for this setting.
+
+The diagnostic compares aggregate task performance, not whether a generated state reproduces one particular reference sample. Generated states with different details can satisfy the same prompt. If rollout training is needed, its supervision must remain appropriate for those states; arbitrary rollout states cannot simply inherit a clean example's original flow-matching target. Task-level or distribution-level supervision is one possible route. These implementation details can remain outside the short proposal paragraph.
+
+Representation encoders stay fixed, consistent with criticism 3. The conditioning-path distinction from criticism 1 also remains: the diagnostic must specify which information comes from the tested components and which is already supplied by the prompt. The user has not requested further preliminary experiments; both diagnosis and any mitigation are proposed award-period work.
+
+### Changes to carry into the final revision
+
+Insert the short diagnostic and contingency paragraph near the generation/evaluation discussion. Cite the rollout-training precedent, retain the emphasis on end-to-end generated outputs, and avoid presenting this issue as a separate major objective. No proposal or compiled deliverable changes have been made.
+
 ## Remaining discussions
 
 The items below summarize reviewer questions to revisit. **They are not yet accepted changes or additional deliverables.**
 
 | No. | Question to settle | Related to criticism 1 |
 |---|---|---|
-| 4 | How will we distinguish useful clean target information from useful model-generated information? | Separate masked-information diagnostics from complete-prompt generation and examine actual generated trajectories. |
 | 5 | What is the smallest credible implementation and one-year deliverable, given available data and compute? | Decide the conditioning path and module granularity before committing to a large integration. |
 | 6 | Which relationship differentiates the proposal from existing schedule learning, sparse modules, and representation methods? | Functional dependencies that predict specific transformer information paths are a candidate, not a settled novelty claim. |
 | 7 | Which existing results most directly establish feasibility, and how much space should each receive? | No new preliminary experiments are required; preserve the distinction between supporting ingredients and establishing their interaction. |
@@ -239,3 +262,4 @@ The items below summarize reviewer questions to revisit. **They are not yet acce
 - **2026-09-16:** Created this discussion record at the user's request. Captured the agreed direction, candidate methods, and open decisions for criticism 1. Queued the remaining criticisms without treating the reviewer's suggestions as accepted commitments. No proposal, LaTeX, figure, budget, or compiled deliverable changes were made.
 - **2026-09-16:** Added the discussion of criticism 2: a proposed four-row hypothesis-and-test table, distinctions among existing evidence and proposed extensions, and focused comparison principles. The user supports the table format and evidence annotations; the specific rows remain proposals for discussion. The proposal draft remains unchanged.
 - **2026-09-16:** The user accepted the criticism-2 table for now, then narrowed criticism 3: obtain representations from pretrained or downstream-task models and fix them during dependency/schedule learning. Recorded this decision, superseded the proposed representation-refinement loop, and adjusted the working H1/H4 formulations to reflect the scope change. No proposal changes were made.
+- **2026-09-16:** Recorded criticism 4 as a bounded technical risk, with a single proposed diagnostic paragraph and rollout-based fine-tuning as a possible mitigation. Added Self Forcing as a feasibility precedent. The proposal draft remains unchanged.
