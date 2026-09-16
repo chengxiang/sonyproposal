@@ -55,54 +55,97 @@ def vector(ax, x, y, w, h, vals, color):
 
 
 def build_overview():
-    fig, ax = canvas(4.65)
-    txt(ax, .018, .971, "Controllable multimodal generation", 12, "bold")
-    box(ax, .018, .788, .964, .145, PO, "#E7CDB2")
-    txt(ax, .035, .906, "REQUESTED SCENE", 10, "bold", ORANGE)
-    txt(ax, .035, .858, "A woman in a red coat gives a blue cup to a man in a green sweater.", 10.5)
-    txt(ax, .035, .815, "A child beside them reads a book.")
+    """Three linked design choices, with concrete illustrative token components."""
+    fig, ax = canvas(5.5)
+    txt(ax, .018, .974, "Learn representation, generation, and computation together", 12, "bold")
 
-    # Three connected aspects; the middle aspect is an ongoing training loop.
-    box(ax, .018, .622, .964, .126, PB)
-    txt(ax, .035, .719, "2.1  Learn representations and component extractors", 10.5, "bold", BLUE)
-    txt(ax, .035, .678, "Learn from fixed encoders or")
-    txt(ax, .035, .643, "downstream tasks / rewards.")
-    txt(ax, .512, .678, "Illustrative: participants / roles / other", 10, color=MUTED)
-    for x, col, vals in [(.512, BLUE, [.8,.45,.2,.7,.5,.9]),
-                         (.666, ORANGE, [.35,.9,.7,.2,.85,.4]),
-                         (.820, GRAY, [.5,.25,.8,.35,.65,.5])]:
-        vector(ax, x, .634, .142, .024, vals, col)
-    arrow(ax, (.500, .617), (.500, .587), BLUE, both=True, scale=6)
+    # The coordinate selections are an illustration, not an asserted learned basis.
+    box(ax, .018, .613, .964, .323, PB)
+    txt(ax, .037, .909, "REPRESENTATION: token vectors and component extractors", 10.5, "bold", BLUE)
 
-    box(ax, .018, .278, .964, .304, PT)
-    txt(ax, .035, .551, "2.2  Jointly learn denoising order, component dependencies,", 10.5, "bold", TEAL)
-    txt(ax, .035, .515, "and the transformer", 10.5, "bold", TEAL)
-    box(ax, .035, .341, .394, .139, "white", "#BEDCD8")
-    box(ax, .553, .341, .412, .139, "white", "#BEDCD8")
-    txt(ax, .052, .453, "Dependency diagnostics", 10, "bold", TEAL)
-    txt(ax, .052, .409, "Compare noise conditions at")
-    txt(ax, .052, .371, "the current model checkpoint.")
-    txt(ax, .570, .453, "Schedule + transformer updates", 10, "bold", TEAL)
-    txt(ax, .570, .409, "Dependencies and denoising order")
-    txt(ax, .570, .371, "evolve together with training.")
-    arrow(ax, (.442, .426), (.540, .426), TEAL)
-    arrow(ax, (.540, .384), (.442, .384), TEAL)
-    txt(ax, .500, .305, "Repeat diagnostics as training changes the model.", 10, "bold", TEAL, ha="center")
-    arrow(ax, (.500, .273), (.500, .243), TEAL, both=True, scale=6)
+    def selected_coordinates(y, selected, color):
+        for j in range(12):
+            x = .177 + j * .20 / 12
+            ax.add_patch(Rectangle((x, y-.012), .20/12*.90, .024,
+                facecolor=color if j in selected else "#DCE4EB",
+                edgecolor="white", linewidth=.35))
+        arrow(ax, (.390, y), (.423, y), color, scale=7)
 
-    box(ax, .018, .063, .964, .175, PB)
-    txt(ax, .035, .211, "2.3  Shared and specialized transformer computations", 10.5, "bold", BLUE)
-    txt(ax, .035, .167, "Noise-dependent module gates", 10, "bold")
-    vector(ax, .035, .102, .126, .025, [.85, .2, .6], BLUE)
-    arrow(ax, (.174, .1145), (.209, .1145), BLUE)
-    for x, active in [(.222, True), (.273, False), (.324, True)]:
-        box(ax, x, .092, .038, .045, TEAL if active else "white", TEAL if active else RULE)
-    box(ax, .412, .095, .238, .083, "white", "#BEDCD8")
-    box(ax, .675, .095, .290, .083, "white", "#BEDCD8")
-    txt(ax, .531, .1365, "Sparse attention", 10, "bold", TEAL, ha="center")
-    txt(ax, .820, .1365, "Shared / switched MLPs", 10, "bold", TEAL, ha="center")
-    txt(ax, .500, .027, "Goal: accurately generate participants, attributes, and relationships.",
-        10.5, "bold", TEAL, ha="center")
+    for label, y, ids, col, interpretation in [
+        ("Token 1", .863, [1, 2, 3, 7, 8], BLUE, "woman; red coat"),
+        ("Token 2", .811, [1, 2, 3, 7, 8], BLUE, "man; green sweater"),
+        (r"Relation $R$", .757, [0, 1, 4, 5, 8, 9], ORANGE,
+         "giver = token 1; receiver = token 2"),
+        (r"Visual $V$", .681, [2, 3, 4, 7, 8, 9], TEAL,
+         "hands and cup in image tokens"),
+    ]:
+        txt(ax, .037, y, label, 10, "bold", col)
+        selected_coordinates(y, ids, col)
+        txt(ax, .440, y, interpretation, 10)
+    txt(ax, .440, .728, "object = blue cup", 10)
+    txt(ax, .037, .635,
+        "Colored cells illustrate selected coordinates; useful components are learned.",
+        10, color=MUTED)
+
+    # Each arrow states a concrete relationship; this is not a serial pipeline.
+    arrow(ax, (.046, .606), (.046, .351), BLUE)
+    txt(ax, .065, .476,
+        "Make informative\ncomponents ready\nearlier to improve\ngeneration",
+        10, color=BLUE)
+    arrow(ax, (.480, .351), (.480, .606), TEAL)
+    txt(ax, .462, .476,
+        "Vary noise to learn\nwhich components\nhelp predict\nother components",
+        10, color=TEAL, ha="right")
+    arrow(ax, (.552, .606), (.552, .351), ORANGE)
+    txt(ax, .575, .476,
+        "Choose component inputs and targets;\nshare attention across tasks;\nspecialize prediction modules.",
+        10, color=ORANGE)
+
+    box(ax, .018, .072, .464, .273, PT)
+    txt(ax, .036, .314, "DENOISING ALGORITHM", 10.5, "bold", TEAL)
+    gax = fig.add_axes([.087, .128, .154, .147])
+    t = np.linspace(0, 1, 301)
+    for progress, col in [(t+.115*np.sin(2*np.pi*t), BLUE),
+                          (t-.115*np.sin(2*np.pi*t), ORANGE),
+                          (t+.055*np.sin(4*np.pi*t), TEAL)]:
+        gax.plot(t, progress, color=col, lw=1.5)
+    gax.set(xlim=(0, 1), ylim=(0, 1), xticks=[0, 1], yticks=[0, 1])
+    gax.set_xlabel(r"Time $t$", fontsize=10, labelpad=0)
+    gax.set_ylabel(r"$\tau_k(t)$", fontsize=10, labelpad=0)
+    gax.tick_params(labelsize=10, length=2, pad=1, colors=MUTED)
+    for edge in ["top", "right"]:
+        gax.spines[edge].set_visible(False)
+    for edge in ["left", "bottom"]:
+        gax.spines[edge].set_color(RULE)
+    txt(ax, .267, .211,
+        "Each component " + r"$s_k$" + "\nhas its own schedule.\nSchedules overlap;\norder can change.", 10)
+
+    box(ax, .518, .072, .464, .273, PO)
+    txt(ax, .536, .314, "TRANSFORMER ARCHITECTURE", 10.5, "bold", ORANGE)
+    txt(ax, .539, .279, "Conditions", 10, color=MUTED)
+    box(ax, .656, .140, .110, .126, "white", "#E7CDB2")
+    txt(ax, .711, .203, "Shared\nattention", 10, "bold", ORANGE, ha="center")
+    for y, condition, target, color in [
+        (.239, r"$1,2,R$", "V", TEAL),
+        (.164, r"$1,2,V$", "R", ORANGE),
+    ]:
+        txt(ax, .539, y, condition, 10, color=color)
+        arrow(ax, (.622, y), (.648, y), color, scale=7)
+        arrow(ax, (.774, y), (.799, y), color, scale=7)
+        box(ax, .805, y-.027, .098, .054, "white", "#E7CDB2")
+        txt(ax, .854, y, r"$\mathrm{MLP}_{"+target+"}$", 10, ha="center", color=color)
+        arrow(ax, (.911, y), (.943, y), color, scale=7)
+        txt(ax, .961, y, "$"+target+"$", 10, "bold", color, ha="center")
+    txt(ax, .537, .099, "Each task also receives its noisy target.", 10, color=MUTED)
+
+    # Schedules and the transformer are fitted together, not in separate phases.
+    from matplotlib.path import Path as MplPath
+    connector = MplPath([(.739, .068), (.739, .030), (.261, .030), (.261, .068)],
+        [MplPath.MOVETO, MplPath.LINETO, MplPath.LINETO, MplPath.LINETO])
+    ax.add_patch(FancyArrowPatch(path=connector, arrowstyle="<->",
+        mutation_scale=8, linewidth=1.2, color=MUTED))
+    txt(ax, .500, .030, "Jointly train schedules and transformer", 10, "bold", MUTED,
+        ha="center", bbox={"facecolor": "white", "edgecolor": "none", "pad": 2})
     return fig
 
 

@@ -4,7 +4,7 @@
 
 ## Compile
 
-Use pdfLaTeX and BibTeX with a standard TeX Live installation. Citations use natbib's author–year format. The included `sonyabbrvnat.bst` is a lightly modified `abbrvnat` style that links reference titles instead of printing a separate URL.
+Use pdfLaTeX and BibTeX with a standard TeX Live installation. Citations use natbib's author–year format. Mathematical variables are explicitly marked in the Markdown source and exported consistently to LaTeX. The included `sonyabbrvnat.bst` is a lightly modified `abbrvnat` style that links reference titles instead of printing a separate URL.
 
 ```bash
 latexmk -pdf -interaction=nonstopmode -halt-on-error proposal.tex
@@ -12,7 +12,7 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error proposal.tex
 
 Alternatively, run `pdflatex proposal.tex`, then `bibtex proposal`, then `pdflatex proposal.tex` twice. For Overleaf, upload this directory's files and select pdfLaTeX and `proposal.tex` as the main document.
 
-The checked output is 10 letter-size pages: nine pages of narrative, figures, and references, followed by one budget page. Body text, tables, and captions use 10-point type; figures use labels of at least 10 points at their specified seven-inch width, except normal mathematical subscripts. The PDF is approximately 0.3 MB. Research prose, equations, references, and benchmark context match the current Markdown draft; scholarly citations are formatted through BibTeX. Internal drafting notes appear after `\end{document}` as comments and are not printed.
+The checked output is 11 letter-size pages: ten pages of narrative, figures, and references, followed by one budget page. Body text, tables, and captions use 10-point type; figures use labels of at least 10 points at their specified seven-inch width, except normal mathematical subscripts. The PDF is approximately 0.3 MB. Research prose, equations, references, and benchmark context match the current Markdown draft; scholarly citations are formatted through BibTeX. Internal drafting notes appear after `\end{document}` as comments and are not printed.
 
 ## Budget and remaining details
 

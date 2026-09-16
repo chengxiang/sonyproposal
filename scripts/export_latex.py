@@ -33,19 +33,6 @@ main = re.sub(r'## References\n.*?(?=\*\*Unpublished preliminary materials\.)',
               lambda _: '\\bibliographystyle{sonyabbrvnat}\n\\nocite{*}\n\\bibliography{references}\n\n',
               main, flags=re.S)
 
-in_math = False
-prose_lines = []
-for line in main.splitlines():
-    if line.startswith('```math'):
-        in_math = True
-    elif line.startswith('```'):
-        in_math = False
-    elif not in_math:
-        line = line.replace('v_k=s_k−ε_k', r'\(v_k=s_k-\varepsilon_k\)')
-        line = re.sub(r'(?<![\w\\])(?:P_k|d_k|I_m|O_m|g_m|u_j|f_k)(?![\w])',
-                      lambda m: r'\(' + m[0] + r'\)', line)
-    prose_lines.append(line)
-main = '\n'.join(prose_lines)
 
 def normalize(text):
     replacements = {
@@ -66,7 +53,7 @@ def normalize(text):
 
 def convert(md):
     return subprocess.run([
-        'pandoc', '-f', 'markdown+raw_tex+tex_math_single_backslash',
+        'pandoc', '-f', 'markdown+raw_tex+tex_math_single_backslash+tex_math_dollars',
         '-t', 'latex', '--wrap=none', '--shift-heading-level-by=-1',
     ], input=normalize(citations(md)) + '\n\n' + definitions, text=True,
        capture_output=True, check=True).stdout.strip()
