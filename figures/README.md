@@ -1,21 +1,24 @@
 # Proposal figure sources
 
-The proposal embeds PNG versions. Matching SVG files preserve editable text and vector elements for final layout. These figures contain schematic methods or existing results; no model was trained or evaluated to make them.
+The current proposal uses **two figures**: one integrated method schematic and one compact qualitative result. PNG versions are embedded in Markdown; matching SVGs retain editable text and vector elements. Print PDFs use the same builders at seven inches wide with labels of at least 10 points. No model was trained, sampled, or newly evaluated to make these figures.
 
-| Figure | Content | Evidence status |
+| Active figure | Content | Evidence status |
 |---|---|---|
-| `fig1_mechanism_overview` | Concrete token-coordinate examples connect representation, denoising schedules, and conditional transformer computations through labeled relationships | Proposed program; coordinate meanings, shared attention, and task-specific MLPs are illustrative |
-| `fig2_recovery_schedule` | A conditional visual prediction task, overlapping component schedules, and one attention–MLP path with progress-dependent activity | Illustrative component meanings, information dependence, schedules, and module roles; no experimental result is claimed |
-| `fig3_component_reuse` | Existing matched image panels plus a compact recovery table | Experiment 3 report, pages 2, 5, and 10 |
-| `fig4_existing_feasibility` | Continuous latent diffusion language reasoning in published benchmark context | Language experiment summary; user-provided exact denoiser size; Nie et al., Table 1 |
+| `fig1_mechanism_overview` | Fixed representation groups, a conditional-information diagnostic, overlapping schedules, and a selected transformer information path | Proposed method; curves and the selected component–module path are illustrative |
+| `fig2_component_reuse` | Existing matched image panels and a two-row recovery table | Experiment 3 report, pages 2, 5, and 10; unchanged images and measurements |
 
-## Conceptual figures
+## Integrated method figure
 
-Figures 1–2 show the three connected research aspects. Section 2.1 learns representations and component extractors from fixed encoders or downstream tasks/rewards. Section 2.2 jointly learns denoising order, component dependencies, and the transformer: diagnostics compare noise conditions at selected current checkpoints, inform joint schedule/transformer updates, and repeat as the model changes. Holding the transformer fixed applies only within each diagnostic comparison; dependency measurement is not a frozen-model phase preceding schedule learning. Section 2.3 develops shared and specialized transformer computations, including noise-dependent module gates, sparse attention, and shared or switched MLPs across conditional denoising tasks. The main application is controllable generation satisfying complex prompt requirements: a woman in a red coat gives a blue cup to a man in a green sweater, while a child beside them reads a book. The example illustrates jointly realizing participants, attributes, and relationships; the representation decomposition is learned and need not follow these human labels. The figures do not introduce a separate model-merging, generated-weight-update, or meta-learning aim.
+Figure 1 replaces the previous separate overview and schedule illustrations. It is **7 × 4 inches**. `scripts/make_conceptual_figures.py` supplies the common builder for PNG, SVG, and PDF outputs.
 
-Both PNG/SVG versions and the print PDFs use the same builders in `scripts/make_conceptual_figures.py`. All versions are exactly 7 inches wide, with nominal text sizes of at least 10 points (ordinary mathematical subscripts scale normally). Figure 1 is 4.5 inches high; Figure 2 is 4.8 inches high. Figure 1 illustrates selected coordinates of participant tokens 1–2, a relation component R (giver, receiver, object), and a visual component V (the hand–cup interaction). These assignments are a toy interpretation; the actual component extractors are learned and may be more complex than coordinate selection. Representation-to-schedule arrows describe making informative components available for other predictions. The reverse arrow describes discovering useful dependencies by changing noise levels. A representation-to-architecture arrow assigns conditional inputs and targets to shared attention and specialized MLPs: denoise V given tokens 1–2 and R, or R given tokens 1–2 and V. Both tasks also receive their noisy target. The bottom connector specifies joint schedule/transformer training. Its vectors and conditional architecture are illustrative, not experimental measurements. Figure 1 summarizes the connections; Figure 2 works through one conditional prediction example.
+- **Panel A:** Initial semantic states consist of projected visual-model and caption-model activations. Two fixed coordinate groups of each give D1/D2 and Q1/Q2; V denotes the VAE image-latent state. The representation encoders and grouping are prepared before denoising/dependency learning and held fixed during that stage. Their *states* still evolve through generation. These groups are not assigned human-readable meanings such as “woman” or “giver.” The diagram also allows the subsequent planned alternative using activations from a model trained on a downstream task.
+- **Panel B:** The incomplete caption is masked **before** its conditioning encoder runs. Denoising loss for the caption target is compared when visual component D1 is mostly noise versus clearer, holding the denoiser, other inputs, and target noise fixed. The full caption's clean representation provides a training target, not an unmasked conditioning path. The masked word illustrates the conditional task; word prediction can be a functional readout, while the plotted method's diagnostic uses target denoising loss. This establishes a component's conditional usefulness without claiming a unique semantic label or indispensability.
+- **Panel C:** Five illustrative, overlapping component-progress schedules have common endpoints. No semantic-first split or strict discrete generation order is imposed. Conditional usefulness informs timing, and schedules are learned jointly with transformer weights. Earlier information can improve another component's prediction while making the early component's own prediction harder. The curves are sketches, not learned results.
+- **Panel D:** A selected D1 → attention head → MLP → Q1 contribution illustrates the proposed mechanistic study. Other inputs, residual paths, and target projections are omitted for clarity. The contribution of D1 is compared with the head active, disabled, and restored, across noise configurations and conditional tasks. The diagram explains one information path; it does not claim to explain the entire pretrained backbone. This analysis motivates dependency-guided access and shared computation, subject to the proposed causal controls.
 
-Figure 2 uses illustrative participant-information (I), interaction-role (R), and visual-realization (V) components. Panel A holds participant information and the noisy visual prediction target fixed while varying how clearly the role component specifies who gives the cup to whom. The conditioning prompt supplies participants and the object but withholds giver–receiver roles, so it cannot reveal the answer in this diagnostic. Panel B shows overlapping progress schedules: advancing a component can help other predictions, while that component must itself be predicted with less-developed context. The example does not impose a fixed semantic-first order. Panel C enlarges one selected attention head, shared MLP, and target projection. Its contribution is gated by component progress; task-appropriate input/output maps can reuse prediction computations when the conditional task changes, including inferring roles from visual information. The shared backbone is omitted. These panels illustrate the proposed investigation, rather than learned dependencies or measured module specializations.
+Suggested concise caption:
+
+> **One dependency connects representation, denoising, and transformer computation.** Fixed groups of visual and caption features provide components whose meaning is measured through conditional prediction. Making one visual group clearer may help denoise a masked caption (B), motivating both component timing (C) and selective transformer access (D). Removing and restoring a selected head tests whether it carries that benefit. Component meanings, curves, and the illustrated path are hypothetical; the encoders and grouping remain fixed while schedules and transformer weights are learned.
 
 ## Component-reuse figure
 
@@ -30,18 +33,15 @@ The untouched embedded images from `experiment3_summary.pdf` are retained as `so
 | STL-10, seed 1 / latent 3 | Source QK with adapted VO and MLP | `(1602, 653, 1839, 889)` |
 | STL-10, seed 1 / latent 3 | Jointly adapted | `(1845, 653, 2081, 889)` |
 
-These rows are selected illustrations, not random or exhaustive samples. The complete original grids remain available above. Figure 3 is 7 inches wide and 2.35 inches high, with labels of at least 10 points. The PNG, SVG, and PDF share `build_reuse()` in `scripts/make_reuse_figure.py`.
+These rows are selected illustrations, not random or exhaustive samples. The complete original grids remain available above. Figure 2 is 7 inches wide and 2.35 inches high, with labels of at least 10 points. The PNG, SVG, and PDF share `build_reuse()` in `scripts/make_reuse_figure.py`.
 
 The tabulated values 0.815 (CelebA to AAHQ) and 0.143 (CelebA to STL-10) are **separate quantitative results**, not measurements on the displayed images alone. For each hybrid H, the report defines recovery as `1 - E_H / E_source`, where E is mean squared distance to paired joint-model outputs in unit-normalized frozen DINOv2 features. Each state uses 1,024 matched latents per adaptation seed, and the figure shows the mean of two seed scores. Joint checkpoints were selected using existing test FID. These are 20M-model post-training component-reversion results; they do not establish success of training with QK fixed, nor do they measure target-distribution fidelity.
 
-## Feasibility figure
+## Historical figures and evidence
 
-The exact plotted values and settings are recorded in `feasibility_data.json`. The PNG, SVG, and PDF share the builder in `scripts/make_feasibility_figure.py`; each is 7 inches wide and 2.2 inches high, with labels of at least 10 points.
+The earlier `fig2_recovery_schedule`, `fig3_component_reuse`, and `fig4_existing_feasibility` files remain historical assets and are **not included in the current proposal**. Figure 4 and its language-model bar chart have been removed from the active build. Its old numbers must not be used for the updated language result: the PI supplied 62.4716% GSM8K accuracy with an approximately 800M-parameter denoiser and a 121M-parameter encoder. That updated result belongs in short proposal prose, not a new chart.
 
-- **Continuous diffusion language model (ours):** `elf_l_grant_summary.md`, prepared 12 September 2026, epoch-12 comparison. The displayed 61.9409% is reversed asynchronous inference: 1,634/2,638 trials. Synchronous inference on the same checkpoint gives 1,429/2,638 = 54.1698%. Both use EMA 0.9999, 32 ODE steps, and inference seeds 42/123 over the same 1,319 distinct GSM8K questions; each trial is scored separately, without majority voting or best-of-two selection. The 795,205,824-parameter denoiser (exact count supplied by the PI) is trained on mathematical question–solution data. A frozen Qwen3-4B-Instruct-2507 encodes the prompt once; the continuous diffusion model generates answer representations and decodes them to tokens. The 795M count therefore describes the denoiser, not the whole inference pipeline.
-- **Published language-model context:** [Nie et al., *Large Language Diffusion Models*, arXiv v3, Table 1](https://arxiv.org/html/2502.09992v3) reports GSM8K 48.7% for Llama-3-8B Base (autoregressive) and 70.3% for LLaDA-8B Base (discrete diffusion), both with four-shot prompting. The chart labels these as published context because training data, conditioning, model size, and evaluation settings differ from our mathematical language experiment. It gives a familiar scale for the continuous diffusion result, not a controlled ranking of model families or a claim of superior parameter efficiency.
-- **LWD (reported in prose, not plotted):** [*Learning When to Denoise*, arXiv v1, Table 2](https://arxiv.org/html/2606.19662v1), also reported in the supplied manuscript `19994_Learning_When_to_Denoise.pdf`, and [SFD Table 2](https://arxiv.org/html/2512.04926v1). The proposal reports AutoGuidance FID 1.05 at 200 LWD epochs versus 1.06 at 800 SFD-XL epochs, with matched 675M backbones and dopri5 sampling. These are documented epoch budgets, not a wall-clock benchmark. The public LWD paper additionally reports FID 1.02 at 600 epochs for its 675M model versus 1.04 at 800 epochs for 1B-parameter SFD-XXL; these final results are recorded in the JSON but are not additional bars. The proposal's REPA comparison comes from LWD Table 1: 120K main updates/FID 4.93 versus 4M/FID 5.84, plus a 10K-update LWD schedule-learning probe.
-- **Parameter sharing (reported in prose, not plotted):** `experiment1.pdf`, page 6. DiT F1024: 10,215,472 parameters, FID-50k 17.574. Shared DiT-MLP H14/d32/W256: 10,239,536 parameters, FID-50k 14.304. CelebA64, one training seed, prespecified epoch-400 EMA, common 50-step sampler. The proposal uses the page-6 table; the original page-5 plots omit the H14 model.
+`feasibility_data.json` retains the prior figure's source record. LWD and parameter-sharing results are presented in proposal prose; their exact source settings remain documented in the proposal references and the supplied experiment reports.
 
 ## Reproduce
 
@@ -49,10 +49,18 @@ From the repository root, with Python, Matplotlib, NumPy, and Pillow installed:
 
 ```bash
 python scripts/make_conceptual_figures.py
-python scripts/make_latex_figures.py --figures 1 2
-python scripts/make_reuse_figure.py
-python scripts/make_feasibility_figure.py
-python scripts/make_latex_figures.py --figures 3 4
+python - <<'PYCODE'
+import sys
+from pathlib import Path
+import matplotlib.pyplot as plt
+sys.path.insert(0, 'scripts')
+from make_reuse_figure import build_reuse
+fig = build_reuse()
+for ext in ('png', 'svg'):
+    fig.savefig(Path('figures') / f'fig2_component_reuse.{ext}', dpi=240)
+plt.close(fig)
+PYCODE
+python scripts/make_latex_figures.py
 ```
 
-The scripts resolve paths relative to the repository. No GPU, source-model checkpoint, new sampling, or additional experiment is needed. Original source reports remain the authority for interpretation; cropping coordinates and selected states are explicit above.
+The two active print outputs are `latex/figures/fig1_mechanism_overview.pdf` and `latex/figures/fig2_component_reuse.pdf`. The reuse builder preserves the original selected source panels and reported values; the older standalone PNG script keeps its historical filename. No GPU, model checkpoint, new sampling, or additional experiment is needed.

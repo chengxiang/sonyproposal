@@ -14,10 +14,15 @@ OUT = ROOT / 'latex'
 OUT.mkdir(exist_ok=True)
 source = (ROOT / 'proposal_draft.md').read_text()
 definitions = '\n'.join(re.findall(r'^\[[^\]]+\]: .+$', source, re.M))
-main, editorial = source.split('## Editorial notes for finalization', 1)
-editorial = editorial.split('\n[dino]:', 1)[0]
-draft_note = re.search(r'^\*Drafting note.*?\*$', main, re.M).group(0)
-main = main.replace(draft_note, '')
+main = source
+editorial = ''
+if '## Editorial notes for finalization' in main:
+    main, editorial = main.split('## Editorial notes for finalization', 1)
+    editorial = editorial.split('\n[dino]:', 1)[0]
+draft_match = re.search(r'^\*Drafting note.*?\*$', main, re.M)
+draft_note = draft_match.group(0) if draft_match else ''
+if draft_note:
+    main = main.replace(draft_note, '')
 title, main = main.split('\n', 1)
 title = title.removeprefix('# ')
 bib_keys = set(re.findall(r'^@\w+\{([^,]+),', (OUT / 'references.bib').read_text(), re.M))
@@ -30,7 +35,7 @@ def citations(md):
 
 # Retain the full reference database; the bibliography is formatted by BibTeX.
 main = re.sub(r'## References\n.*?(?=\*\*Unpublished preliminary materials\.)',
-              lambda _: '\\bibliographystyle{sonyabbrvnat}\n\\nocite{*}\n\\bibliography{references}\n\n',
+              lambda _: '\\bibliographystyle{sonyabbrvnat}\n\\bibliography{references}\n\n',
               main, flags=re.S)
 
 
@@ -84,6 +89,14 @@ def table_widths(match):
     table = match.group(0)
     if 'Budget category' in table:
         widths = [.80, .20]
+    elif 'Closest approach' in table:
+        widths = [.25, .32, .43]
+    elif 'Hypothesis' in table:
+        widths = [.24, .51, .25]
+    elif 'GPU-hours' in table:
+        widths = [.41, .43, .16]
+    elif 'Concrete output or decision' in table:
+        widths = [.14, .43, .43]
     elif 'Concrete output' in table:
         widths = [.14, .47, .39]
     elif 'What it establishes' in table:
@@ -97,15 +110,18 @@ def table_widths(match):
                   lambda _: r'\real{' + f'{next(index):.4f}' + '}', table)
 
 body = re.sub(r'\\begin\{longtable\}.*?\\end\{longtable\}', table_widths, body, flags=re.S)
+body = body.replace(r'\subsection{Hypotheses, comparisons, and existing support}',
+                    r'\Needspace{23\baselineskip}' + '\n'
+                    + r'\subsection{Hypotheses, comparisons, and existing support}')
 
 preamble = r'''% Generated from proposal_draft.md; edit this file directly if preferred.
 % Compile: latexmk -pdf -interaction=nonstopmode -halt-on-error proposal.tex
-\documentclass[10pt,letterpaper]{article}
+\documentclass[11pt,letterpaper]{article}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{mathptmx}
 \usepackage{amsmath,amssymb}
-\usepackage[letterpaper,margin=0.65in]{geometry}
+\usepackage[letterpaper,margin=0.7in]{geometry}
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{float}
@@ -113,6 +129,7 @@ preamble = r'''% Generated from proposal_draft.md; edit this file directly if pr
 \usepackage{caption}
 \usepackage{enumitem}
 \usepackage{titlesec}
+\usepackage{needspace}
 \usepackage{xcolor}
 \usepackage{xurl}
 \usepackage[authoryear,round]{natbib}
@@ -123,9 +140,12 @@ preamble = r'''% Generated from proposal_draft.md; edit this file directly if pr
 \urlstyle{same}
 \setcounter{secnumdepth}{-2}
 \setlength{\parindent}{0pt}
-\linespread{0.96}
-\setlength{\parskip}{2.5pt plus 0.5pt minus 0.3pt}
+\linespread{1.0}
+\setlength{\parskip}{3pt plus 0.5pt minus 0.3pt}
 \setlength{\emergencystretch}{1.8em}
+\clubpenalty=10000
+\widowpenalty=10000
+\predisplaypenalty=10000
 \titleformat{\section}{\large\bfseries}{}{0pt}{}
 \titleformat{\subsection}{\normalsize\bfseries}{}{0pt}{}
 \titlespacing*{\section}{0pt}{9pt plus 2pt minus 1pt}{4pt}
@@ -159,5 +179,6 @@ preamble = r'''% Generated from proposal_draft.md; edit this file directly if pr
 
 notes = '\n'.join('% ' + l for l in (draft_note + '\n\n' + editorial).splitlines())
 (OUT / 'proposal.tex').write_text(preamble + '\n' + body
-    + '\n\n\\end{document}\n\n% Internal drafting notes (not typeset):\n' + notes + '\n')
+    + '\n\n\\end{document}\n'
+    + ('\n% Internal drafting notes (not typeset):\n' + notes + '\n' if notes.strip('% \n') else ''))
 print(OUT / 'proposal.tex')

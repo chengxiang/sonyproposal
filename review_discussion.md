@@ -2,6 +2,12 @@
 
 Last updated: 2026-09-16.
 
+**Current status: coordinated revision applied.** The user approved the remaining useful details, authorized inclusion of the supplied email and phone in the private GitHub-hosted proposal, and requested the full draft update. That instruction supersedes the earlier hold on proposal edits. The discussion below preserves the decision history; earlier statements that the proposal is unchanged describe the discussion phase.
+
+The revised `proposal_draft.md` and matching LaTeX now incorporate fixed representation components, joint schedule/transformer learning, functional dependency diagnostics, explicit module access and sharing, a bounded causal case, the generated-state diagnostic, the hypothesis table, and a funded execution plan. The initial design uses two fixed visual-coordinate groups, two fixed caption-coordinate groups, and the original image-latent component. Native PixArt image noising and VAE decoding are retained; the masked-caption diagnostic disables parallel visual paths and includes a frozen missing-word readout. An inference-only native-PixArt reference accompanies the four matched main variants.
+
+The updated evidence uses 62.47% GSM8K accuracy with the approximately 800M denoiser and 121M encoder. The proposal includes two compact figures, 11-point body text, and a USD 149,999 budget with 0.5 months of PI salary and USD 23,999 for cloud services. No additional preliminary experiment was run. A fresh reviewer read the revised proposal without this discussion and helped resolve the remaining masked-caption, baseline, and figure-metric details. The final PDF has nine narrative/reference pages and one budget page. Remaining submission items are the separate PI CV and confirmation of the budget workbook's calendar dates.
+
 ## Purpose and working agreement
 
 This document tracks our discussion of the criticisms in [the independent review](review_independent.md). We will work through them individually, then make a coordinated revision of the proposal. **Updating this record does not authorize or imply changes to the proposal itself.**
