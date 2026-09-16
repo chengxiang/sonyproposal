@@ -139,100 +139,95 @@ def build_overview():
 
 
 def build_recovery_schedule():
-    """One concrete dependency factorization, schedule, and module allocation.
+    """A conditional prediction example links dependence, scheduling, and modules.
 
-    These are hypothetical examples of learned objects. Colored groups contain
-    several component vectors; the model need not learn these human labels.
+    No images, losses, schedules, or module assignments are experimental data.
+    The illustrative paired diagnostic withholds roles from prompt conditioning.
     """
-    fig, ax = canvas(5.2)
-    txt(ax, .018, .975, "From component dependencies to denoising and computation", 12, "bold")
-    txt(ax, .018, .931, "A. Dependencies given “woman gives the blue cup to the man”", 10.5, "bold", BLUE)
+    fig, ax = canvas(5.35)
+    txt(ax, .018, .974, "How available information shapes denoising and computation", 12, "bold")
 
-    # Information can pass through clothing bindings or directly from the cup
-    # to the final interaction. Edges indicate useful conditioning information.
-    node_specs = [
-        (.040, .835, .245, .060, "Woman", PB, BLUE),
-        (.378, .835, .245, .060, "Blue cup", PB, BLUE),
-        (.715, .835, .245, .060, "Man", PB, BLUE),
-        (.040, .738, .300, .064, "Woman in red coat", PO, ORANGE),
-        (.660, .738, .300, .064, "Man in green sweater", PO, ORANGE),
-        (.263, .639, .474, .064, "Woman hands cup to man", PT, TEAL),
-    ]
-    for x, y, w, h, label, fill, edge in node_specs:
-        box(ax, x, y, w, h, fill, edge)
-        txt(ax, x+w/2, y+h/2, label, 10, "bold", edge, ha="center")
-    arrow(ax, (.163, .831), (.190, .806), ORANGE)
-    arrow(ax, (.838, .831), (.810, .806), ORANGE)
-    arrow(ax, (.192, .734), (.358, .706), TEAL)
-    arrow(ax, (.808, .734), (.642, .706), TEAL)
-    arrow(ax, (.500, .831), (.500, .707), TEAL)
+    # Meaningful vector labels are carried through all three panels.
+    for x, w, label, detail, col, fill in [
+        (.018, .286, r"$I$: participants", "woman, man, blue cup", BLUE, PB),
+        (.322, .320, r"$R$: interaction roles", "giver, receiver, object", ORANGE, PO),
+        (.660, .322, r"$V$: visual realization", "hand and cup positions", TEAL, PT),
+    ]:
+        box(ax, x, .875, w, .069, fill, col)
+        txt(ax, x+w/2, .924, label, 10, "bold", col, ha="center")
+        txt(ax, x+w/2, .891, detail, 10, ha="center")
 
-    txt(ax, .018, .612, "B. Overlapping denoising schedules for these component groups", 10.5, "bold", TEAL)
-    # The groups overlap in time. Chosen snapshots fall in the unshared parts
-    # so that the activity diagram can be read without another gating legend.
-    gax = fig.add_axes([.138, .390, .823, .163])
-    t = np.linspace(0, 1, 501)
-    schedules = [np.clip(t/.40, 0, 1),
-                 np.clip((t-.20)/.45, 0, 1),
-                 np.clip((t-.55)/.45, 0, 1)]
-    colors = [BLUE, ORANGE, TEAL]
-    labels = ["Participants + cup", "Clothing bindings", "Handover"]
-    for u, col, label in zip(schedules, colors, labels):
-        assert np.all(np.diff(u) >= -1e-12)
-        assert abs(u[0]) < 1e-12 and abs(u[-1]-1) < 1e-12
-        gax.plot(t, u, color=col, lw=2, label=label)
-    for time in [.10, .50, .85]:
-        gax.axvline(time, color=RULE, lw=.8, ls=(0,(2,2)), zorder=0)
-    gax.set(xlim=(0,1), ylim=(-.025,1.025), xticks=[0,.1,.5,.85,1], yticks=[0,1])
-    gax.set_xticklabels(["0", "0.1", "0.5", "0.85", "1"])
-    gax.set_yticklabels(["0", "1"])
-    gax.set_xlabel(r"Generation time $t$", fontsize=10, labelpad=0)
-    gax.set_ylabel("Progress", fontsize=10, labelpad=0)
-    gax.tick_params(labelsize=10, length=2, pad=2, colors=MUTED)
-    for edge in ["top", "right"]:
-        gax.spines[edge].set_visible(False)
-    for edge in ["left", "bottom"]:
-        gax.spines[edge].set_color(RULE)
-    gax.legend(loc="lower center", bbox_to_anchor=(.50,1.015), ncol=3,
-        fontsize=10, frameon=False, handlelength=1.2, columnspacing=1.4,
-        borderaxespad=0, handletextpad=.4)
+    txt(ax, .018, .845, "A. What does clearer role information contribute to visual prediction?", 10.5, "bold", BLUE)
+    txt(ax, .018, .813, "Hold participants, visual-target noise, and transformer weights fixed.", 10, color=MUTED)
+    for x, clear in [(.018, False), (.516, True)]:
+        w=.466
+        box(ax, x, .664, w, .126, "white", RULE)
+        txt(ax, x+.017, .768, "Clearer roles R" if clear else "Noisier roles R", 10, "bold", ORANGE)
+        txt(ax, x+.085, .729, "woman", 10, ha="center")
+        txt(ax, x+w-.079, .729, "man", 10, ha="center")
+        arrow(ax, (x+.149,.729), (x+w-.141,.729), ORANGE if clear else GRAY,
+              both=not clear, scale=8)
+        txt(ax, x+w/2, .729, "gives cup" if clear else "who gives?", 10,
+            color=ORANGE if clear else MUTED, ha="center",
+            bbox={"facecolor":"white", "edgecolor":"none", "pad":1})
+        txt(ax, x+.017, .686, r"Denoise the same hand/cup states $V$", 10, color=TEAL)
+    txt(ax, .018, .637, "Compare visual denoising losses to measure the contribution of R.", 10)
+    txt(ax, .018, .607, "Role labels are withheld from the prompt in this training comparison.", 10, color=MUTED)
 
-    txt(ax, .018, .304, "C. The same transformer at three generation times", 10.5, "bold", ORANGE)
-    txt(ax, .018, .274, "Colored: active modules. Gray: gated off. Bind = clothing; Hand = handover.", 10, color=MUTED)
+    txt(ax, .018, .569, "B. Learn component schedules with the transformer", 10.5, "bold", TEAL)
+    gax=fig.add_axes([.083, .383, .581, .126])
+    t=np.linspace(0,1,501)
+    schedules=[1-(1-t)**2.2, 1-(1-t)**1.35, t**1.5]
+    for u,col,label in zip(schedules,[BLUE,ORANGE,TEAL],[r"$I$",r"$R$",r"$V$"]):
+        gax.plot(t,u,color=col,lw=2,label=label)
+    gax.set(xlim=(0,1),ylim=(0,1.04),xticks=[0,.5,1],yticks=[0,1])
+    gax.set_xticklabels(["0","0.5","1"])
+    gax.set_yticklabels(["0","1"])
+    gax.set_xlabel(r"Generation time $t$",fontsize=10,labelpad=0)
+    gax.set_ylabel("Progress",fontsize=10,labelpad=0)
+    gax.tick_params(labelsize=10,length=2,pad=2,colors=MUTED)
+    for edge in ["top","right"]: gax.spines[edge].set_visible(False)
+    for edge in ["left","bottom"]: gax.spines[edge].set_color(RULE)
+    gax.legend(loc="lower center",bbox_to_anchor=(.50,1.00),ncol=3,
+        fontsize=10,frameon=False,handlelength=1.4,columnspacing=2,
+        borderaxespad=0,handletextpad=.4)
+    txt(ax,.703,.496,"Earlier R can help V,\nbut R must be\npredicted with less\nvisual information.",10,va="center")
+    txt(ax,.703,.400,"All components\ncontinue developing.",10,color=TEAL)
 
-    def transformer(x, time, stage):
-        w = .300
-        col = colors[stage]
-        box(ax, x, .050, w, .184, "white", RULE)
-        txt(ax, x+w/2, .244, rf"$t={time}$", 10, "bold", col, ha="center")
-        # Two attention-head groups, followed by three target-prediction slices.
-        # Their layout and labels are identical at every time; only gates vary.
-        txt(ax, x+.012, .188, "Attn", 10, color=MUTED)
-        for j, label in enumerate(["Bind", "Hand"]):
-            active = stage == j+1
-            left = x+.078+j*.107
-            box(ax, left, .169, .098, .041,
-                [PO, PT][j] if active else "#F2F3F5",
-                col if active else RULE)
-            txt(ax, left+.049, .1895, label, 10,
-                "bold" if active else "normal", col if active else "#89929B", ha="center")
-        arrow(ax, (x+.176, .163), (x+.176, .149), MUTED, scale=6)
-        txt(ax, x+.012, .124, "MLP", 10, color=MUTED)
-        for j, label in enumerate(["Entity", "Bind", "Hand"]):
-            active = stage == j
-            left = x+.078+j*.071
-            box(ax, left, .104, .066, .041,
-                [PB, PO, PT][j] if active else "#F2F3F5",
-                col if active else RULE)
-            txt(ax, left+.033, .1245, label, 10,
-                "normal", col if active else "#89929B", ha="center")
-        txt(ax, x+w/2, .073, labels[stage], 10, "bold", col, ha="center")
-
-    for x, time, stage in [(.018, "0.1", 0), (.350, "0.5", 1), (.682, "0.85", 2)]:
-        transformer(x, time, stage)
-    txt(ax, .018, .018,
-        "Illustration only: component definitions, dependencies, schedules, and module gates are learned.",
-        10, color=MUTED)
+    txt(ax,.018,.301,"C. Identify the information paths and computations that can be reused",10.5,"bold",ORANGE)
+    # One selected contribution, with explicit noisy input, read path, shared
+    # predictor, target-specific projections, and noise-dependent output gate.
+    for y,label,col,fill in [(.252,"I: participants",BLUE,PB),
+                             (.201,"R: noisy roles",ORANGE,PO),
+                             (.150,"V: noisy visual",TEAL,PT)]:
+        box(ax,.018,y-.020,.183,.041,fill,col)
+        txt(ax,.1095,y,label,10,color=col,ha="center")
+        arrow(ax,(.207,y),(.282,.201),col,scale=7)
+    box(ax,.291,.154,.127,.094,PO,ORANGE)
+    txt(ax,.3545,.201,"Attention\nhead",10,"bold",ORANGE,ha="center")
+    arrow(ax,(.426,.201),(.476,.201),ORANGE,scale=8)
+    box(ax,.484,.160,.133,.082,"white",ORANGE)
+    txt(ax,.5505,.201,"Shared\nMLP",10,"bold",ORANGE,ha="center")
+    # A solid visual path and a dashed alternative semantic task show reuse
+    # without duplicating the transformer or asserting that tasks are identical.
+    arrow(ax,(.625,.213),(.670,.233),TEAL,scale=7)
+    box(ax,.679,.212,.110,.042,PT,TEAL)
+    txt(ax,.734,.233,"Map to V",10,color=TEAL,ha="center")
+    arrow(ax,(.797,.233),(.866,.233),TEAL,scale=7)
+    txt(ax,.833,.263,r"$g_m(\mathbf{u})$",10,color=TEAL,ha="center")
+    txt(ax,.921,.233,"Predict V",10,"bold",TEAL,ha="center")
+    ap=FancyArrowPatch((.625,.181),(.670,.137),arrowstyle="-|>",mutation_scale=7,
+                      linewidth=1.1,linestyle=(0,(3,2)),color=ORANGE,shrinkA=0,shrinkB=0)
+    ax.add_patch(ap)
+    box(ax,.679,.114,.110,.042,PO,ORANGE)
+    txt(ax,.734,.135,"Map to R",10,color=ORANGE,ha="center")
+    ap=FancyArrowPatch((.797,.135),(.866,.135),arrowstyle="-|>",mutation_scale=7,
+                      linewidth=1.1,linestyle=(0,(3,2)),color=ORANGE,shrinkA=0,shrinkB=0)
+    ax.add_patch(ap)
+    txt(ax,.921,.135,"Predict R",10,color=ORANGE,ha="center")
+    txt(ax,.018,.095,r"Gate $g_m(\mathbf{u})$ changes this contribution with component noise levels.",10)
+    txt(ax,.018,.061,"Dashed: reuse the predictor for roles, with task-specific input/output maps.",10,color=MUTED)
+    txt(ax,.018,.022,"Illustrative components, schedules, and module roles; these are learned in the project.",10,color=MUTED)
     return fig
 
 
