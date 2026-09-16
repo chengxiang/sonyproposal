@@ -249,11 +249,11 @@ Reference-based identity across scenes, multiple simultaneous activities, and vi
 \hypertarget{models-data-and-compute}{%
 \subsection{Models, data, and compute}\label{models-data-and-compute}}
 
-Existing 10--20M-parameter diffusion-transformer pipelines provide the first setting for schedule and module studies, including the existing CelebA64, AAHQ, and STL-10 experiments. The text-to-image prototype uses the approximately \textbf{0.6B-parameter PixArt-\(\Sigma\) backbone}, beginning at 256 pixels and scaling to 512 pixels after the month-6 decision. Its VAE, native text encoder, and most backbone weights remain fixed. A semantic branch, interfaces, and selected conditional computations target \textbf{20--50M trainable parameters}. A separate \textbf{10--20M-parameter task model} on cached visual/language features supplies one task-trained representation alternative. Frozen backbone computation is included in the run budget.
+Existing 10--20M-parameter diffusion-transformer pipelines provide the first setting for schedule and module studies, including the existing CelebA64, AAHQ, and STL-10 experiments. The text-to-image prototype uses the approximately \textbf{0.6B-parameter PixArt-\(\Sigma\) backbone}, beginning at 256 pixels and scaling to 512 pixels after the month-6 decision. Its VAE, native text encoder, and most backbone weights remain fixed. A semantic branch, interfaces, and selected conditional computations target \textbf{20--50M trainable parameters}. A separate \textbf{10--20M-parameter task model} on cached visual/language features supplies one task-trained representation alternative. Frozen backbone computation is included in the compute estimates.
 
 We will select approximately \textbf{20,000 training images}, with a \textbf{50,000-image ceiling}, from SWiG \citep{swig} role annotations and Visual Genome \citep{visualgenome} objects, attributes, and relations. Handover is the preferred directional interaction, subject to annotation coverage. The broad corpus supports conditional training; 100--300 manually checked matched cases support the focused mechanistic study. Existing generators can supply controlled role reversals where natural pairs are unavailable, with generated examples checked for the intended requirements. Image-level splits keep captions, crops, and related synthetic variants together; selected attribute/role combinations are withheld while their individual elements remain represented in training.
 
-The \textbf{USD 23,999 cloud-services allocation} supports approximately \textbf{5,000 H100-80GB GPU-hours}, budgeted at USD 4.30 per GPU-hour, plus USD 2,499 for storage and other cloud charges. This planning rate is consistent with \href{https://lambda.ai/pricing}{posted H100 instance prices}. One GPU-hour denotes one GPU used for one hour.
+We estimate a total workload of approximately \textbf{5,000 H100-80GB GPU-hours}, distributed across the studies below. One GPU-hour denotes one GPU used for one hour.
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.4100}}
@@ -300,7 +300,7 @@ Concrete output or decision
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-Months 1--3 & Curate the interaction subset; obtain fixed representations and one task-trained alternative; build conditional denoisers and the image interface. & Working baseline, component definitions, and measured runtime. Select the interaction family and confirm the run budget. \\
+Months 1--3 & Curate the interaction subset; obtain fixed representations and one task-trained alternative; build conditional denoisers and the image interface. & Working baseline, component definitions, and measured runtime. Select the interaction family and confirm the planned runs. \\
 Months 4--6 & Jointly learn schedules and the transformer; characterize dependencies; conduct initial component--module interventions. & A usable conditional generator and reproducible information-path effect. Scale to 512 pixels if data, integration, and runtime support it. \\
 Months 7--9 & Train dependency-guided attention and shared prediction modules across conditional tasks; complete the focused comparisons. & Integrated generation pipeline and a measured account of when computation can be reused. \\
 Months 10--12 & Complete held-out generation and intervention/restoration studies; consolidate the demonstration and documentation. & Creator demonstration, implementation, mechanistic case study, evaluation materials, and final report. \\
@@ -320,7 +320,7 @@ The PI will direct the mechanistic analysis and research design, with one gradua
 \hypertarget{budget-summary}{%
 \section{Budget summary}\label{budget-summary}}
 
-\textbf{Total requested: USD 149,999 for 12 months.} The budget supports 0.5 months of PI salary, 12 months of graduate research assistant support, associated fringe benefits and tuition remission, and cloud computing and storage.
+\textbf{Total requested: USD 144,300 for 12 months.} The budget supports 1.5 months of PI salary and 12 months of support for one graduate research assistant, together with associated fringe benefits and graduate tuition remission. Personnel will carry out the proposed representation learning, mechanistic analysis, model development, and creator demonstrations.
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 2\tabcolsep) * \real{0.8000}}
@@ -335,17 +335,16 @@ Amount (USD)
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-PI salary: Xiang Cheng, 0.5 months & 7,944 \\
+PI salary: Xiang Cheng, 1.5 months & 23,833 \\
 Graduate research assistant stipend: 12 months & 44,213 \\
-PI fringe benefits: 28.83\% of PI salary & 2,290 \\
+PI fringe benefits: 28.83\% of PI salary & 6,871 \\
 Graduate research assistant fringe benefits: 11.45\% of stipend & 5,062 \\
-Graduate tuition remission & 15,134 \\
-Cloud computing and storage & 23,999 \\
-\textbf{Total direct costs} & \textbf{98,642} \\
-Indirect costs: 61.5\% of modified total direct costs & 51,357 \\
-\textbf{Total requested} & \textbf{149,999} \\
+Graduate tuition remission: 34.23\% of stipend & 15,134 \\
+\textbf{Total direct costs} & \textbf{95,113} \\
+Indirect costs: 61.5\% of modified total direct costs & 49,187 \\
+\textbf{Total requested} & \textbf{144,300} \\
 \end{longtable}
 
-\textbf{Budget basis.} The institutional workbook supplies the salary, fringe, stipend, tuition, and indirect-cost rates; amounts are rounded to whole dollars. PI salary uses a nine-month basis of USD 143,000. The modified total direct cost base is USD 83,508, including cloud services and excluding tuition remission. Applying the 61.5\% indirect-cost rate gives USD 51,357. The total includes indirect costs and is within the Focused Research Award limit of USD 150,000. Cloud services fund the model development, controlled generation, and evaluation described in Section 6.
+\textbf{Budget basis.} Amounts follow the supplied institutional budget, rounded to whole dollars. PI salary uses a nine-month salary basis of USD 143,000. The modified total direct cost base is USD 79,979, consisting of salaries/stipend and fringe benefits; tuition remission is excluded. Applying the 61.5\% indirect cost rate gives USD 49,187. No funding is requested for equipment, supplies, travel, other expenses, or subcontracts. The total includes indirect costs and is within the Focused Research Award limit of USD 150,000.
 
 \end{document}

@@ -16,9 +16,9 @@ The checked output is **10 letter-size pages: nine pages of narrative, figures, 
 
 ## Budget and remaining details
 
-The revised workbook, `budget/Budget_Sony_Cheng_Revised.xlsx` at the repository root, requests **USD 149,999**: USD 98,642 direct costs plus USD 51,357 indirect costs. PI effort is 0.5 months; cloud computing and storage receive USD 23,999. Institutional formulas, rates, other charges, and whole-dollar rounding are preserved. The original uploaded workbook was not modified.
+The original institution-routed workbook, `budget/Budget_Sony_Cheng.xlsx` at the repository root, requests **USD 144,300**: USD 95,113 direct costs plus USD 49,187 indirect costs. PI effort is 1.5 months. This file is an exact copy of the original upload, preserving every formula, rate, date, and formatting detail. It supersedes the proposed budget revision, which would require another institutional approval. The research plan retains its estimated 5,000 H100-80GB GPU-hours without assigning those estimates to a funding line or quoting cloud prices.
 
-PI email and phone are included with the user's explicit authorization for the private GitHub repository. Confirm the budget calendar dates with the institutional administrator: the workbook lists July 1, 2026–June 30, 2027, while its student rate calculation blends eight months of 2026–27 rates and four months of 2027–28 rates. The proposal uses the revised totals and 12-month duration without inventing replacement dates. The PI CV remains a separate submission item.
+PI email and phone are included with the user's explicit authorization for the private GitHub repository. The original workbook dates and institutional calculations are retained without alteration, as requested. The PI CV remains a separate submission item.
 
 ## Maintaining the source
 
