@@ -21,7 +21,7 @@ Numbering follows the review's eight ranked criticisms, rather than its shorter 
 | 3 | The representation-refinement algorithm is underspecified. | Scope decision agreed: obtain representations from pretrained or task-trained models, then hold them fixed during dependency/schedule learning. Remove representation refinement from that stage. |
 | 4 | Useful information in corrupted ground-truth states may not remain useful in generated states. | Treat as a bounded technical risk; add one short diagnostic paragraph and mention rollout-based training as a possible mitigation. |
 | 5 | Integration, resources, and the minimum 12-month scope need firmer bounds. | User supports compute funding, lower PI salary support, bounded data/models/runs, and scaling gates. Proposed budget and execution plan recorded below. |
-| 6 | The differentiation does not yet isolate one new scientific relationship. | Awaiting discussion. |
+| 6 | The differentiation does not yet isolate one new scientific relationship. | Gap-first positioning agreed. User proposes a representation/dependency/module pipeline; refinements to the central connection and scope wording are recorded below. |
 | 7 | Preliminary evidence takes more space than its direct support for the proposal warrants. | Awaiting discussion. |
 | 8 | Mathematical detail is disproportionate to the unresolved method choices. | Awaiting discussion; some exposition was already simplified. |
 
@@ -338,13 +338,71 @@ Broader reference identity across scenes, multiple simultaneous activities, and 
 
 Replace the “no computing costs requested” statement; apply the revised salary/fringe/compute/indirect figures; replace the broad execution section with a compact architecture/data/run table; state the minimum demonstration and scaling decisions. Preserve the fixed-representation decision throughout. The proposal, original budget workbook, figures, LaTeX, and compiled deliverables remain unchanged at this discussion stage.
 
+## 6. Lead with the gap and connect the three ideas through conditional dependencies
+
+### User's proposed positioning
+
+The user agrees that the differentiation should begin with the gap. The proposed key ideas are:
+
+1. Carefully learn a decomposable semantic representation, with more structure and task relevance than simply taking a pretrained model's final-layer activations.
+2. Learn dependencies between its components through denoising and schedules, with controllability of generation as the objective rather than training speed alone.
+3. Learn how transformer modules interact with those components, emphasizing the integrated study of these relationships.
+
+The following refinements are the assistant's recommendations for discussion. They preserve the fixed-representation decision in criticism 3 and do not add a new representation-refinement objective.
+
+### Recommended central insight
+
+**Use the same conditional dependencies to organize both how semantic requirements are generated and which transformer computations realize them.**
+
+The connection is more specific than combining useful representations, better schedules, and module analysis. A component that supplies useful information for a prediction should inform when that information becomes available and which transformer computations need access to it. Establishing that correspondence would connect semantic control with an internal account of generation.
+
+One concrete example is information relevant to the giver–receiver assignment. First characterize which representation components help predict the visual interaction. Learn how their relative denoising progress should support that prediction. Then identify or train the attention/MLP computations that use the same information, checking their role through component–module interventions. The learned components need not each have a human-readable label.
+
+### Sharpen the three points
+
+**1. Task-relevant representations with functionally characterized components.** Retain the two concrete representation sources: pretrained activations, then activations of models trained on selected reward, discrimination, or other downstream tasks. The intended refinement is greater relevance to requirements such as participant-role and attribute binding, together with an explicit characterization of component usefulness. A useful decomposition means that changing component availability has distinguishable effects on conditional predictions; merely partitioning a vector does not establish that property.
+
+Training a task model encourages relevant information but does not automatically guarantee a selective decomposition. The wording should therefore describe developing task-relevant representations and identifying useful components, unless the initial representation-training stage also specifies an objective that constructs a decomposition. Such an additional objective has not been agreed. Under criticism 3, the representation and component definitions are fixed before dependency/schedule learning, and are not revised by that stage.
+
+**2. Learn conditional dependencies and schedules for controllable generation.** Component-wise noise variation reveals which information improves a prediction. Schedule optimization determines when making that information available is beneficial, accounting for the difficulty of predicting a component before its context is available. These two operations are closely connected, but a learned generation order alone does not identify a unique dependency structure. The accurate method is to learn dependencies through conditional denoising at varied noise levels while jointly learning schedules and the transformer.
+
+Controllability is the goal: use the resulting information structure to satisfy interacting prompt requirements reliably. Training speed and FID remain useful supporting outcomes and feasibility evidence; the proposed advance concerns how specific requirements enter the generated content.
+
+**3. Explain and organize the transformer computations that use those dependencies.** Establish which modules use the relevant component information, how this changes with noise levels, and which computations can be shared across conditional tasks. The component–module intervention from criticism 1 supplies a concrete mechanism: does disabling a module selectively remove the benefit of exposing one component when predicting another, and does restoration recover it? Use the same dependence measurements to inform access, activity, and sharing. This is stronger than attaching an attention visualization to an otherwise unrelated schedule-learning method.
+
+### Proposed gap-first paragraph
+
+Semantic representations and asynchronous denoising provide useful foundations for generation, but encoding a requirement does not by itself explain how the generator realizes it. We will connect three questions: which representation components supply the information needed for a conditional prediction, when that information should become available during denoising, and which transformer computations use it. Starting from pretrained and task-trained semantic representations, we will learn component dependencies through conditional denoising and use them to organize schedules and transformer computations for precise control of interacting semantic requirements.
+
+This paragraph states the proposed gap and response; it does not assert that all prior work lacks mechanistic explanations or that each ingredient is individually new.
+
+### Differentiation from close existing work
+
+| Close work | Existing contribution relevant to this proposal | Proposed emphasis beyond that contribution |
+|---|---|---|
+| [LWD](https://arxiv.org/abs/2606.19662) and [Latent Forcing](https://arxiv.org/abs/2602.11401) | Asynchronous evolution across representations and the benefit of choosing or learning generation schedules | Multiple task-relevant components, measured conditional usefulness, and explicit connection to transformer computations for semantic control |
+| [Local Mechanisms of Compositional Generalization in Conditional Diffusion](https://arxiv.org/abs/2509.16447) | Sparse conditional-score dependencies, including feature-space composition, with interventions supporting the locality/composition relationship | Connect component dependencies across noise configurations to learned schedules and identifiable, reusable transformer computations |
+| [Vision-Language Binding in In-Context Image Generation](https://arxiv.org/abs/2605.24624) | Causal tracing of reference information through multimodal transformer computations | Use dependencies among semantic generation targets to organize both denoising and computation, alongside causal analysis |
+
+The broader combination of representation learning, scheduling, and architecture work is not sufficient by itself to establish novelty. The proposed differentiation is the shared relationship among **component usefulness, denoising progress, and module function**, and its use for control. The present literature comparison motivates that positioning; it does not establish an exhaustive “first” claim.
+
+### Scope and wording to carry into the final revision
+
+- Lead the differentiation section with the missing connection, then explain the three linked steps.
+- Describe an integrated pipeline and joint learning of schedules and transformer computations **within an obtained representation**. Avoid saying all three are simultaneously optimized.
+- Preserve the user's emphasis on carefully obtained task-relevant semantic representations. Do not reduce Section 2.1 to an arbitrary frozen DINO feature choice, but do not silently restore denoising-driven representation refinement.
+- Define decomposability through conditional usefulness and interventions, with the initial component grouping stated separately.
+- Distinguish dependency measurement through varied noise levels from the subsequent choice of denoising progress; neither requires a unique graph or a strict semantic-first order.
+- Emphasize the generation requirement, the information supporting it, and the module using that information. Keep implementation and evaluation detail subordinate to that story.
+
+Only the discussion record has been updated. The proposal, budget workbook, figures, and compiled deliverables remain unchanged.
+
 ## Remaining discussions
 
 The items below summarize reviewer questions to revisit. **They are not yet accepted changes or additional deliverables.**
 
 | No. | Question to settle | Related to criticism 1 |
 |---|---|---|
-| 6 | Which relationship differentiates the proposal from existing schedule learning, sparse modules, and representation methods? | Functional dependencies that predict specific transformer information paths are a candidate, not a settled novelty claim. |
 | 7 | Which existing results most directly establish feasibility, and how much space should each receive? | No new preliminary experiments are required; preserve the distinction between supporting ingredients and establishing their interaction. |
 | 8 | Which equations make the new method understandable, and which details can be shortened? | Keep the new operational definition self-contained; avoid introducing unexplained gating or attribution notation. |
 
@@ -355,3 +413,4 @@ The items below summarize reviewer questions to revisit. **They are not yet acce
 - **2026-09-16:** The user accepted the criticism-2 table for now, then narrowed criticism 3: obtain representations from pretrained or downstream-task models and fix them during dependency/schedule learning. Recorded this decision, superseded the proposed representation-refinement loop, and adjusted the working H1/H4 formulations to reflect the scope change. No proposal changes were made.
 - **2026-09-16:** Recorded criticism 4 as a bounded technical risk, with a single proposed diagnostic paragraph and rollout-based fine-tuning as a possible mitigation. Added Self Forcing as a feasibility precedent. The proposal draft remains unchanged.
 - **2026-09-16:** Recorded criticism 5, including a formula-traced proposed USD 149,999 budget with USD 23,999 for cloud services, a 5,000-H100-GPU-hour planning allowance, bounded datasets and trainable parameter targets, and month-3/month-6 scaling decisions. Corrected the reviewer's outdated “representation refinement” milestone to respect criticism 3. The original budget workbook and proposal remain unchanged.
+- **2026-09-16:** Recorded the user's three-part positioning for criticism 6 and the recommendation to connect it through component usefulness, denoising progress, and module function. Clarified the meaning of decomposability, the distinction between dependency measurement and schedule order, and the fixed-representation scope. Added close-work comparisons without making an unsupported “first” claim. No proposal edits were made.
