@@ -20,7 +20,7 @@ Numbering follows the review's eight ranked criticisms, rather than its shorter 
 | 2 | No decisive evaluation isolates the value of learning representations, denoising, and transformer computations together. | Working table accepted for now. Criticism 3 narrows the claim; corresponding H1/H4 revisions are recorded below for discussion. |
 | 3 | The representation-refinement algorithm is underspecified. | Scope decision agreed: obtain representations from pretrained or task-trained models, then hold them fixed during dependency/schedule learning. Remove representation refinement from that stage. |
 | 4 | Useful information in corrupted ground-truth states may not remain useful in generated states. | Treat as a bounded technical risk; add one short diagnostic paragraph and mention rollout-based training as a possible mitigation. |
-| 5 | Integration, resources, and the minimum 12-month scope need firmer bounds. | Awaiting discussion. |
+| 5 | Integration, resources, and the minimum 12-month scope need firmer bounds. | User supports compute funding, lower PI salary support, bounded data/models/runs, and scaling gates. Proposed budget and execution plan recorded below. |
 | 6 | The differentiation does not yet isolate one new scientific relationship. | Awaiting discussion. |
 | 7 | Preliminary evidence takes more space than its direct support for the proposal warrants. | Awaiting discussion. |
 | 8 | Mathematical detail is disproportionate to the unresolved method choices. | Awaiting discussion; some exposition was already simplified. |
@@ -246,13 +246,104 @@ Representation encoders stay fixed, consistent with criticism 3. The conditionin
 
 Insert the short diagnostic and contingency paragraph near the generation/evaluation discussion. Cite the rollout-training precedent, retain the emphasis on end-to-end generated outputs, and avoid presenting this issue as a separate major objective. No proposal or compiled deliverable changes have been made.
 
+## 5. Budget computing and bound the implementation
+
+### User's direction
+
+The user agrees that the resource plan needs to be more realistic. Reduce requested PI salary support from 1.5 to 0.5 months, reduce the corresponding fringe benefits, and allocate the remaining room under the USD 150,000 award ceiling to computing. Specify datasets, architectures, approximate trainable parameter counts, and a run budget. Detailed tensor/component shapes are unnecessary for the proposal.
+
+The user also supports a minimal demonstration, an early decision about scaling, and treating broader reference identity, multiple simultaneous activities, and video as extensions. The numerical run allocations and data targets below are proposed planning assumptions, not measured throughput or already curated datasets.
+
+### Proposed budget using the supplied workbook's formulas
+
+Source: `Budget_Sony_Cheng.xlsx`, worksheet `Budget`. Retain the supplied salary basis, student costs, fringe rates, tuition exclusion, 61.5% modified-total-direct-cost (MTDC) rate, and whole-dollar rounding. Budget rented cloud computing as an other direct expense included in MTDC. This follows the workbook's current formula treatment of other expenses; final institutional costing should use the applicable classification.
+
+| Cost | Current budget (USD) | Proposed budget (USD) |
+|---|---:|---:|
+| PI salary | 23,833 (1.5 months) | 7,944 (0.5 months) |
+| PI fringe benefits, 28.83% | 6,871 | 2,290 |
+| Graduate stipend, 12 months | 44,213 | 44,213 |
+| Graduate fringe benefits, 11.45% | 5,062 | 5,062 |
+| Graduate tuition remission | 15,134 | 15,134 |
+| Cloud computing and associated storage/service costs | 0 | **23,999** |
+| Total direct costs | 95,113 | 98,642 |
+| Indirect costs, 61.5% of MTDC | 49,187 | 51,357 |
+| **Total requested** | **144,300** | **149,999** |
+
+Calculation trace: workbook `B5` becomes 0.5; `C5=ROUND(143000/9*0.5,0)=7944`; `C8=ROUND(7944*0.2883,0)=2290`. Salaries and fringe total USD 59,509. With USD 23,999 in computing, MTDC is USD 83,508; `ROUND(83508*0.615,0)=51357` indirect costs. Tuition remains outside MTDC. Increasing computing to USD 24,000 would produce a rounded total of USD 150,001, so **USD 23,999 is the maximum whole-dollar computing line under these formulas**.
+
+[Sony's terms](https://www.sony.com/en/SonyInfo/research-award-program/terms.html) make the award all-inclusive, including overhead. The calculation therefore includes the indirect cost on cloud services rather than allocating the entire apparent salary saving as direct computing money.
+
+The original workbook and proposal budget have not been edited during this discussion. These are the figures to apply in the coordinated final revision.
+
+### Architectures and trainable parameter targets
+
+| Work | Proposed starting architecture | Approximate trainable parameters |
+|---|---|---:|
+| Mechanism development and representation-source screening | Existing small diffusion transformers, using cached semantic/image representations and existing experiment pipelines | 10–20M |
+| One task-trained representation alternative | A modest multimodal prediction network using frozen visual/language features, trained to assess selected role or attribute requirements; use its internal activations, then freeze it | 10–20M as a design target during this separate task-training stage |
+| Text-to-image demonstration | Pretrained PixArt-Σ, initially its 256px checkpoint with 512px as the planned larger demonstration; small semantic prediction branch and selective attention/MLP updates | Approximately 20–50M updated/new parameters, alongside the approximately 0.6B pretrained denoising backbone |
+
+The [official PixArt-Σ repository](https://github.com/PixArt-alpha/PixArt-sigma) provides pretrained 256px/512px checkpoints, training code, feature-precomputation tools, and adaptation examples. DINOv2 and Qwen3-4B states remain initial representation sources. These source encoders stay fixed during dependency/schedule training; the existing 795M language denoiser need not be trained again for this project. Cache fixed features where possible and include encoding work in the compute budget.
+
+The 20–50M estimate is a candidate implementation budget, not a measured count for an existing prototype. For scale, the [official PixArt configuration](https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS/raw/main/transformer/config.json) has 28 layers of width 1,152. Rank-16–32 updates to self/cross-attention projections are approximately 8–17M parameters, or approximately 13–27M when feed-forward projections are also included. Allowing 10–20M for the semantic branch and interfaces gives the stated range. Low-rank updates are an implementation option; the scientific question concerns which computations should access, share, or specialize for particular representation components.
+
+Frozen weights still incur forward computation and can require gradient propagation through their activations. GPU-hour estimates must therefore cover the full executed model, not scale linearly with the trainable parameter fraction. Retain the pretrained image-decoding path and establish a compatible denoising interface during the initial integration. The open conditioning-path questions in criticism 1 remain relevant; naming PixArt does not settle the role of its T5 conditioning.
+
+### Bounded datasets and curation
+
+- **Primary interaction annotations:** [SWiG](https://prior.allenai.org/projects/gsr), which supplies grounded semantic-role information.
+- **Broader objects, attributes, and relationships:** [Visual Genome](https://homes.cs.washington.edu/~ranjay/visualgenome/index.html).
+- **Training scale:** begin with approximately 20,000 selected distinct images and cap the main corpus at 50,000, including any controlled generated supplements. These are intended filtered-corpus sizes, not counts already verified after filtering.
+- **Focused case:** two participants in one directional interaction family, with handover as the preferred example. Choose the final family after checking annotation coverage. Target roughly 100–300 manually checked matched cases for the mechanistic study; generated examples can supply controlled role reversals when natural pairs are unavailable.
+- **Existing small-data pipelines:** retain CelebA64/AAHQ/STL-10 for inexpensive module-reuse implementation checks, while the annotated interaction corpus supplies the creator-facing and semantic case studies.
+
+The [SWiG paper](https://arxiv.org/abs/2003.12058) describes 126,102 images across 504 verbs. This does not imply thousands of usable natural handover examples; role visibility and annotation coverage require filtering. Visual Genome supplies broad relation annotations but does not guarantee complete giver/receiver/object assignments or recurring character identities. Use the broad corpus for conditional training and the smaller checked set for the causal example.
+
+Preserve image-level splits across captions/crops and keep paired synthetic variants in the same split. Withhold selected role/attribute combinations. These are implementation details for the planned data preparation, not additional proposal paragraphs or pre-submission experiments.
+
+### Proposed computing allowance: 5,000 H100-80GB GPU-hours
+
+Use one GPU type to make the estimate interpretable. A GPU-hour is one GPU used for one hour; four GPUs running for 72 hours consume 288 GPU-hours.
+
+| Work | Planned allocation | GPU-hours |
+|---|---|---:|
+| Small-model experiments and repetitions | 12 runs × 1 GPU × 48 hours | 576 |
+| Main image-generation comparisons | 8 runs × 4 GPUs × 72 hours | 2,304 |
+| Feature encoding, controlled data generation, and one task-trained representation source | Combined allowance | 600 |
+| Generation evaluation, component/module interventions, and the rollout-gap diagnostic | Combined allowance | 900 |
+| Integration failures and repeated runs | Reserve | 620 |
+| **Total** | | **5,000** |
+
+The eight principal runs can implement four variants with two seeds: fixed versus learned schedules crossed with ordinary versus dependency-guided module organization, holding the chosen representation fixed. Screen representation sources primarily in the small-model stage. These shared variants cover the focused comparisons in criticism 2 without a large factorial sweep.
+
+For a rough main-run assumption, plan 5,000–20,000 updates with effective batch 64. The upper end is 1.28M training presentations, or about 26 passes over a 50,000-image corpus. At an assumed average of 10 seconds per optimizer update on four H100 GPUs, 20,000 updates take about 56 wall-clock hours; the 72-hour allowance leaves time for validation and checkpointing. **This is a planning assumption, not benchmarked throughput.** Profile the actual modified model early in the award and reduce exploratory steps, resolution, or repetitions if necessary while preserving the core comparisons and evaluation allocation. No new profiling experiment is required before submission.
+
+As checked on 2026-09-16, [Lambda's posted H100-SXM pricing](https://lambda.ai/pricing) is USD 4.29 per GPU-hour for a single-GPU instance and USD 4.09 for the four-GPU instance. Budgeting conservatively at **USD 4.30 per GPU-hour** gives USD 21,500 for 5,000 GPU-hours, leaving **USD 2,499** of the computing line for persistent storage, applicable cloud charges, and price variation. This is a planning rate, not a reserved-capacity quote or a claim of purchased access. It does not assume donated compute; existing institutional allocations would provide additional capacity if available.
+
+### Minimum deliverable and scaling decisions
+
+The proposed minimum is a conditional-generation demonstration with two participants and one interaction family, using one initial pretrained representation configuration and one task-trained alternative, each fixed during denoising training. Investigate one sharing hypothesis, such as reusing an attention computation across related conditional tasks, and complete one component–module intervention/restoration case study. Assess held-out role/attribute combinations alongside image quality.
+
+The reviewer's phrase **“one representation refinement” is superseded by criticism 3**. Use “one task-trained representation alternative” instead; do not reintroduce refinement through the denoising objective.
+
+| Decision point | Required information and scope decision |
+|---|---|
+| Month 3 | Usable role-annotated subset, a functioning conditional-generation baseline, prepared fixed representations, and measured memory/runtime. Select the initial interaction family and confirm the remaining run budget. |
+| Month 6 | Usable conditional generation and a reproducible component–module effect in the bounded setup. Proceed to the larger 512px demonstration if data quality, integration, and runtime support it; otherwise retain a complete smaller-scale demonstration and mechanistic study. |
+
+Broader reference identity across scenes, multiple simultaneous activities, and video are extensions beyond the minimum deliverable. The proposal should still explain their relevance to Sony without depending on all of them for success.
+
+### Changes to carry into the final revision
+
+Replace the “no computing costs requested” statement; apply the revised salary/fringe/compute/indirect figures; replace the broad execution section with a compact architecture/data/run table; state the minimum demonstration and scaling decisions. Preserve the fixed-representation decision throughout. The proposal, original budget workbook, figures, LaTeX, and compiled deliverables remain unchanged at this discussion stage.
+
 ## Remaining discussions
 
 The items below summarize reviewer questions to revisit. **They are not yet accepted changes or additional deliverables.**
 
 | No. | Question to settle | Related to criticism 1 |
 |---|---|---|
-| 5 | What is the smallest credible implementation and one-year deliverable, given available data and compute? | Decide the conditioning path and module granularity before committing to a large integration. |
 | 6 | Which relationship differentiates the proposal from existing schedule learning, sparse modules, and representation methods? | Functional dependencies that predict specific transformer information paths are a candidate, not a settled novelty claim. |
 | 7 | Which existing results most directly establish feasibility, and how much space should each receive? | No new preliminary experiments are required; preserve the distinction between supporting ingredients and establishing their interaction. |
 | 8 | Which equations make the new method understandable, and which details can be shortened? | Keep the new operational definition self-contained; avoid introducing unexplained gating or attribution notation. |
@@ -263,3 +354,4 @@ The items below summarize reviewer questions to revisit. **They are not yet acce
 - **2026-09-16:** Added the discussion of criticism 2: a proposed four-row hypothesis-and-test table, distinctions among existing evidence and proposed extensions, and focused comparison principles. The user supports the table format and evidence annotations; the specific rows remain proposals for discussion. The proposal draft remains unchanged.
 - **2026-09-16:** The user accepted the criticism-2 table for now, then narrowed criticism 3: obtain representations from pretrained or downstream-task models and fix them during dependency/schedule learning. Recorded this decision, superseded the proposed representation-refinement loop, and adjusted the working H1/H4 formulations to reflect the scope change. No proposal changes were made.
 - **2026-09-16:** Recorded criticism 4 as a bounded technical risk, with a single proposed diagnostic paragraph and rollout-based fine-tuning as a possible mitigation. Added Self Forcing as a feasibility precedent. The proposal draft remains unchanged.
+- **2026-09-16:** Recorded criticism 5, including a formula-traced proposed USD 149,999 budget with USD 23,999 for cloud services, a 5,000-H100-GPU-hour planning allowance, bounded datasets and trainable parameter targets, and month-3/month-6 scaling decisions. Corrected the reviewer's outdated “representation refinement” milestone to respect criticism 3. The original budget workbook and proposal remain unchanged.
