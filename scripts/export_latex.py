@@ -142,7 +142,7 @@ preamble = r'''% Generated from proposal_draft.md; edit this file directly if pr
 \usepackage[hidelinks,unicode]{hyperref}
 \setlength{\bibsep}{1.5pt}
 \renewcommand{\bibfont}{\normalfont\normalsize}
-\hypersetup{pdftitle={Linking Representations, Denoising, and Transformer Computation for Controllable Multimodal Generation},pdfauthor={Xiang Cheng}}
+\hypersetup{pdftitle={Linking Representations, Denoising, and Transformer Modules for Controllable Multimodal Generation},pdfauthor={Xiang Cheng}}
 \urlstyle{same}
 \setcounter{secnumdepth}{-2}
 \setlength{\parindent}{0pt}
@@ -178,7 +178,7 @@ preamble = r'''% Generated from proposal_draft.md; edit this file directly if pr
 \makeatother
 \begin{document}
 \begin{center}
-{\LARGE\bfseries Linking Representations, Denoising, and Transformer\\[2pt] Computation for Controllable Multimodal Generation\par}
+{\LARGE\bfseries Linking Representations, Denoising, and Transformer\\[2pt] Modules for Controllable Multimodal Generation\par}
 \end{center}
 \vspace{-5pt}
 '''
