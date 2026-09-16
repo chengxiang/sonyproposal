@@ -1,4 +1,4 @@
-# How Representations and Weights Shape Multimodal Generation
+# Linking Representations, Denoising, and Transformer Computation for Controllable Multimodal Generation
 
 **Principal investigator:** Xiang Cheng, Department of Electrical and Computer Engineering, Duke University  
 **Focused Research Theme:** Internal Mechanisms of Multimodal Generative Models for Content Creation  
