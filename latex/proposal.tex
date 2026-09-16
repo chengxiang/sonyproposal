@@ -79,11 +79,44 @@ Consider the request: ``A woman in a red coat holds a blue cup beside a man in a
 
 Our central hypothesis is that \textbf{dependencies useful for conditional generation also identify opportunities to specialize and share transformer computations}. A component need not have a human-readable semantic label: its meaning can be characterized by which conditional predictions improve when it is available. Here, \emph{locality} means dependence on a limited subset of representation components, which can span distant tokens or modalities. We seek selective information use where the task supports it, while identifying cases that require broader interactions.
 
-The approach has three connected steps. First, obtain task-relevant semantic activations and define fixed components. Second, jointly learn their denoising schedules and the transformer, measuring how one component helps predict another. Third, identify and train computations that exploit these dependencies across conditional tasks. Representation learning occurs in the first step; dependency and schedule learning do not subsequently change the representation or regroup its coordinates.
+We will obtain task-relevant activations and fix their components, jointly learn schedules and the transformer, then use measured dependencies to guide module access and sharing. Representation components remain fixed during dependency and schedule learning.
 
-\textbf{A concrete starting point.} We will begin with existing 10--20M-parameter diffusion transformers, then build a text-to-image prototype around pretrained PixArt-\(\Sigma\) \citep{pixart}. The initial representation combines fixed DINOv2 and Qwen activations with the generator's existing image latents. Four semantic components and one image-latent component provide a bounded starting configuration. A small semantic denoiser and conditional modules connect these states while retaining the pretrained image-decoding path. Section 2 specifies their construction; Section 6 bounds the data and compute.
+\textbf{A concrete starting point.} Initial schedule and module studies will use SiT-B-scale \citep{sit} diffusion transformers, approximately 130M parameters. The text-to-image prototype will build on pretrained PixArt-\(\Sigma\) \citep{pixart}, connecting four fixed semantic components from DINOv2 and Qwen with the generator's image latents through an added semantic denoiser and conditional modules. Section 3 specifies the construction; Section 6 bounds the data and compute.
 
 Continuous diffusion is important for both image and video generation. Text-to-image examples make the proposal concrete, while the same questions arise when video frames and semantic states progress at different noise levels, as motivated by Diffusion Forcing \citep{diffusionforcing}. The committed demonstration focuses on images; video is a subsequent extension.
+
+\hypertarget{differentiation-from-the-current-state-of-the-art}{%
+\section{2. Differentiation from the current state of the art}\label{differentiation-from-the-current-state-of-the-art}}
+
+\textbf{Our proposed advance is to use measured conditional dependencies to connect representation availability, denoising progress, and reusable transformer computations.} We will use the same information-use measurements to guide which states are generated or retained, and where a shared prediction core needs a specialized conditional computation. This makes the connection actionable for controlled generation and gives it a mechanistic interpretation through component--module interventions.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.2500}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3200}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.4300}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Closest approach
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Existing contribution
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Proposed advance
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+SFD \citep{sfd}, Latent Forcing \citep{latentforcing}, and our LWD \citep{schedule} & Generate complementary representations with separate schedules. LWD learns schedules; Latent Forcing measures noise-dependent predictive usefulness and tests output-specific branches. & Use measured dependencies to guide selective variation and predict where additional conditioning requires specialized computation. \\
+Local Mechanisms of Compositional Generalization \citep{local} & Connect sparse conditional-score dependencies, including feature-space composition, to generalization and interventions. & Relate noise-dependent component usefulness to identifiable attention/MLP computations and their reuse across conditional tasks. \\
+Vision-Language Binding \citep{binding} & Trace how reference information influences multimodal transformer predictions. & Combine causal analysis with learning schedules and conditional modules that exploit the identified information paths. \\
+\end{longtable}
+
+The schedule is an operational use of dependence, rather than a unique graph recovered from data: varying noise levels measures predictive usefulness, while schedule optimization determines when producing that information is worthwhile. Latent Forcing's best tested schedule is fully cascaded; our contribution concerns how learned dependencies guide control and reusable computation, without assuming that a more interleaved schedule is always preferable. Compared with a general low-rank adaptation, the proposed module construction specifies which information a computation can access and which predictions it can change. For controlled variation, the distinction from attention-based editing such as Prompt-to-Prompt \citep{prompttoprompt} is to use measured conditional dependencies to guide representation availability, denoising progress, and module access.
+
+\hypertarget{research-approach-dependencies-that-organize-denoising-and-transformer-computation}{%
+\section{3. Research approach: dependencies that organize denoising and transformer computation}\label{research-approach-dependencies-that-organize-denoising-and-transformer-computation}}
+
+The method first obtains fixed semantic components, then learns how their information supports denoising and transformer computation. SiT-B-scale studies develop the conditional tasks and interventions. The creator prototype retains the released 0.6B-parameter PixArt-\(\Sigma\) \citep{pixart} image transformer, text conditioning, and decoder, with approximately 20--50M trainable parameters in the added semantic branch, interfaces, and selected adaptations.
 
 \begin{figure}[!htbp]
 \centering
@@ -92,22 +125,19 @@ Continuous diffusion is important for both image and video generation. Text-to-i
 \label{fig:1}
 \end{figure}
 
-\hypertarget{research-approach-dependencies-that-organize-denoising-and-transformer-computation}{%
-\section{2. Research approach: dependencies that organize denoising and transformer computation}\label{research-approach-dependencies-that-organize-denoising-and-transformer-computation}}
-
-We will obtain semantic representations first, then hold them fixed while learning their conditional dependencies, denoising schedules, and transformer computations. The initial prototype combines a small semantic denoising branch with the released 0.6B-parameter PixArt-\(\Sigma\) \citep{pixart} image transformer, retaining its text conditioning and image decoder. Approximately 20--50M parameters in the added branch, interfaces, and selected adaptations will be trainable. Our existing 10--20M-parameter diffusion transformers provide a smaller setting for developing the conditional tasks and module interventions.
-
 \hypertarget{obtain-task-relevant-representations-and-fix-their-components}{%
-\subsection{2.1 Obtain task-relevant representations and fix their components}\label{obtain-task-relevant-representations-and-fix-their-components}}
+\subsection{3.1 Obtain task-relevant representations and fix their components}\label{obtain-task-relevant-representations-and-fix-their-components}}
 
 \textbf{Start with pretrained activations, then use activations learned for the desired task.} Frozen DINOv2 \citep{dino} image-token activations and Qwen caption-token activations provide the first semantic representations. The second representation source will be a prompt-image compatibility model trained to distinguish correct descriptions from descriptions with reversed action roles or exchanged attributes. We will use its visual branch's hidden activations as generation targets: the training task encourages useful distinctions, while the resulting image representation does not require the correct caption as an input. Discriminator features \citep{vaegan} and reward models \citep{imagereward} motivate obtaining representations from such task signals. The committed comparison uses one such task-trained alternative to the pretrained visual features.
 
-\textbf{A component is a specified group of representation coordinates.} For an image and its training description, let the encoder output token vectors with \(d\) coordinates. Fit a principal-component projection on the training features, normalize their coordinate scales, and divide each projected token into two fixed coordinate groups. Collecting the first group across tokens gives one component vector; collecting the second gives another. Applying this construction separately to the visual and language representations produces four semantic components. The complete VAE image-latent array forms a fifth component. Write these vectors as \(s_k\in\mathbb R^{d_k}\), where \(k=1,\ldots,K\), \(K=5\) initially, and \(d_k\) is the number of coordinates in component \(k\). Each component retains its token positions internally. Encoders, projections, normalization, and group assignments remain fixed during the following stages.
+\Needspace{9\baselineskip}
+
+\textbf{A component is a specified group of representation coordinates.} For an image and its training description, let the encoder output token vectors with \(d\) coordinates. Fit a principal-component projection on the training features, normalize their coordinate scales, and divide each projected token into two fixed coordinate groups. Collecting the first group across tokens gives one component vector; collecting the second gives another. Applying this construction separately to visual and language representations gives two visual components, \(D_1,D_2\), and two language components, \(Q_1,Q_2\). The complete VAE image-latent array, \(V\), forms a fifth component. Write these vectors as \(s_k\in\mathbb R^{d_k}\), where \(k=1,\ldots,K\), \(K=5\) initially, and \(d_k\) is the number of coordinates in component \(k\). Each component retains its token positions internally. Encoders, projections, normalization, and group assignments remain fixed during the following stages.
 
 The groups need not correspond to human-named concepts. Their meaning will come from which conditional predictions improve when their information is available. For example, which visual groups help recover the missing word in ``The {[}MASK{]} holds the cup''? Language-state denoising supplies a training task for learning these dependencies. A component can be a prediction target in one task and known conditioning in another. For complete-prompt image generation, encode the supplied text directly and keep its language states clean; generate the unknown visual states.
 
 \hypertarget{jointly-learn-denoising-order-conditional-dependencies-and-the-transformer}{%
-\subsection{2.2 Jointly learn denoising order, conditional dependencies, and the transformer}\label{jointly-learn-denoising-order-conditional-dependencies-and-the-transformer}}
+\subsection{3.2 Jointly learn denoising order, conditional dependencies, and the transformer}\label{jointly-learn-denoising-order-conditional-dependencies-and-the-transformer}}
 
 \textbf{Vary how much information each component supplies.} Let \(u_k\in[0,1]\) measure component \(k\)'s progress from noise toward data, and let \(\varepsilon_k\) be independent standard Gaussian noise with \(d_k\) coordinates. Form a noisy training state and its target rate of change as
 
@@ -150,43 +180,23 @@ For the masked-caption diagnostic, remove the word from the conditioning caption
 We will compare downstream generation conditioned on corrupted ground-truth visual semantic states with generation conditioned on model-generated visual states at corresponding noise levels. Prompt satisfaction and image quality will reveal whether accumulated semantic errors reduce the measured benefit. If necessary, short-rollout training will expose the conditional modules to generated states, following the motivation of Self Forcing \citep{selfforcing}, using supervision appropriate to the conditional task.
 
 \hypertarget{build-and-explain-reusable-conditional-computations}{%
-\subsection{2.3 Build and explain reusable conditional computations}\label{build-and-explain-reusable-conditional-computations}}
+\subsection{3.3 Build and explain reusable conditional computations}\label{build-and-explain-reusable-conditional-computations}}
 
-\textbf{Use measured dependencies to define module access.} A module initially means one attention head or one MLP residual branch. Keep the target's own noisy state available, rank other components by their measured denoising benefit, and retain the smallest ranked input set whose masked-input validation error is within 5\% of the full-input predictor. Omitted components are replaced by independent noise at progress zero during this selection; retain all inputs if needed. Train restricted attention heads to read only the selected component vectors before unrestricted mixing, with output projections writing only to designated targets. We will implement a shared attention--MLP core with target-specific input/output projections, training it across different condition/target assignments and participant--attribute combinations. This gives ``diverse composition'' a concrete meaning: the same computation must support recurring conditional relationships in different scenes. If a shared predictor cannot serve both directions, specialize its target projection or MLP while retaining useful shared computations.
+\textbf{Use measured dependencies to define module access.} A module initially means one attention head or one MLP residual branch. Keep the target's own noisy state available, rank other components by their measured denoising benefit, and retain the smallest ranked input set whose masked-input validation error is within 5\% of the full-input predictor. Omitted components are replaced by independent noise at progress zero during this selection; retain all inputs if needed. Train restricted attention heads to read only the selected component vectors before unrestricted mixing, with output projections writing only to designated targets.
 
-A learned scalar gate for each added branch takes the component progress levels as input. It controls the branch's contribution under the same denoising loss, allowing a computation to become active when its inputs are sufficiently informative. The first study therefore localizes computation in both representation components and denoising stages. Restrictions apply to the added branches; the pretrained backbone remains an additional information path. Dense access remains available where conditional prediction requires it.
+\textbf{Predict where a shared computation needs a conditional correction.} Begin with two tasks that denoise the same image-latent target \(V\). Task A receives the noisy image \(\widetilde V\), prompt \(c\), and noisy visual component \(\widetilde D_1\); Task B also receives \(\widetilde D_2\). Fix their noise levels for each comparison. Write the available inputs as \(A=(\widetilde V,c,\widetilde D_1)\) and \(B=(A,\widetilde D_2)\). For the image-rate target \(r_V\), the optimal squared-loss predictors are \(f_A=\mathbb E[r_V\mid A]\) and \(f_B=\mathbb E[r_V\mid B]\). Their coordinate-averaged errors, \(R_X=\mathbb E\|r_V-f_X\|_2^2/d_V\) for \(X\in\{A,B\}\), satisfy
 
-\textbf{Connect a component's effect to a particular computation.} In a matched role-swap case, first measure the benefit of exposing a candidate visual component for predicting the holder. Exchange that component between the two images, then disable a candidate attention head or MLP and repeat. A specific mechanism is supported when removing the module suppresses the component's effect, restoring its contribution restores that effect, and unrelated predictions remain usable. Match participant attributes and setting; include within-role swaps that change comparable incidental visual content without changing the holder. Equally sized random-module interventions and perturbation-magnitude controls distinguish selective effects from general damage, following activation-patching methodology \citep{patching}. Predict and test at least one component--module effect in an unrestricted checkpoint before imposing access restrictions, then examine its reuse on unseen compositions.
+\[
+R_A-R_B=\frac{1}{d_V}\mathbb E\|f_B-f_A\|_2^2.
+\]
 
-These case studies explain specified information paths in the conditional denoiser and added semantic branches. Carrying selected interventions through complete image generation connects that account to useful control, with T5 conditioning held constant. The result will be an interpretable account of how particular components influence predictions through attention and MLP computations, rather than a requirement that every component or weight have a human-readable semantic label.
+Thus, a small benefit from the extra information predicts a small average change in the optimal denoising function at those noise levels. This provides a functional reason to reuse computation, although it does not by itself establish which weights can be shared. We will train a shared image-prediction core, including MLPs, that receives \(A\) in both tasks. An added attention/residual branch reads \(\widetilde D_2\) and is disabled for Task A. Concentrate specialization in noise regimes where \(D_2\) provides a substantial measured benefit. Compare the same amount of specialization elsewhere, holding input access and parameter capacity fixed. Fix the permitted noise regimes in each comparison so learned gates cannot move specialization between them. Separate predictors provide a quality and parameter-cost reference. Training these tasks across varied participant--attribute combinations makes the reuse question concrete: can the same core support new compositions, with the conditional branch supplying the additional information?
 
-\hypertarget{differentiation-from-the-current-state-of-the-art}{%
-\section{3. Differentiation from the current state of the art}\label{differentiation-from-the-current-state-of-the-art}}
+Each added branch has a scalar gate, learned under the denoising loss, that uses component progress levels to control its contribution. This localizes computation in both components and denoising stages. Restrictions apply to added branches; the pretrained backbone remains a parallel information path. Retain dense access where needed.
 
-\textbf{The proposed research connects the usefulness of representation components to both denoising progress and transformer function.} Asynchronous generation alone does not identify a reusable computation, and an important attention head alone does not explain which conditional information it uses. Our contribution is to establish this correspondence and use it to organize generation.
+\textbf{Connect a component's effect to a particular computation.} In matched images with different holders, measure the benefit of a candidate visual component, exchange it between images, then disable a candidate head or MLP and repeat. A specific mechanism is supported when removal suppresses the component's effect, restoration recovers it, and unrelated predictions remain usable. Match participant attributes and setting; include within-role swaps of comparable incidental content. Equally sized random-module interventions and perturbation-magnitude controls distinguish selective effects from general damage, following activation-patching methodology \citep{patching}. Predict and test at least one component--module effect in an unrestricted checkpoint before imposing access restrictions, then examine reuse on unseen compositions.
 
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.2500}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3200}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.4300}}@{}}
-\toprule\noalign{}
-\begin{minipage}[b]{\linewidth}\raggedright
-Closest approach
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Existing contribution
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Proposed advance
-\end{minipage} \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-SFD \citep{sfd}, Latent Forcing \citep{latentforcing}, and our LWD \citep{schedule} & Generate complementary representations with separate schedules. LWD learns schedules; Latent Forcing measures noise-dependent predictive usefulness and tests output-specific branches. & Use component dependencies to select useful module access and sharing, and to control which scene requirements change during generation. \\
-Local Mechanisms of Compositional Generalization \citep{local} & Connect sparse conditional-score dependencies, including feature-space composition, to generalization and interventions. & Relate noise-dependent component usefulness to identifiable attention/MLP computations and their reuse across conditional tasks. \\
-Vision-Language Binding \citep{binding} & Trace how reference information influences multimodal transformer predictions. & Combine causal analysis with learning schedules and conditional modules that exploit the identified information paths. \\
-\end{longtable}
-
-The schedule is an operational use of dependence, rather than a unique graph recovered from data: varying noise levels measures predictive usefulness, while schedule optimization determines when producing that information is worthwhile. Latent Forcing's best tested schedule is fully cascaded; our contribution concerns how learned dependencies guide control and reusable computation, without assuming that a more interleaved schedule is always preferable. Compared with a general low-rank adaptation, the proposed module construction specifies which information a computation can access and which predictions it can change. For controlled variation, the distinction from attention-based editing such as Prompt-to-Prompt \citep{prompttoprompt} is to use measured conditional dependencies to guide representation availability, denoising progress, and module access.
+These case studies identify information paths in the conditional denoiser and added branches. Carry selected interventions through complete image generation, holding T5 conditioning constant, to connect the mechanistic account to useful control.
 
 \hypertarget{existing-results-and-feasibility}{%
 \section{4. Existing results and feasibility}\label{existing-results-and-feasibility}}
@@ -209,18 +219,18 @@ The schedule is an operational use of dependence, rather than a unique graph rec
 
 \textbf{Final model: generate a scene, then vary one relationship while retaining the other requirements.} The integrated model and sampler will support a creator's iterative development of scene concepts for games, animation, and film. Starting from ``A woman in a red coat holds a blue cup beside a man in a green sweater,'' the creator requests: ``Put the cup in the man's hand. Keep their clothing, positions, and the surrounding scene.'' The target capability is coordinated control of who holds the object, including necessary hand and arm changes, with limited unintended changes elsewhere. The accompanying mechanistic account addresses \href{https://www.sony.com/en/SonyInfo/research-award-program/}{Sony's interests} in modality binding, generation dynamics, and causal interventions.
 
-\textbf{A first implementation using the conditional denoiser.} Begin with the model's own generated images. Save the source image latents and obtain its visual representations with the fixed encoders. Add noise using the component-specific corruption processes in Section 2.2, then denoise under the revised complete prompt, whose language states remain clean. This builds on the established noise-and-denoise editing approach of SDEdit \citep{sdedit}. Our addition is to use the conditional-dependency studies to select how much source information each component retains.
+\textbf{A first implementation using the conditional denoiser.} Save a generated image's latents and encode its visual representations. Apply the component-specific corruption in Section 3.2, then denoise under the revised prompt with clean language states. Building on SDEdit \citep{sdedit}, we use measured dependencies to select how much source information each component retains.
 
-Visual groups that strongly inform the holder prediction are candidates for greater noise, weakening evidence for the original assignment. Other groups and the image latents initially retain more source information. All visual representation states and image latents remain free to update: fixed groups can carry several properties, and changing the holder may require coordinated changes across them. Rescale each learned schedule to advance from its selected starting progress to the clean endpoint, using the same conditional modules and progress-dependent gates. Independently varied noise levels during training support these unequal starting configurations; successful preservation under a changed instruction remains an outcome to establish.
+Visual groups that inform the holder prediction are candidates for greater noise, weakening the original assignment. Other groups and image latents initially retain more source information. All visual states remain free to update because groups may carry several properties requiring coordinated changes. Rescale each learned schedule from its selected starting progress to the clean endpoint, using the same conditional modules and gates. Training with independently varied noise levels supports these starting configurations; preservation under a changed instruction remains an outcome to establish.
 
-Select a small set of component allocations and restart strengths on validation cases, then fix them for the held-out demonstration. If role information spans both visual groups, allow both to receive more noise. This procedure uses the existing conditional model and requires neither image inversion nor a separately trained editor. It also gives a concrete control tradeoff: retaining more source information favors preservation, while adding more noise permits a larger change. The initial implementation uses explicit forward corruption of source states rather than assuming that a cached generation trajectory is a valid conditional restart.
+Select component allocations and restart strengths on validation cases, then fix them for held-out use. Both visual groups can receive more noise if necessary. Retaining more source information favors preservation; adding noise permits larger changes. Forward corruption supplies the starting states without image inversion, a separately trained editor, or an assumption that cached trajectories support conditional restarts.
 
-\textbf{Creator-facing evidence.} Use 50 source scenes from a prespecified subset of the held-out prompts for controlled variations, within the existing evaluation allowance. Give the same sources and revised instructions to ordinary regeneration, a uniform-noise restart, and the proposed component-dependent restart, with matched sampling allowances. Report variation success conditional on a correct source, and end-to-end success across all prespecified attempts. Assess the requested holder change together with retained clothing, approximate participant placement, and recognizable surrounding scene; necessary object, hand, and arm movement is allowed. Blinded judges assess visual plausibility and major artifacts. Report joint change-and-preservation success and runtime under a fixed attempt limit. A final side-by-side demonstration will show the source, requested change, baseline variation, and our output, including representative failures.
+\textbf{Creator-facing evidence.} Use 50 source scenes from a prespecified subset of the held-out prompts for controlled variations, within the existing evaluation allowance. Give the same sources and revised instructions to ordinary regeneration, a uniform-noise restart, and component-dependent restarts. Compare allocations selected using measured dependencies with directly tuned allocations over the same noise ranges, candidate counts, validation examples, and sampling budgets. Direct tuning can itself exploit conditional dependencies; this comparison measures the added value of using them explicitly to select allocations. Report variation success conditional on a correct source, and end-to-end success across all prespecified attempts. Assess the requested holder change together with retained clothing, approximate participant placement, and recognizable surrounding scene; necessary object, hand, and arm movement is allowed. Blinded judges assess visual plausibility and major artifacts. Report joint change-and-preservation success and runtime under a fixed attempt limit. A final side-by-side demonstration will show the source, requested change, baseline variation, and our output, including representative failures.
 
-The masked-caption task establishes which information and computations support a conditional prediction. Full-prompt generation and controlled variation establish their practical value when the instruction is known. Module interventions during these variations will connect the internal account to the final image, without requiring every parallel path in the pretrained backbone to be explained.
+The masked-caption task identifies information useful for a conditional prediction. Generation and controlled variation demonstrate its practical value with known instructions. Module interventions connect the internal account to the final image.
 
 \hypertarget{hypotheses-comparisons-and-existing-support}{%
-\Needspace{23\baselineskip}
+\Needspace{19\baselineskip}
 \subsection{Hypotheses, comparisons, and existing support}\label{hypotheses-comparisons-and-existing-support}}
 
 \begin{longtable}[]{@{}
@@ -241,11 +251,11 @@ Existing support
 \endlastfoot
 Task-trained activations carry useful information for generation. & Compare pretrained and task-trained representations on common conditional tasks; freeze each before denoising training. Measure semantic correctness on held-out examples. & Language-state diffusion supports feasibility; the task-trained visual extension is proposed. \\
 Schedules should reflect conditional prediction requirements. & Fixed versus learned schedules, with the same representation and architecture and a trained denoiser in both. Measure joint prompt satisfaction and image quality. & LWD demonstrates benefits for two fixed representation groups. \\
-Dependencies identify useful, reusable computations. & Ordinary versus dependency-guided module access/sharing at matched capacity. Measure component--module effects, restoration, and reuse across tasks. & Attention/MLP analysis and weight-sharing/replacement results provide partial support. \\
+Dependencies identify useful, reusable computations. & Share an image-prediction core across tasks with one versus two visual inputs; place equal specialization in predicted versus alternative noise regimes. Measure quality, reuse, and component--module effects. & Attention/MLP analysis and weight-sharing/replacement results provide partial support. \\
 The integrated generator benefits from both choices. & Cross fixed/learned schedules with ordinary/dependency-guided modules within one fixed representation. Assess all prompt requirements together using generated states. & The full connection is the proposed contribution. \\
 \end{longtable}
 
-\textbf{A bounded evaluation.} The main endpoint is the fraction of images satisfying all specified participant, attribute, and role requirements. Plan \textbf{200 held-out prompts with four noise realizations each per trained model}. The four main variants use two training seeds, with matched data, semantic supervision, trainable capacity, guidance, and sampling budget. ``Ordinary'' modules use unrestricted component access with the same conditional supervision. Small-model controls permute the selected inputs while matching the number of connections and sharing architecture, isolating the value of measured dependencies. An inference-only comparison with unmodified PixArt shows the overall benefit relative to the starting generator. Report paired differences with prompt-level bootstrap confidence intervals and variation across training seeds, alongside individual requirement scores and image quality. Count feature preparation and schedule/module selection in training cost. Representation-source comparisons run primarily in the smaller-model stage.
+\textbf{A bounded evaluation.} The main endpoint is the fraction of images satisfying all specified participant, attribute, and role requirements. Plan \textbf{200 held-out prompts with four noise realizations each per trained model}. The four main variants use two training seeds, with matched data, semantic supervision, trainable capacity, guidance, and sampling budget. ``Ordinary'' modules use unrestricted component access with the same conditional supervision. SiT-B-scale controls permute the selected inputs while matching the number of connections and sharing architecture, isolating the value of measured dependencies. An inference-only comparison with unmodified PixArt shows the overall benefit relative to the starting generator. Report paired differences with prompt-level bootstrap confidence intervals and variation across training seeds, alongside individual requirement scores and image quality. Count feature preparation and schedule/module selection in training cost. Representation-source comparisons run primarily in the SiT-B-scale studies.
 
 GenEval \citep{geneval} supplies a starting point for object and attribute assessment. Role correctness requires an independent role-aware evaluator, checked against two raters blinded to the method on a common 200-image subset per variant; human judgments take precedence where the automated score is unreliable. The same subset supports paired visual-quality judgments against the ordinary-module baseline, using a plausibility/artifact rubric and degradation tolerance fixed on validation cases. Visually undecidable roles count as unsuccessful in the primary endpoint. The separate \textbf{100--300 matched mechanistic cases} use component swaps, module removal/restoration, equally sized control interventions, and checks for collateral changes. Useful progress combines improved joint satisfaction and acceptable visual quality with a reproducible component--module effect. If a task needs broad access or separate predictors, identifying that boundary still informs reliable architecture choices.
 
@@ -257,11 +267,13 @@ Reference-based identity across scenes, multiple simultaneous activities, and vi
 \hypertarget{models-data-and-compute}{%
 \subsection{Models, data, and compute}\label{models-data-and-compute}}
 
-Existing 10--20M-parameter diffusion-transformer pipelines provide the first setting for schedule and module studies, including the existing CelebA64, AAHQ, and STL-10 experiments. The text-to-image prototype uses the approximately \textbf{0.6B-parameter PixArt-\(\Sigma\) backbone}, beginning at 256 pixels and scaling to 512 pixels after the month-6 decision. Its VAE, native text encoder, and most backbone weights remain fixed. A semantic branch, interfaces, and selected conditional computations target \textbf{20--50M trainable parameters}. A separate \textbf{10--20M-parameter task model} on cached visual/language features supplies one task-trained representation alternative. Frozen backbone computation is included in the compute estimates.
+The initial conditional schedule and module studies use \textbf{SiT-B-scale diffusion transformers, approximately 130M parameters}, at 256-pixel image resolution in latent space. These bounded comparative studies develop the shared-core hypothesis and conditional tasks. The text-to-image prototype uses the approximately \textbf{0.6B-parameter PixArt-\(\Sigma\) backbone}, beginning at 256 pixels and scaling to 512 pixels after the month-6 decision. Its VAE, native text encoder, and most backbone weights remain fixed. A semantic branch, interfaces, and selected conditional computations target \textbf{20--50M trainable parameters}. A separate \textbf{10--20M-parameter task model} on cached visual/language features supplies one task-trained representation alternative. Frozen backbone computation is included in the compute estimates.
 
 We will select approximately \textbf{20,000 training images}, with a \textbf{50,000-image ceiling}, from SWiG \citep{swig} role annotations and Visual Genome \citep{visualgenome} objects, attributes, and relations. Holding an object is the initial relation: require visible hand--object contact or support that distinguishes the holder. Month-3 selection will check annotation coverage and role observability; ambiguous examples are excluded from the mechanistic cases. The broad corpus supports conditional training; 100--300 manually checked matched cases support the focused study. Existing generators can supply controlled role changes where natural pairs are unavailable, with generated examples checked for the intended requirements. Image-level splits keep captions, crops, and related synthetic variants together; selected attribute/role combinations are withheld while their individual elements remain represented in training.
 
-We estimate a total workload of approximately \textbf{5,000 H100-80GB GPU-hours}, distributed across the studies below. One GPU-hour denotes one GPU used for one hour.
+\Needspace{13\baselineskip}
+
+The project will use \textbf{Duke's two available H200 clusters}. We estimate approximately \textbf{5,600 H200 GPU-hours} across the studies below; one GPU-hour denotes one GPU used for one hour. Run allocations are planning allowances, with scheduling subject to cluster availability.
 
 \begin{longtable}[]{@{}
   >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.4100}}
@@ -279,15 +291,15 @@ GPU-hours
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-Small-model studies & 12 runs × 1 GPU × 48 hours & 576 \\
+SiT-B-scale schedule/module studies & 8 runs × 2 GPUs × 72 hours & 1,152 \\
 Main generation comparisons & 8 runs × 4 GPUs × 72 hours & 2,304 \\
 Feature preparation and task-model training & Combined allowance & 600 \\
 Generation evaluation and mechanistic studies & Combined allowance & 900 \\
-Integration and repeat-run reserve & Reserve & 620 \\
-\textbf{Total} & & \textbf{5,000} \\
+Integration and repeat-run reserve & Reserve & 644 \\
+\textbf{Total} & & \textbf{5,600} \\
 \end{longtable}
 
-Main runs target 5,000--20,000 updates at effective batch 64. At an assumed 10 seconds per update on four H100 GPUs, 20,000 updates take about 56 hours, leaving time within the 72-hour allowance for validation and checkpointing. These are planning estimates. Month-3 profiling will set the final update count and resolution while protecting the core comparisons and evaluation allowance.
+Month-3 implementation profiling will determine batch size, feasible update counts, and resolution within these allowances. Main runs target 5,000--20,000 updates at effective batch 64 where measured runtime permits, including validation and checkpointing. Core comparisons and evaluation take priority over additional configurations or higher resolution.
 
 \hypertarget{milestones-and-minimum-deliverable}{%
 \subsection{Milestones and minimum deliverable}\label{milestones-and-minimum-deliverable}}

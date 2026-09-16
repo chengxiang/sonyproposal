@@ -1,6 +1,6 @@
 # Sony proposal: LaTeX source
 
-`proposal.tex` is the editable LaTeX version of `proposal_draft.md`. It incorporates the coordinated review revisions and the final creator-facing demonstration: generate a two-person scene, then change the object holder while preserving other requirements. Controlled variation starts with component-specific forward noising of the model's own images and uses the conditional denoiser trained in Section 2.2. Known prompt states remain clean; language-state denoising supplies auxiliary dependency-learning tasks. Representations remain fixed, and no new preliminary experiments or separate editor-training program are required. Keep `references.bib`, `sonyabbrvnat.bst`, and the two active figure PDFs in `figures/` alongside it.
+`proposal.tex` is the editable LaTeX version of `proposal_draft.md`. It places the explicit state-of-the-art differentiation in Section 2, before the research approach, and specifies a shared image-prediction core with a conditional correction for additional visual information. It incorporates the coordinated review revisions and the final creator-facing demonstration: generate a two-person scene, then change the object holder while preserving other requirements. Controlled variation starts with component-specific forward noising of the model's own images and uses the conditional denoiser trained in Section 3.2. Known prompt states remain clean; language-state denoising supplies auxiliary dependency-learning tasks. Representations remain fixed, and no new preliminary experiments or separate editor-training program are required. Keep `references.bib`, `sonyabbrvnat.bst`, and the two active figure PDFs in `figures/` alongside it.
 
 ## Compile
 
@@ -16,7 +16,7 @@ The checked output is **11 letter-size pages: ten pages of narrative, figures, a
 
 ## Budget and remaining details
 
-The original institution-routed workbook, `budget/Budget_Sony_Cheng.xlsx` at the repository root, requests **USD 144,300**: USD 95,113 direct costs plus USD 49,187 indirect costs. PI effort is 1.5 months. This file is an exact copy of the original upload, preserving every formula, rate, date, and formatting detail. It supersedes the proposed budget revision, which would require another institutional approval. The research plan retains its estimated 5,000 H100-80GB GPU-hours without assigning those estimates to a funding line or quoting cloud prices.
+The original institution-routed workbook, `budget/Budget_Sony_Cheng.xlsx` at the repository root, requests **USD 144,300**: USD 95,113 direct costs plus USD 49,187 indirect costs. PI effort is 1.5 months. This file is an exact copy of the original upload, preserving every formula, rate, date, and formatting detail. It supersedes the proposed budget revision, which would require another institutional approval. The research plan uses Duke's two available H200 clusters and estimates 5,600 H200 GPU-hours, including eight SiT-B-scale schedule/module runs at approximately 130M parameters. These are workload estimates, not changes to the financial budget or guaranteed cluster reservations.
 
 PI email and phone are included with the user's explicit authorization for the private GitHub repository. The original workbook dates and institutional calculations are retained without alteration, as requested. The PI CV remains a separate submission item.
 

@@ -82,6 +82,12 @@ def figure(match):
 main = re.sub(r'!\[[^\]]*\]\(([^)]+)\)\n\n\*\*Figure (\d+)\. ([^\n]+)',
               figure, main)
 main = main.replace('## Budget summary', '\\clearpage\n\n## Budget summary')
+main = main.replace("The project will use **Duke's two available H200 clusters**.",
+                    r'\Needspace{13\baselineskip}' + '\n\n'
+                    + "The project will use **Duke's two available H200 clusters**.")
+main = main.replace('**A component is a specified group of representation coordinates.**',
+                    r'\Needspace{9\baselineskip}' + '\n\n'
+                    + '**A component is a specified group of representation coordinates.**')
 body = convert(main)
 
 # Set widths by the table's information content, rather than Markdown dashes.
@@ -111,7 +117,7 @@ def table_widths(match):
 
 body = re.sub(r'\\begin\{longtable\}.*?\\end\{longtable\}', table_widths, body, flags=re.S)
 body = body.replace(r'\subsection{Hypotheses, comparisons, and existing support}',
-                    r'\Needspace{23\baselineskip}' + '\n'
+                    r'\Needspace{19\baselineskip}' + '\n'
                     + r'\subsection{Hypotheses, comparisons, and existing support}')
 
 preamble = r'''% Generated from proposal_draft.md; edit this file directly if preferred.
