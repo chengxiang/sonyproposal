@@ -1,4 +1,4 @@
-"""Render documented language, schedule, and parameter-sharing results."""
+"""Render the language comparison and retain documented feasibility data."""
 from pathlib import Path
 import json
 import matplotlib
@@ -14,7 +14,9 @@ DATA = {
         "display_name": "Continuous diffusion language model",
         "synchronous_accuracy_percent": 54.1698,
         "asynchronous_accuracy_percent": 61.9409,
+        "denoiser_parameters": 795205824,
         "denoiser_parameters_millions": 795,
+        "parameter_count_source": "Exact denoiser count provided by the investigator; excludes the frozen prompt encoder",
         "prompt_encoder": "Frozen Qwen3-4B-Instruct-2507; encodes the prompt once",
         "training": "Math-trained denoiser generates continuous answer states",
         "ode_steps": 32, "distinct_test_questions": 1319,
@@ -61,39 +63,32 @@ def build_feasibility():
         "axes.labelcolor": "#203747", "text.color": "#203747",
         "xtick.color": "#405666", "ytick.color": "#405666",
     })
-    fig, axes = plt.subplots(1, 3, figsize=(7, 3.0),
-                             gridspec_kw={"width_ratios": [1.2, 1, 1]})
-    fig.subplots_adjust(left=.078, right=.988, top=.70, bottom=.28, wspace=.65)
-    vals = [[DATA["language_context"]["baselines"][0]["gsm8k_accuracy_percent"],
-             DATA["elf"]["asynchronous_accuracy_percent"],
-             DATA["language_context"]["baselines"][1]["gsm8k_accuracy_percent"]],
-            [DATA["schedule"]["sfd_xl_epochs"], DATA["schedule"]["lwd_epochs"]],
-            [DATA["sharing"]["baseline"]["fid_50k"], DATA["sharing"]["shared"]["fid_50k"]]]
-    titles = ["A. Language reasoning", "B. Learned schedules", "C. Shared MLPs"]
-    subs = ["Published context;\nsettings differ", "Comparable FID (~1.05)\n675M parameters", "CelebA64\n10.2M parameters"]
-    ticks = [["Llama-3\n8B Base", "Ours", "LLaDA\n8B Base"],
-             ["SFD-XL\nFID 1.06", "LWD\nFID 1.05"], ["DiT", "Shared\nDiT-MLP"]]
-    ylabels = ["GSM8K accuracy (%)", "Training epochs", "FID-50k"]
-    limits = [85, 1000, 22]
-    colors = [["#7497BD", "#167E83", "#8793A3"], ["#7497BD", "#167E83"], ["#7497BD", "#167E83"]]
-    for k, ax in enumerate(axes):
-        pos = ax.get_position()
-        fig.text(pos.x0 + pos.width / 2, .956, titles[k], fontsize=10.5,
-                 weight="bold", ha="center")
-        fig.text(pos.x0 + pos.width / 2, .827, subs[k], fontsize=10,
-                 color="#536575", ha="center", va="center", linespacing=1.2)
-        positions = range(len(vals[k]))
-        bars = ax.bar(positions, vals[k], width=.58, color=colors[k])
-        ax.set_xticks(list(positions), ticks[k], fontsize=10)
-        ax.set_ylim(0, limits[k])
-        ax.set_ylabel(ylabels[k], fontsize=10, labelpad=3)
-        ax.tick_params(axis="both", labelsize=10, length=2, pad=3)
-        ax.yaxis.grid(True, color="#e6ebef", lw=.6)
-        ax.set_axisbelow(True)
-        for bar, value in zip(bars, vals[k]):
-            label = f"{value:.1f}" if k == 0 else f"{value:.0f}" if k == 1 else f"{value:.3f}"
-            ax.text(bar.get_x() + bar.get_width() / 2, value + limits[k] * .025,
-                    label, ha="center", va="bottom", fontsize=10.5, weight="bold")
+    fig, ax = plt.subplots(figsize=(7, 2.65))
+    fig.subplots_adjust(left=.095, right=.985, top=.80, bottom=.29)
+    vals = [DATA["language_context"]["baselines"][0]["gsm8k_accuracy_percent"],
+            DATA["elf"]["asynchronous_accuracy_percent"],
+            DATA["language_context"]["baselines"][1]["gsm8k_accuracy_percent"]]
+    ticks = ["Llama 3–8B Base\nAutoregressive",
+             "Ours · 795M denoiser\nContinuous latent diffusion",
+             "LLaDA–8B Base\nDiscrete diffusion"]
+    fig.text(.095, .945, "Language reasoning through continuous latent diffusion",
+             fontsize=11, weight="bold", ha="left", va="center")
+    bars = ax.bar(range(3), vals, width=.48,
+                  color=["#8793A3", "#167E83", "#8793A3"])
+    ax.set_xticks(range(3), ticks, fontsize=10)
+    ax.set_ylim(0, 85)
+    ax.set_yticks([0, 20, 40, 60, 80])
+    ax.set_ylabel("GSM8K accuracy (%)", fontsize=10, labelpad=6)
+    ax.tick_params(axis="both", labelsize=10, length=0, pad=5)
+    ax.spines["left"].set_visible(False)
+    ax.spines["bottom"].set_color("#c9d3dc")
+    ax.yaxis.grid(True, color="#e6ebef", lw=.7)
+    ax.set_axisbelow(True)
+    for bar, value, label in zip(bars, vals, ["48.7", "61.94", "70.3"]):
+        ax.text(bar.get_x() + bar.get_width() / 2, value + 2,
+                label, ha="center", va="bottom", fontsize=11, weight="bold")
+    fig.text(.095, .035, "Published benchmark context; training and evaluation settings differ.",
+             fontsize=10, color="#536575", ha="left", va="center")
     return fig
 
 
