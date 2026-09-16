@@ -22,10 +22,11 @@ Numbering follows the review's eight ranked criticisms, rather than its shorter 
 | 4 | Useful information in corrupted ground-truth states may not remain useful in generated states. | Treat as a bounded technical risk; add one short diagnostic paragraph and mention rollout-based training as a possible mitigation. |
 | 5 | Integration, resources, and the minimum 12-month scope need firmer bounds. | User supports compute funding, lower PI salary support, bounded data/models/runs, and scaling gates. Proposed budget and execution plan recorded below. |
 | 6 | The differentiation does not yet isolate one new scientific relationship. | Gap-first positioning agreed. User proposes a representation/dependency/module pipeline; refinements to the central connection and scope wording are recorded below. |
-| 7 | Preliminary evidence takes more space than its direct support for the proposal warrants. | Awaiting discussion. |
-| 8 | Mathematical detail is disproportionate to the unresolved method choices. | Awaiting discussion; some exposition was already simplified. |
+| 7 | Preliminary evidence takes more space than its direct support for the proposal warrants. | User accepts compression; supplies a new language result; retain the REPA comparison and omit new multi-seed experiments. Details below. |
+| 8 | Mathematical detail is disproportionate to the unresolved method choices. | User agrees to remove irrelevant technical detail, especially stop-gradient notation; preserve self-contained definitions of the proposed method. |
+| 9* | Figures occupy too much space. | Delete Figure 4, keep simple numerical comparisons in prose/tables, and consider merging Figures 1/2 and selective text wrapping. |
 
-Organization, figures, and submission cleanup are cross-cutting review comments. They will be revisited during the final editing pass.
+Organization, figures, and submission cleanup are cross-cutting review comments. They will be revisited during the final editing pass. *The independent review has eight ranked criticisms; “criticism 9” is the user's label for its figure/layout comments, and is tracked that way below for continuity.*
 
 ## 1. Give components and modules an operational meaning
 
@@ -153,7 +154,7 @@ The project studies representations, denoising, and transformer computations tog
 
 The most directly relevant published evidence for H2 is in [LWD, Section 4.4 and Table 3](https://arxiv.org/html/2606.19662v1#S4.SS4). At 400,000 main-training iterations, unguided ImageNet-256 FID improves from 3.53 to 2.87 using SemVAE semantic latents, and from 4.06 to 2.97 using DINO-PCA latents. The learned schedule shapes also differ across semantic encoders. These results support adapting generation to the representation, without establishing that the resulting schedules identify a unique dependency structure. The schedule-learning phase is an additional cost to report when comparing total compute. The CLIP comparison changes the semantic compression method as well, so it is less clean for isolating schedule effects.
 
-For H1, the existing 61.94% GSM8K result is evidence that continuous latent diffusion can generate functionally useful contextual language states. It supports using pretrained contextual states as a representation source; it does not establish the additional benefit of task-trained visual representations or their visual grounding.
+For H1, use the updated result reported by the user under criticism 7: **62.4716% GSM8K accuracy with an approximately 800M-parameter continuous diffusion model and the team's own 121M-parameter encoder**, using Qwen-3-derived latent states. This supersedes the earlier 61.94% result and its encoder description. It supports generating functionally useful contextual language states; it does not establish the additional benefit of task-trained visual representations or their visual grounding.
 
 For H3, the preliminary CelebA64 sharing result (FID 17.574 to 14.304 at approximately 10.2M parameters) and source/adapted weight-replacement experiments support investigating reusable transformer computations. They do not yet identify a semantic component-to-module mechanism. These are the existing results summarized in [the current proposal](proposal_draft.md); no new preliminary results are claimed.
 
@@ -397,14 +398,83 @@ The broader combination of representation learning, scheduling, and architecture
 
 Only the discussion record has been updated. The proposal, budget workbook, figures, and compiled deliverables remain unchanged.
 
-## Remaining discussions
+## 7. Compress preliminary evidence and replace the language result
 
-The items below summarize reviewer questions to revisit. **They are not yet accepted changes or additional deliverables.**
+### Updated result supplied by the user
 
-| No. | Question to settle | Related to criticism 1 |
-|---|---|---|
-| 7 | Which existing results most directly establish feasibility, and how much space should each receive? | No new preliminary experiments are required; preserve the distinction between supporting ingredients and establishing their interaction. |
-| 8 | Which equations make the new method understandable, and which details can be shortened? | Keep the new operational definition self-contained; avoid introducing unexplained gating or attribution notation. |
+The user reports a later experiment with **62.4716% GSM8K accuracy** and the team's own **121M-parameter encoder**, and asks that it replace the previous 61.94% result. The denoising model is described as approximately 800M parameters, using Qwen-3 hidden activations as latent states.
+
+Treat this as a new PI-reported preliminary result; no additional experiment or independent re-evaluation is required before submission. Preserve the exact 62.4716% figure in this record and use **62.47%** in proposal prose. State the approximately 800M denoiser and 121M encoder separately. Do not reuse the old claim that this result uses a separate 4B question encoder, or infer a complete system parameter count or a more specific role for the new encoder than the user has supplied. Qwen-derived latent states and the encoder used by the final model are distinct descriptions.
+
+The new result changes the feasibility evidence. It does not automatically select or replace the encoders in the proposed image-generation implementation; that integration choice can use the new model when appropriate.
+
+### Keep the language evidence to one or two sentences
+
+The result is several steps removed from multimodal binding. Its purpose is to show that continuous latent diffusion can generate reasoning-relevant language states, encouraging its use for semantic as well as visual components. Do not make it a separate performance centerpiece.
+
+Proposed two-sentence version:
+
+In preliminary experiments, our continuous diffusion language model, with an approximately 800M-parameter denoiser and a 121M-parameter encoder, uses Qwen-3-derived latent states and achieves **62.47% GSM8K accuracy**, compared with **66.6% reported for the 7B TESS 2 model after mathematics-specific fine-tuning**, under different training settings. This result supports using continuous diffusion to generate reasoning-relevant semantic states alongside visual components.
+
+[TESS 2, Table 3](https://arxiv.org/html/2502.13917v1#S4.T3) supplies the 66.6% mathematics-fine-tuned reference point; its base comes from Mistral-7B. This is contextual evidence of strong continuous-diffusion reasoning, not a matched efficiency comparison or a claim of equal performance. One reference point is enough for the short feasibility paragraph.
+
+The assistant recommends omitting the proposed historical statement that continuous diffusion had not previously succeeded at language generation. [Diffusion-LM](https://arxiv.org/abs/2205.14217) already studied continuous diffusion for controllable text generation in 2022, and TESS 2 demonstrated broader instruction-following. The useful claim here is substantial reasoning capability in continuous latent diffusion, rather than the absence of earlier language-generation results.
+
+### Retain LWD versus REPA as evidence for the overall approach
+
+The user disagrees with making the SFD-matched comparison the sole or dominant feasibility argument. SFD and LWD both motivate asynchronous multi-component diffusion; comparison with a more standard approach such as REPA helps demonstrate why that overall direction is useful.
+
+Keep **class-conditional ImageNet-256** as the setting and retain the comparison of LWD's FID **4.93 versus REPA's 5.84**, at **120,000 versus 4 million main-training updates**. The 33-fold figure describes fewer main-training updates, not measured wall-clock speedup. The schedule-learning phase adds 10,000 updates; this can be acknowledged compactly where the training budget is stated. Do not attribute the entire system-level difference to schedule optimization alone.
+
+The stronger final FID result can remain if space permits. The user considers the AutoGuidance setting unnecessary detail for the main proposal narrative. Omit that detail there; retain accurate experimental provenance in the source references and figure notes. SFD comparisons can still support the narrower schedule hypothesis in the hypothesis/evidence table without displacing the REPA comparison in the feasibility story.
+
+### Explain the reviewer's “lead feasibility” recommendation
+
+“Lead feasibility with the matched schedule result and the component-reversion finding” was a recommendation about ordering: first show that changing the denoising process helps image generation, then show that selected transformer weights can be reused, then briefly give the language-state result. “Component reversion” refers to restoring selected source weights after adaptation and examining which generated behavior remains.
+
+It does not require new experiments or a rebuttal-style limitations paragraph. We will adapt the ordering to the user's preference: lead with the image-generation evidence, including REPA, connect the existing module results to the proposed mechanism, and keep language evidence short. Retain only the distinctions needed to avoid an inaccurate claim, such as not turning post-training weight restoration into evidence that those weights were frozen throughout training.
+
+### Figure 3 and experimental evidence
+
+No additional multi-seed runs are requested or required before submission. Use the existing qualitative results and available measurements; do not add a lengthy discussion of seed counts or uncertainty to the proposal.
+
+The numerical panel of the current Figure 3 is already a compact two-row table, replacing earlier bars. Preserve that direction and consider putting the two numbers directly in the caption or adjacent prose if it saves space. Retain the qualitative source/hybrid/joint comparison only at a size where the image differences are readable. Do not reintroduce a bar chart for two values.
+
+### Changes to carry into the final revision
+
+Replace the old language score and encoder description everywhere in the submission text, restrict that result to one or two sentences, and remove its benchmark figure. Keep the main feasibility emphasis on the image-generation and transformer-mechanism results, using REPA as the broader baseline. Existing artifacts/provenance can retain historical results if clearly identified; the submitted proposal should use the updated result consistently.
+
+## 8. Keep mathematical detail relevant and self-contained
+
+The user agrees that the proposal should omit stop-gradient details because they do not help explain the proposed investigation. **Those details have already been removed from the current draft; preserve that omission in the final revision.**
+
+Retain the definitions necessary to understand the representation components, noise levels, conditional prediction, joint schedule/transformer objective, and proposed interventions. Explain each symbol locally. Remove generic optimization tutorials and implementation notation that does not clarify a new idea, including the elementary parameter-update equation if it adds no useful content. Do not replace the removed detail with another elaborate formalism.
+
+This accepts the reviewer's prioritization point without adopting every technical qualification as proposal text. Details of existing algorithms can remain in their citations and implementation materials.
+
+## 9. Reduce figure space and integrate overlapping explanations
+
+The user agrees that figures take too much space, supports deleting Figure 4, and is open to wrapping text around suitable figures and merging Figures 1/2 if that improves clarity. This section tracks the review's cross-cutting layout comments under the user's “criticism 9” label.
+
+### Agreed changes
+
+- **Delete Figure 4.** The updated language result belongs in its short prose description.
+- Avoid charts for simple numerical comparisons; use a small table or prose for Figure 3's two values.
+- Reduce duplication and unused space while preserving readable type and explanatory content.
+
+### Recommended final layout, subject to visual review
+
+Aim for **two figures in total**: one integrated method diagram and one compact qualitative preliminary-result figure.
+
+For the method diagram, use the current Figure 2's concrete conditional-information comparison, overlapping schedules, and transformer path as the main structure. Incorporate only the necessary representation explanation from Figure 1, such as a small strip showing fixed representation components and a clear link to the conditional task. Remove the duplicated overview boxes and long text labels. The revised diagram must reflect the fixed-representation decision and present component meanings as illustrative, not prescribe human-labeled coordinates. Joint learning applies to schedules and transformer computations.
+
+The method diagram will probably benefit from the full text width. Consider text wrapping for a compact version of the qualitative transfer figure if its images and labels remain legible. Wrapping a dense multi-panel diagram into a narrow column would likely reduce clarity. The exact placement, caption width, and figure dimensions should be decided from the rendered final PDF, rather than by shrinking all figures uniformly.
+
+If merged, renumber the surviving figures and update every caption and cross-reference. Do not concatenate the existing Figures 1/2 unchanged; the goal is one clearer explanation with duplicated content removed.
+
+## Status before the coordinated revision
+
+All eight ranked criticisms and the user's figure/layout item have now been discussed. The directions and proposed implementations are recorded above, with remaining choices marked as recommendations rather than approved final designs. Continue to preserve the no-additional-preliminary-experiments constraint. The proposal, budget workbook, figures, LaTeX, and compiled deliverables remain unchanged until the coordinated revision.
 
 ## Record of updates
 
@@ -414,3 +484,4 @@ The items below summarize reviewer questions to revisit. **They are not yet acce
 - **2026-09-16:** Recorded criticism 4 as a bounded technical risk, with a single proposed diagnostic paragraph and rollout-based fine-tuning as a possible mitigation. Added Self Forcing as a feasibility precedent. The proposal draft remains unchanged.
 - **2026-09-16:** Recorded criticism 5, including a formula-traced proposed USD 149,999 budget with USD 23,999 for cloud services, a 5,000-H100-GPU-hour planning allowance, bounded datasets and trainable parameter targets, and month-3/month-6 scaling decisions. Corrected the reviewer's outdated “representation refinement” milestone to respect criticism 3. The original budget workbook and proposal remain unchanged.
 - **2026-09-16:** Recorded the user's three-part positioning for criticism 6 and the recommendation to connect it through component usefulness, denoising progress, and module function. Clarified the meaning of decomposability, the distinction between dependency measurement and schedule order, and the fixed-representation scope. Added close-work comparisons without making an unsupported “first” claim. No proposal edits were made.
+- **2026-09-16:** Recorded criticisms 7/8 and the user's figure/layout item 9. Updated the evidence record to the PI-reported 62.4716% GSM8K result with a 121M encoder, recommended a short TESS 2 comparison, retained the REPA framing, rejected additional multi-seed work, and recorded removal of Figure 4 plus a possible Figures 1/2 merger. Confirmed that Figure 3's table and omission of stop-gradient details are already present in the held draft. No submission artifact changes were made.
