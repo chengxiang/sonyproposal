@@ -70,7 +70,7 @@ def build_overview():
     txt(ax, .018, .719, 'B. Measure which components help a conditional task',
         10.5, 'bold', TEAL)
     txt(ax, .018, .675,
-        'Image + “The [MASK] gives the cup.” → predict the missing word.')
+        'Image + “The [MASK] holds the cup.” → predict the missing word.')
     for y, label, col in [(.611, r'$D_1$ mostly noise', MUTED),
                            (.551, r'$D_1$ clearer', BLUE)]:
         txt(ax, .038, y, label, color=col)

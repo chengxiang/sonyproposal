@@ -1,6 +1,6 @@
 # Sony proposal: LaTeX source
 
-`proposal.tex` is the editable LaTeX version of `proposal_draft.md`. It incorporates the coordinated review revisions: representations and component groups are fixed before denoising training; schedules and transformer computations are learned within that representation; conditional diagnostics, causal interventions, matched comparisons, and a bounded execution plan connect the method to its claims. Keep `references.bib`, `sonyabbrvnat.bst`, and the two active figure PDFs in `figures/` alongside it.
+`proposal.tex` is the editable LaTeX version of `proposal_draft.md`. It incorporates the coordinated review revisions and the final creator-facing demonstration: generate a two-person scene, then change the object holder while preserving other requirements. Controlled variation starts with component-specific forward noising of the model's own images and uses the conditional denoiser trained in Section 2.2. Known prompt states remain clean; language-state denoising supplies auxiliary dependency-learning tasks. Representations remain fixed, and no new preliminary experiments or separate editor-training program are required. Keep `references.bib`, `sonyabbrvnat.bst`, and the two active figure PDFs in `figures/` alongside it.
 
 ## Compile
 
@@ -12,7 +12,7 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error proposal.tex
 
 Alternatively, run `pdflatex proposal.tex`, then `bibtex proposal`, then `pdflatex proposal.tex` twice. For Overleaf, upload this directory's files and select pdfLaTeX and `proposal.tex` as the main document.
 
-The checked output is **10 letter-size pages: nine pages of narrative, figures, and references, followed by one budget page**. Body text, tables, and captions use 11-point type; figures use labels of at least 10 points at their seven-inch width, except mathematical subscripts. The PDF is approximately 0.26 MB, with no LaTeX warnings. The four-row hypothesis table stays together. Research prose, equations, references, and benchmark context match the Markdown draft; scholarly citations use BibTeX. Editorial notes are kept outside the proposal.
+The checked output is **11 letter-size pages: ten pages of narrative, figures, and references, followed by one budget page**. Body text, tables, and captions use 11-point type; figures use labels of at least 10 points at their seven-inch width, except mathematical subscripts. The PDF is approximately 0.26 MB, with no LaTeX warnings. The four-row hypothesis table stays together. Research prose, equations, references, and benchmark context match the Markdown draft; scholarly citations use BibTeX. Editorial notes are kept outside the proposal.
 
 ## Budget and remaining details
 
