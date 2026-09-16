@@ -472,6 +472,56 @@ The method diagram will probably benefit from the full text width. Consider text
 
 If merged, renumber the surviving figures and update every caption and cross-reference. Do not concatenate the existing Figures 1/2 unchanged; the goal is one clearer explanation with duplicated content removed.
 
+## 10. Coverage audit against the original independent review
+
+The user asked us to revisit the complete review, check whether every issue has been addressed, and identify useful suggestions that were missed. The assistant reread the original review and current discussion record, checked the held proposal, and obtained a separate coverage audit from another agent.
+
+**Every major criticism has a response in this discussion, but several have only been resolved in principle. The coordinated proposal revision has not yet happened.** The table distinguishes an agreed response from a completed implementation choice.
+
+| Review item | What our discussion resolves | What still needs attention in the coordinated revision |
+|---|---|---|
+| 1. Mechanistic claim | Functional meaning through conditional prediction; component–module interventions and restoration; no mandatory human-readable semantics | State the information paths and the scope of the mechanism; choose initial component/module units; specify matched control interventions |
+| 2. Value of the synthesis | Hypothesis-and-test table, focused variants, common generation endpoint, held-out combinations, and partial-evidence labels | Give a compact evaluation size/scoring/uncertainty plan and a useful interpretation if sparse sharing does not help |
+| 3. Representation algorithm | Obtain representations from pretrained or task-trained models, then fix them; remove denoising-driven refinement | Name one initial component grouping and one rule translating measured usefulness into module access |
+| 4. Generated-state gap | One short diagnostic comparing corrupted target states with generated states; possible rollout-based mitigation | Keep missing-information diagnosis distinct from generation with complete prompts |
+| 5. Feasibility | Proposed compute budget, bounded data and trainable model sizes, run allowance, minimum milestone, and scaling gates | Explain the native image-decoding path and the interface to the pretrained denoiser; apply the revised budget consistently |
+| 6. Differentiation | Lead with the connection between component usefulness, generation progress, and transformer computation | Remove claims of simultaneous representation/schedule/network optimization; present the nearest-work comparison around the proposed relationship |
+| 7. Evidence | Updated 62.4716% result and 121M encoder; short language paragraph; REPA comparison retained; no new preliminary runs | Replace stale scores/encoder descriptions and compress the evidence in the submission |
+| 8. Mathematics | Keep necessary, defined notation; omit stop-gradient details and elementary optimization exposition | Preserve the existing final prediction-only fit and dependency remeasurement |
+| 9. Figures and organization | Delete Figure 4; simple values in prose/tables; consider one integrated method diagram | Implement the layout changes and the additional organization suggestions below |
+
+### Useful remaining method and evaluation details
+
+1. **Scope the mechanistic result and its information paths.** The diagnostic can establish that a particular component helps a particular module make a conditional prediction. It should not imply that this explains every route through the pretrained image generator. Separately demonstrate the practical benefit with complete prompts. T5 removal remains undecided; a bounded claim about the identified path avoids requiring a complete explanation of the backbone. Masked words must be removed before contextual encoding in the diagnostic.
+
+2. **Give one concrete starting configuration.** Fixing the representation resolves the largest algorithmic gap, but the reader still needs to know what receives an independent noise level, what counts as a transformer module, and how a measured dependency determines its inputs. Choose one initial component unit, one module granularity, and one access-selection rule when drafting. Token groups, coordinate groups, attention heads, and MLP branches should not all remain equally prominent alternatives. This does not require exact tensor shapes or restoring representation refinement.
+
+3. **Finish the evaluation paragraph.** The current record already budgets four main variants with two seeds and proposes 100–300 checked mechanistic cases. It still leaves the main generation evaluation's prompt/sample count and scoring procedure open. State a bounded number of held-out requests and generations, how joint requirement satisfaction will be judged, and how paired differences and uncertainty will be summarized. Decision criteria can require improvement in joint satisfaction without a material quality loss, alongside a specific intervention/rescue effect; no numerical performance gain needs to be invented. These are award-period plans, not additional pre-submission experiments.
+
+4. **Explain the pretrained-model integration in ordinary language.** State that image generation retains the pretrained image-latent/VAE decoding route, and explain where the semantic states enter its denoising computation. The implementation must also preserve or explicitly map the backbone's noise levels, input scaling, prediction target, and sampler. The present phrase “establish a compatible interface” leaves this bridge open. Settle one initial route before treating backbone freezing as a sufficient feasibility argument.
+
+5. **Retain small controls with high explanatory value.** The original review specifically proposed equally sized random-module interventions and controls for perturbation/activation scale, in addition to restoration and collateral effects. Our record had only said “matched controls.” A short explicit phrase would make the causal study more convincing without a long ablation list. If a task requires broad access or little sharing, the useful outcome is a measured boundary of selective reuse; do not promise sparsity everywhere.
+
+### Organization suggestions that had not yet been explicitly carried forward
+
+- Introduce the concrete starting model, representation source, and bounded task near the beginning of the method, rather than delaying them until the execution section.
+- State the central contribution once clearly, then let the approach develop it. Reduce repeated versions across the abstract, introduction, differentiation, applications, and work plan.
+- Give differentiation, preliminary feasibility, Sony's use case, and evaluation distinct functions. Avoid making the performance evidence carry the novelty argument.
+- Remove the closing list of distant future applications from the main narrative if it competes with the committed deliverable. Preserve deferred ideas in our discussion/history rather than using them to expand this proposal.
+- After the coordinated edit, read the submission alone to check that its examples, equations, method, and figures use the same fixed-representation scope and initial implementation.
+
+### Existing fixes and deliberately unadopted suggestions
+
+The original review predates some edits. Figure 3 already uses a compact numerical table, and the held draft already omits stop-gradient detail. It also explicitly trains the final denoiser with the prediction loss alone after schedule selection and remeasures dependencies. Preserve that last safeguard; the review's technical caution does not require reopening a lengthy velocity-penalty discussion.
+
+Do not revive additional preliminary experiments, new multi-seed runs, a SFD-first feasibility requirement, mandatory human-readable component names, denoising-driven representation refinement, or a full interpretation of every module. These were narrowed or rejected through the discussion. The remaining details can be settled within the existing approach rather than adding research directions.
+
+### PI contact details and submission completion
+
+The user supplied the PI email and phone in the conversation. The values are intentionally omitted from this GitHub record: automatic approval review blocked publishing them because it requires explicit authorization to disclose them in the repository. The information is available for the final revision once that destination is authorized.
+
+Remaining production items are the separate PI CV, consistent revised budget amounts, confirmation of the workbook's calendar dates, complete citations, removal of editorial notes, and a final rendered-PDF check. The date question already appears in the draft's notes: the workbook's stated project dates and its blended academic-year rates are not aligned. Do not invent replacement dates.
+
 ## Status before the coordinated revision
 
 All eight ranked criticisms and the user's figure/layout item have now been discussed. The directions and proposed implementations are recorded above, with remaining choices marked as recommendations rather than approved final designs. Continue to preserve the no-additional-preliminary-experiments constraint. The proposal, budget workbook, figures, LaTeX, and compiled deliverables remain unchanged until the coordinated revision.
@@ -485,3 +535,4 @@ All eight ranked criticisms and the user's figure/layout item have now been disc
 - **2026-09-16:** Recorded criticism 5, including a formula-traced proposed USD 149,999 budget with USD 23,999 for cloud services, a 5,000-H100-GPU-hour planning allowance, bounded datasets and trainable parameter targets, and month-3/month-6 scaling decisions. Corrected the reviewer's outdated “representation refinement” milestone to respect criticism 3. The original budget workbook and proposal remain unchanged.
 - **2026-09-16:** Recorded the user's three-part positioning for criticism 6 and the recommendation to connect it through component usefulness, denoising progress, and module function. Clarified the meaning of decomposability, the distinction between dependency measurement and schedule order, and the fixed-representation scope. Added close-work comparisons without making an unsupported “first” claim. No proposal edits were made.
 - **2026-09-16:** Recorded criticisms 7/8 and the user's figure/layout item 9. Updated the evidence record to the PI-reported 62.4716% GSM8K result with a 121M encoder, recommended a short TESS 2 comparison, retained the REPA framing, rejected additional multi-seed work, and recorded removal of Figure 4 plus a possible Figures 1/2 merger. Confirmed that Figure 3's table and omission of stop-gradient details are already present in the held draft. No submission artifact changes were made.
+- **2026-09-16:** Audited all original review comments against the discussion, with a separate agent coverage check. Recorded the remaining implementation, evaluation, and organization details; distinguished responses in principle from completed draft changes; preserved existing fixes and decisions not to expand scope. The PI supplied contact information, but automatic approval review blocked publishing its values to GitHub without explicit disclosure authorization; the values are omitted from this record. Only this discussion record was changed.
