@@ -17,24 +17,28 @@ We will jointly design multimodal representations, denoising procedures, and the
 
 Consider a creator's request: “A woman in a red coat hands a blue cup to a man in a green sweater. A child beside them reads a book.” Successful generation must bind clothing to the correct people, distinguish the giver from the receiver, and realize the child's separate activity. We will learn representations, denoising schedules, and transformer computations that jointly support these requirements. Participants and relationships are illustrative meanings; the learned decomposition need not assign one component to each human-named concept.
 
-### Three linked hypotheses
+### Central hypothesis: learned dependencies can organize generation and transformer computation
 
-**1. Useful representations admit learnable component extractors.** An encoder E maps an image or video, together with its available description, to N token vectors of dimension d. Flattening these vectors gives z; an extraction function P_k selects or computes component k:
+**What information does the model need to generate each component accurately?** We hypothesize that a useful multimodal representation can be divided into components whose conditional dependencies guide both their denoising schedules and the transformer computations used to predict them. Learning these elements together will provide more precise control over how complex semantic requirements are realized in an image.
+
+In the handover scene, generating the visual interaction requires information about the participants and their respective roles; other predictions may depend on different subsets of the scene description. These requirements need not correspond to separate, human-named coordinates. We will learn component vectors that capture information useful for these conditional predictions, starting from pretrained representations and downstream tasks.
+
+**Denoising provides a way to discover these dependencies.** If making one component less noisy improves prediction of another, it reveals useful information that the generation process can exploit. Making that information available earlier can help other components, but may make its own prediction harder. Jointly learning the transformer and component schedules balances these effects. The resulting measurements also guide how we refine the representation's division. Dependencies therefore develop with the model that learns to use them.
+
+**Transformer modules implement these conditional predictions.** Attention selects and combines information across components, while MLPs transform that information into predictions. Our preliminary mechanistic results motivate learning computations that can be shared across conditional tasks, alongside computations that specialize to particular inputs, targets, or noise levels. Module interventions will explain which computations implement the learned dependencies and when they remain reusable. This connects the representation's organization to concrete choices about attention access, parameter sharing, and module activity during generation.
+
+### A concrete formulation
+
+**Representation components.** An encoder E maps a generation target x—an image or video together with its available description—to N token vectors of dimension d. Flattening them gives z, and an extraction function P_k computes component k:
 
 ```math
 Z=E(x)\in\mathbb R^{N\times d},\qquad z=\operatorname{vec}(Z)\in\mathbb R^D,
 \qquad s_k=P_k(z)\in\mathbb R^{d_k},\quad D=Nd.
 ```
 
-For one token, an extractor simply maps d coordinates to d_k coordinates. A low-dimensional linear projection is the simplest example; an MLP or attention-based extractor can learn more complex features and combine information across tokens. We use P_k for this general extraction function. The initial construction uses disjoint groups of projected coordinates or tokens, together with a reconstruction map and residual visual features. This retains information needed for generation while allowing the divisions to be learned. Overlapping nonlinear components provide a later extension.
+For one token, P_k maps d coordinates to d_k coordinates. It can be a low-dimensional projection, or an MLP or attention-based extractor combining information across tokens. Encoders and extractors supply clean training targets; the diffusion model generates corresponding component states from noise.
 
-We will obtain representations from pretrained models and downstream tasks, then learn their component extractors. Encoders supply clean training targets; the diffusion model generates corresponding states from noise. Our aim is a decomposition useful for controllable generation, including complex prompt semantics, without prescribing an exhaustive list of semantic factors.
-
-**2. Transformer modules can specialize in how they access and change these components.** A *module* is an identifiable transformer computation together with its parameters: an attention head, including its query/key/value/output projections; an MLP block; or a specified group of rows or columns in these projections. Denote its parameters by θₘ. This definition supports interventions on existing modules and the shared or specialized constructions in Section 2.3.
-
-Our preliminary studies show how MLPs can store training samples or patches in the studied models, and how attention combines information during denoising. We will identify which representation components supply useful inputs to a module, which predictions change when its contribution is removed or replaced, and how these roles vary with noise levels. **A particular focus is attention's use of a local subset of information: locality means dependence on a small set of representation components, which may span distant tokens, image regions, or modalities.** Sparse dependence alone does not imply isolated weights; we will construct and analyze the corresponding transformer computations.
-
-**3. Denoising schedules should be learned with the representation and transformer.** In asynchronous flow matching, component k follows its own progress schedule:
+**Component schedules.** In asynchronous flow matching, component k follows its own noise-to-data progress schedule:
 
 ```math
 s_{k,t}=(1-\tau_k(t;\phi))\varepsilon_k+\tau_k(t;\phi)s_k,
@@ -42,26 +46,11 @@ s_{k,t}=(1-\tau_k(t;\phi))\varepsilon_k+\tau_k(t;\phi)s_k,
 \tau_k(0;\phi)=0,\quad\tau_k(1;\phi)=1.
 ```
 
-The parameters φ determine monotone schedules from noise to data. Their curves may cross; there is no required first/second ordering. The transformer can likewise vary which modules are active as different components become informative.
+The parameters φ determine monotone schedules that can overlap and cross. These schedules determine how much information is available in each component at each generation time. Our variational trajectory and asynchronous flow methods provide the starting point for learning them jointly with the transformer (Section 2.2); Section 3 describes the supporting results and differentiation.
 
-**Our work provides a practical basis for learning these schedules.** Our [variational trajectory optimization][trajectory] and [Learning When to Denoise (LWD)][schedule] jointly learn the noise process and score/flow network. LWD achieves leading image-generation quality with substantially fewer training updates, as detailed in Section 3. Benefits from coordinating generation across representations or tokens have also been reported in [SFD][sfd], [Latent Forcing][latentforcing], and [Diffusion Forcing][diffusionforcing].
+**Transformer modules.** A module is an identifiable computation and its parameters θₘ: an attention head with its query/key/value/output projections, an MLP block, or a specified group of rows or columns in those projections. We will identify which components it uses and predicts, and how its role varies with noise levels. Here *locality* means dependence on a small set of representation components, potentially spanning distant tokens, image regions, or modalities. Learning and analyzing the corresponding module access and sharing patterns connects this dependence to parameter organization.
 
-The interaction with training is explicit. With extractor parameters ψ and schedule parameters φ, a training step is
-
-```math
-\theta^+=\theta-\eta\nabla_\theta\mathcal J(\theta,\phi;\psi),
-\qquad s_k=P_{k,\psi}(\operatorname{vec}(E(x))).
-```
-
-Changing ψ changes the prediction targets; changing φ changes the noisy inputs and their weighting. Both therefore change the parameter update. Section 2.1 learns the targets; Section 2.2 jointly learns denoising order, dependencies, and the transformer; Section 2.3 organizes its computations across conditional prediction tasks.
-
-### One research program in three connected parts
-
-1. **Learn representations and component extractors** from pretrained activations and downstream tasks.
-2. **Jointly learn denoising order, component dependencies, and the transformer.** Denoising losses reveal useful information, and schedules determine when that information becomes available.
-3. **Learn shared and specialized transformer computations** across conditional tasks and component noise configurations.
-
-These are interacting parts of one training procedure. Transformer learning changes which dependencies it can exploit, and schedule learning changes the conditional prediction problems it encounters. Measurements at selected checkpoints guide refinements to component divisions and module access, followed by further joint training. Controllable generation from text and reference images provides the common application.
+Section 2.1 learns the representation and extractors; Section 2.2 jointly learns component dependencies, schedules, and the transformer; Section 2.3 develops and analyzes shared or specialized computations across the resulting conditional tasks. Together, they support controllable generation from text and reference images.
 
 ![Figure 1: fig1 mechanism overview](figures/fig1_mechanism_overview.png)
 
@@ -73,7 +62,7 @@ These are interacting parts of one training procedure. Transformer learning chan
 
 ### 2.1 Obtain representations and learn component extractors
 
-**Begin with pretrained activations.** Frozen [DINOv2][dino] features and Qwen states provide visual and language targets. We will generate selected features alongside image latents, initially using token groups and disjoint groups of learned projected coordinates. A small MLP or attention extractor is a later refinement. Keeping the total feature dimension fixed and retaining residual visual information prevents apparent gains from simply adding capacity or discarding difficult content.
+**Begin with pretrained activations.** Frozen [DINOv2][dino] features and Qwen states provide visual and language targets. We will generate selected features alongside image latents, initially using token groups and disjoint groups of learned projected coordinates. A small MLP or attention extractor is a later refinement. A reconstruction map and residual visual features retain information needed for generation; overlapping nonlinear components are a later extension. Keeping the total feature dimension fixed and retaining residual visual information prevents apparent gains from simply adding capacity or discarding difficult content.
 
 **Use downstream tasks to improve the targets.** Discriminators, reward/preference models, and visual or language understanding tasks can reveal distinctions that a generation model needs. [Discriminator feature losses][vaegan], [ImageReward][imagereward], and [representation alignment][repa] provide precedents. We will first train extractors to predict annotated participants and interaction roles, while also reconstructing the original features. Task losses give components useful information; the denoising objective determines how that information should be divided. These tasks guide learning without requiring a one-to-one correspondence between a component and a named concept.
 
@@ -98,6 +87,15 @@ Here *denoising* means predicting a clean component, or equivalently its flow ta
 The first term fits the denoising network with a change-of-variable weight for each component's own progress. The operator sg holds that weight fixed during differentiation; schedule gradients still pass through the noisy states and progress inputs. The second term penalizes large predicted velocities in generation time and serves as a schedule-selection regularizer during the probe. This is LWD's prescribed surrogate-gradient construction, generalized from two representations to K components; it is not an unweighted flow loss whose value can be reduced just by changing the sampling of noise levels.
 
 During a probe, we will jointly update a temporary denoiser and φ with this objective. Both probe and main training will also include auxiliary flow losses at independently sampled component noise levels, including components held clean, to support dependency measurements and conditional generation. Extractors remain fixed within a probe and are refined between probes. After refinement, we will fix the schedules for main training, following our [LWD implementation][schedule]; the main model uses the weighted flow-fitting term and auxiliary losses without the kinetic penalty. Our [variational anisotropic method][trajectory] supplies a complementary score-based formulation.
+
+**Representation and schedule choices also shape parameter learning.** With extractor parameters ψ, a training step takes the form
+
+```math
+\theta^+=\theta-\eta\nabla_\theta\mathcal J(\theta,\phi;\psi),
+\qquad s_k=P_{k,\psi}(\operatorname{vec}(E(x))).
+```
+
+Here J is the denoising objective for the chosen extractors and schedules. Changing ψ changes the prediction targets; changing φ changes the noisy inputs and their weighting. Both therefore change the transformer parameter update. This is why the dependence structure and denoising order must be learned with the model.
 
 Generation integrates the predicted velocity in generation time:
 
