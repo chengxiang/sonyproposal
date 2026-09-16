@@ -17,7 +17,7 @@ Numbering follows the review's eight ranked criticisms, rather than its shorter 
 | No. | Criticism | Discussion status |
 |---|---|---|
 | 1 | Predictive dependence and module ablation do not, by themselves, establish the promised semantic mechanism. | Direction agreed; candidate methods recorded below; implementation choices remain open. |
-| 2 | No decisive evaluation isolates the value of learning representations, denoising, and transformer computations together. | Awaiting discussion. |
+| 2 | No decisive evaluation isolates the value of learning representations, denoising, and transformer computations together. | Hypothesis-and-test table and partial-evidence annotations supported by the user; specific rows and comparisons proposed below. |
 | 3 | The representation-refinement algorithm is underspecified. | Awaiting discussion. |
 | 4 | Useful information in corrupted ground-truth states may not remain useful in generated states. | Awaiting discussion. |
 | 5 | Integration, resources, and the minimum 12-month scope need firmer bounds. | Awaiting discussion. |
@@ -126,13 +126,60 @@ These are feasibility precedents, not claims that the proposed synthesis is alre
 - [Analyzing Multi-Head Self-Attention](https://aclanthology.org/P19-1580/): head specialization and pruning.
 - [How to Use and Interpret Activation Patching](https://arxiv.org/abs/2404.15255): interpreting interventions in the presence of redundancy and interacting computations.
 
+## 2. Evaluate the contribution of learning the three elements together
+
+### User's direction
+
+A hypothesis-and-test table would be useful, with an indication of which hypotheses already have partial support from existing or preliminary work. The table should connect the proposed investigation to that evidence without suggesting that the full synthesis has already been demonstrated.
+
+The following organization and comparisons are **proposed for discussion**, not yet finalized implementation commitments.
+
+### Proposed central claim
+
+Learned conditional dependencies provide a useful common basis for choosing representation components, denoising schedules, and transformer computations. Allowing these choices to inform one another should improve generation satisfying interacting semantic requirements.
+
+Here, “learning together” permits alternating refinement. It need not mean updating every parameter in every gradient step. The proposed comparison is between allowing feedback among these choices and choosing them once in succession without revisiting earlier decisions.
+
+### Proposed hypothesis-and-test table
+
+| Hypothesis | Focused award-period comparison | Outcome that would support it | Existing support and remaining step |
+|---|---|---|---|
+| **H1. A learned decomposition concentrates information useful for conditional generation.** | Compare learned extractors with fixed groups of the same source features, at matched total dimension, normalized feature scales, and exposure to clean conditioning information. | Better prediction of the same held-out semantic targets with limited available components; selective effects in the component-interchange case study from criticism 1. | **Partial feasibility:** the continuous diffusion language-model result supports generating useful Qwen contextual states. It does not yet demonstrate their decomposition into selectively useful components. |
+| **H2. Denoising schedules should adapt to the representation's conditional prediction requirements.** | Hold the representation and architecture fixed; compare learned asynchronous schedules with fixed synchronous or asynchronous schedules, training a denoiser for each. | Better generation at comparable training and sampling cost; in the new multimodal setting, better simultaneous satisfaction of prompt requirements. | **Demonstrated in a narrower setting:** LWD jointly learns a schedule and denoiser for two fixed representation groups, improves generation, and obtains different schedules with different semantic encoders. Learning multiple component divisions and relating them to measured conditional dependencies remains proposed. |
+| **H3. Representation dependencies can guide useful and identifiable transformer computations.** | Compare dependency-guided access, sharing, or activity with comparably sized trainable modules whose organization does not use those dependencies. Keep representation and schedule fixed for this comparison. | Specific module interventions alter the benefit of exposing one component when predicting another; useful computations transfer across held-out conditional tasks or compositions. | **Partial evidence:** the attention/MLP analysis, sharing experiments, and selective weight replacement support differentiated and reusable computations. Their correspondence with learned semantic divisions and noise-dependent conditional tasks remains proposed. |
+| **H4. Feedback among representation, schedule, and module choices improves the resulting generator.** | Compare coupled refinement with a one-pass staged pipeline using the same source features, training signals, architecture family, and total training budget. The staged version selects components, then schedules, then module organization without returning to earlier design choices. | Better joint satisfaction of prompt requirements on held-out combinations, using generated intermediate states, with image quality and generation cost accounted for. | **Proposed synthesis:** existing work supports ingredients and some pairwise connections. No supplied result yet establishes the complete interaction. |
+
+### Existing evidence worth emphasizing
+
+The most directly relevant published evidence for H2 is in [LWD, Section 4.4 and Table 3](https://arxiv.org/html/2606.19662v1#S4.SS4). At 400,000 main-training iterations, unguided ImageNet-256 FID improves from 3.53 to 2.87 using SemVAE semantic latents, and from 4.06 to 2.97 using DINO-PCA latents. The learned schedule shapes also differ across semantic encoders. These results support adapting generation to the representation, without establishing that the resulting schedules identify a unique dependency structure. The schedule-learning phase is an additional cost to report when comparing total compute. The CLIP comparison changes the semantic compression method as well, so it is less clean for isolating schedule effects.
+
+For H1, the existing 61.94% GSM8K result is evidence that continuous latent diffusion can generate functionally useful contextual language states. It supports the representation source, rather than the proposed decomposition or its visual grounding.
+
+For H3, the preliminary CelebA64 sharing result (FID 17.574 to 14.304 at approximately 10.2M parameters) and source/adapted weight-replacement experiments support investigating reusable transformer computations. They do not yet identify a semantic component-to-module mechanism. These are the existing results summarized in [the current proposal](proposal_draft.md); no new preliminary results are claimed.
+
+### Keep the evaluation focused
+
+- Use one common creator-facing endpoint: the fraction of generated scenes satisfying **all** specified requirements on held-out combinations of participants, attributes, and relations. Report individual requirement scores, image quality, and cost to explain changes in that endpoint.
+- Define held-out combinations so the relevant participants, attributes, and relations are individually encountered during training, while selected combinations are withheld.
+- Train the transformer in every generative baseline. The third design choice concerns module access, sharing, and activity; it is not a comparison of a trained denoiser with an untrained or arbitrarily frozen one.
+- Match source features and semantic supervision when testing decomposition or scheduling. Count feature/interface learning, schedule selection, and module refinement in the total training budget. Where resource matching is imperfect, report the actual costs.
+- Compare conditional performance on common decoded or annotated targets. Raw latent denoising losses across different learned representations can change through scaling or easier targets and are not sufficient evidence of improvement.
+- Use the causal case study from criticism 1 to explain a component–module relationship. A better final image alone does not establish that mechanism; a useful mechanism alone does not establish better full generation.
+- Reuse a small set of variants across these comparisons. A full factorial sweep over every possible representation, schedule, and architecture is unnecessary. Detailed sample counts and thresholds remain open until the initial implementation and resources are settled.
+- A full-versus-staged improvement supports the practical value of feedback. It need not establish superadditivity or that all three choices are universally necessary. Fixed-choice comparisons help identify which connections are useful.
+
+### Changes to carry into the final revision, after agreement on the table
+
+Add a compact table near the research approach or work plan, with short evidence labels such as “demonstrated in a simpler setting,” “partial feasibility,” and “proposed synthesis.” Let its first rows explain the links and its final row evaluate the integrated generator. Keep stronger headline performance results in the feasibility discussion, while using the closest matched comparisons to support specific hypotheses.
+
+No proposal, figures, LaTeX, or compiled deliverables were changed during this discussion. All evaluation runs above are proposed award-period work.
+
 ## Remaining discussions
 
 The items below summarize reviewer questions to revisit. **They are not yet accepted changes or additional deliverables.**
 
 | No. | Question to settle | Related to criticism 1 |
 |---|---|---|
-| 2 | Which compact comparisons and generation outcomes will show the contribution of the joint approach? | Include the component–module interaction and causal case alongside generation performance. |
 | 3 | What is the initial extractor family, and how will the learning objective refine the decomposition? | The proposed noise allocation characterizes an existing decomposition; learning it still needs a specified procedure. |
 | 4 | How will we distinguish useful clean target information from useful model-generated information? | Separate masked-information diagnostics from complete-prompt generation and examine actual generated trajectories. |
 | 5 | What is the smallest credible implementation and one-year deliverable, given available data and compute? | Decide the conditioning path and module granularity before committing to a large integration. |
@@ -143,3 +190,4 @@ The items below summarize reviewer questions to revisit. **They are not yet acce
 ## Record of updates
 
 - **2026-09-16:** Created this discussion record at the user's request. Captured the agreed direction, candidate methods, and open decisions for criticism 1. Queued the remaining criticisms without treating the reviewer's suggestions as accepted commitments. No proposal, LaTeX, figure, budget, or compiled deliverable changes were made.
+- **2026-09-16:** Added the discussion of criticism 2: a proposed four-row hypothesis-and-test table, distinctions among existing evidence and proposed extensions, and focused comparison principles. The user supports the table format and evidence annotations; the specific rows remain proposals for discussion. The proposal draft remains unchanged.
