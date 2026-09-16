@@ -63,20 +63,20 @@ def build_feasibility():
         "axes.labelcolor": "#203747", "text.color": "#203747",
         "xtick.color": "#405666", "ytick.color": "#405666",
     })
-    fig, ax = plt.subplots(figsize=(7, 2.65))
-    fig.subplots_adjust(left=.095, right=.985, top=.80, bottom=.29)
+    fig, ax = plt.subplots(figsize=(7, 2.2))
+    fig.subplots_adjust(left=.095, right=.985, top=.84, bottom=.31)
     vals = [DATA["language_context"]["baselines"][0]["gsm8k_accuracy_percent"],
             DATA["elf"]["asynchronous_accuracy_percent"],
             DATA["language_context"]["baselines"][1]["gsm8k_accuracy_percent"]]
     ticks = ["Llama 3–8B Base\nAutoregressive",
              "Ours · 795M denoiser\nContinuous latent diffusion",
              "LLaDA–8B Base\nDiscrete diffusion"]
-    fig.text(.095, .945, "Language reasoning through continuous latent diffusion",
+    fig.text(.095, .953, "Language reasoning through continuous latent diffusion",
              fontsize=11, weight="bold", ha="left", va="center")
     bars = ax.bar(range(3), vals, width=.48,
                   color=["#8793A3", "#167E83", "#8793A3"])
     ax.set_xticks(range(3), ticks, fontsize=10)
-    ax.set_ylim(0, 85)
+    ax.set_ylim(0, 82)
     ax.set_yticks([0, 20, 40, 60, 80])
     ax.set_ylabel("GSM8K accuracy (%)", fontsize=10, labelpad=6)
     ax.tick_params(axis="both", labelsize=10, length=0, pad=5)

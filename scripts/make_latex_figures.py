@@ -77,37 +77,8 @@ def recovery():
 
 
 def reuse():
-    fig, ax = canvas(2.6)
-    xs=[.023,.195,.367]
-    w=.127; h=w*7/2.6
-    ys=[.470,.025]
-    for x,label in zip(xs,["Source","Source QK +\nadapted VO/MLP","Jointly\nadapted"]):
-        text(ax,x+w/2,.932,label,10,"bold",ha="center")
-    crops=[(148,120,384,356),(1602,120,1839,356),(1845,120,2081,356)]
-    for filename,label,y,col in zip(["source_transfer_aahq.png","source_transfer_stl10.png"],
-                                    ["CelebA → AAHQ","CelebA → STL-10"],ys,[TEAL,ORANGE]):
-        text(ax,.023,y+h+.014,label,10,"bold",col,va="bottom")
-        source=mpimg.imread(ROOT/"figures"/filename)
-        assert source.shape[:2]==(1174,2099)
-        for x,(l,t,r,b) in zip(xs,crops):
-            iax=fig.add_axes([x,y,w,h])
-            iax.imshow(source[t:b,l:r],interpolation="nearest",aspect="auto")
-            iax.axis("off")
-    text(ax,.620,.954,"Recovery with source QK",10.5,"bold")
-    text(ax,.620,.880,"Joint endpoint = 1",10,color=MUTED)
-    gax=fig.add_axes([.686,.224,.256,.550])
-    values=[.815,.143]
-    gax.barh([1,0],values,height=.35,color=[TEAL,ORANGE],zorder=3)
-    gax.set(xlim=(0,1.08),ylim=(-.5,1.5),yticks=[1,0],xticks=[0,.5,1])
-    gax.set_yticklabels(["AAHQ","STL-10"])
-    gax.set_xticklabels(["0","0.5","1"])
-    gax.tick_params(axis="both",length=0,labelsize=10,pad=4)
-    gax.spines["left"].set_visible(False)
-    gax.grid(axis="x",color="#e3e8ec",lw=.7)
-    for y,value,col in zip([1,0],values,[TEAL,ORANGE]):
-        gax.text(value+.020,y,f"{value:.3f}",fontsize=10.5,fontweight="bold",color=col,va="center")
-    text(ax,.814,.064,"Normalized DINOv2\nrecovery",10,color=MUTED,ha="center")
-    save(fig,"fig3_component_reuse")
+    from make_reuse_figure import build_reuse
+    save(build_reuse(), "fig3_component_reuse")
 
 def feasibility():
     from make_feasibility_figure import build_feasibility
